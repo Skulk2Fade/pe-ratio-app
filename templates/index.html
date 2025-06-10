@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>P/E Ratio Calculator</title>
+</head>
+<body>
+    <h2>P/E Ratio Calculator</h2>
+    <form method="POST">
+        <label>Ticker Symbol:</label><br>
+        <input name="ticker" value="{{ symbol }}" required><br><br>
+        <button type="submit">Fetch Live Data</button>
+    </form>
+
+    {% if pe_ratio %}
+        <h3>Results for {{ symbol }}</h3>
+        <p><strong>Price:</strong> {{ price }}</p>
+        <p><strong>EPS:</strong> {{ eps }}</p>
+        <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
+        <p><strong>Valuation:</strong> {{ valuation }}</p>
+    {% endif %}
+</body>
+</html>
