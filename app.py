@@ -1,49 +1,41 @@
 from flask import Flask, render_template, request
-import yfinance as yf
 import requests
 
 app = Flask(__name__)
 
-# Workaround: custom session with headers
-def get_stock_info(symbol):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    session = requests.Session()
-    session.headers.update(headers)
-    ticker = yf.Ticker(symbol, session=session)
+API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
-    # Get latest close price
-    hist = ticker.history(period="1d")
-    price = hist["Close"].iloc[-1] if not hist.empty else None
-
-    # Get earnings and shares to calculate EPS
-    eps = None
+def get_stock_data(symbol):
+    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
     try:
-        earnings = ticker.earnings
-        shares = ticker.get_shares_full(start="2020-01-01").iloc[-1]  # fallback for shares
-        if not earnings.empty and shares:
-            latest_year = earnings.index[-1]
-            net_income = earnings.loc[latest_year]["Earnings"]
-            eps = net_income / shares
-    except Exception:
-        eps = None
-
-    return {"price": price, "eps": eps}
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0:
+            quote = data[0]
+            price = quote.get("price")
+            eps = quote.get("eps")
+            return price, eps
+    except Exception as e:
+        print(f"API error: {e}")
+    return None, None
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    pe_ratio = None
-    valuation = None
+    symbol = ""
     price = ""
     eps = ""
-    symbol = ""
+    pe_ratio = None
+    valuation = None
+    error_message = ""
 
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
-        try:
-            data = get_stock_info(symbol)
-            price = data.get("price")
-            eps = data.get("eps")
-            if price and eps:
+        price, eps = get_stock_data(symbol)
+
+        if price is None or eps is None:
+            error_message = "Ticker not found or unsupported by data provider."
+        else:
+            try:
                 pe_ratio = round(price / eps, 2)
                 if pe_ratio < 10:
                     valuation = "Undervalued?"
@@ -51,10 +43,11 @@ def index():
                     valuation = "Fairly Valued"
                 else:
                     valuation = "Overvalued?"
-        except Exception:
-            pe_ratio = "Error"
+            except ZeroDivisionError:
+                pe_ratio = "EPS is zero"
 
-    return render_template("index.html", symbol=symbol, price=price, eps=eps, pe_ratio=pe_ratio, valuation=valuation)
+    return render_template("index.html", symbol=symbol, price=price, eps=eps,
+                           pe_ratio=pe_ratio, valuation=valuation, error_message=error_message)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
