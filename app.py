@@ -4,13 +4,30 @@ import requests
 
 app = Flask(__name__)
 
-# Workaround: custom request session with headers
+# Workaround: custom session with headers
 def get_stock_info(symbol):
     headers = {'User-Agent': 'Mozilla/5.0'}
     session = requests.Session()
     session.headers.update(headers)
     ticker = yf.Ticker(symbol, session=session)
-    return ticker.info
+
+    # Get latest close price
+    hist = ticker.history(period="1d")
+    price = hist["Close"].iloc[-1] if not hist.empty else None
+
+    # Get earnings and shares to calculate EPS
+    eps = None
+    try:
+        earnings = ticker.earnings
+        shares = ticker.get_shares_full(start="2020-01-01").iloc[-1]  # fallback for shares
+        if not earnings.empty and shares:
+            latest_year = earnings.index[-1]
+            net_income = earnings.loc[latest_year]["Earnings"]
+            eps = net_income / shares
+    except Exception:
+        eps = None
+
+    return {"price": price, "eps": eps}
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -23,9 +40,9 @@ def index():
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
         try:
-            info = get_stock_info(symbol)
-            price = info.get("currentPrice")
-            eps = info.get("trailingEps")
+            data = get_stock_info(symbol)
+            price = data.get("price")
+            eps = data.get("eps")
             if price and eps:
                 pe_ratio = round(price / eps, 2)
                 if pe_ratio < 10:
