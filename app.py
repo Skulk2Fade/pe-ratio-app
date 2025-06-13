@@ -1,7 +1,16 @@
 from flask import Flask, render_template, request
 import yfinance as yf
+import requests
 
 app = Flask(__name__)
+
+# Workaround: custom request session with headers
+def get_stock_info(symbol):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    session = requests.Session()
+    session.headers.update(headers)
+    ticker = yf.Ticker(symbol, session=session)
+    return ticker.info
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -14,8 +23,7 @@ def index():
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
         try:
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
+            info = get_stock_info(symbol)
             price = info.get("currentPrice")
             eps = info.get("trailingEps")
             if price and eps:
