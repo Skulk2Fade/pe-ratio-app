@@ -1,27 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>P/E Ratio Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h2>P/E Ratio Calculator</h2>
-    <form method="POST">
-        <label>Ticker Symbol:</label><br>
-        <input name="ticker" value="{{ symbol }}" required><br><br>
-        <button type="submit">Fetch Live Data</button>
-    </form>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-sm-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">P/E Ratio Calculator</h3>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="ticker" class="form-label">Ticker Symbol:</label>
+                                <input type="text" id="ticker" name="ticker" value="{{ symbol }}" class="form-control" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Fetch Live Data</button>
+                            </div>
+                        </form>
 
-    {% if pe_ratio %}
-        <h3>Results for {{ symbol }}</h3>
-        <p><strong>Price:</strong> {{ price }}</p>
-        <p><strong>EPS:</strong> {{ eps }}</p>
-        <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
-        <p><strong>Valuation:</strong> {{ valuation }}</p>
-    {% endif %}
+                        {% if error_message %}
+                            <div class="alert alert-danger mt-4">{{ error_message }}</div>
+                        {% endif %}
 
-    {% if error_message %}
-    <p style="color:red;"><strong>{{ error_message }}</strong></p>
-    {% endif %}
-
+                        {% if pe_ratio %}
+                            <hr>
+                            <h5 class="mt-4">Results for {{ symbol }}</h5>
+                            <p><strong>Price:</strong> {{ price }}</p>
+                            <p><strong>EPS:</strong> {{ eps }}</p>
+                            <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
+                            <p><strong>Valuation:</strong> {{ valuation }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
