@@ -30,9 +30,12 @@
                         {% if pe_ratio %}
                             <hr>
                             <h5 class="mt-4">Results for {{ symbol }}</h5>
+                            {% if company_name %}
+                                <p><strong>Company Name:</strong> {{ company_name }}</p>
+                            {% endif %}
+                            <p><strong>Market Cap:</strong> {{ market_cap }}</p>
                             <p><strong>Price:</strong> {{ price }}</p>
                             <p><strong>EPS:</strong> {{ eps }}</p>
-                            <p><strong>Market Cap:</strong> {{ market_cap }}</p>
                             <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
                             <p><strong>Valuation:</strong> {{ valuation }}</p>
                         {% endif %}

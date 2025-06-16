@@ -23,17 +23,19 @@ def get_stock_data(symbol):
         data = response.json()
         if isinstance(data, list) and len(data) > 0:
             quote = data[0]
+            name = quote.get("name")
             price = quote.get("price")
             eps = quote.get("eps")
             market_cap = format_market_cap(quote.get("marketCap"))
-            return price, eps, market_cap
+            return name, price, eps, market_cap
     except Exception as e:
         print(f"API error: {e}")
-    return None, None, None
+    return None, None, None, None
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
+    company_name = ""
     price = ""
     eps = ""
     market_cap = ""
@@ -43,7 +45,7 @@ def index():
 
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
-        price, eps, market_cap = get_stock_data(symbol)
+        company_name, price, eps, market_cap = get_stock_data(symbol)
 
         if price is None or eps is None:
             error_message = "Ticker not found or unsupported by data provider."
@@ -59,9 +61,10 @@ def index():
             except ZeroDivisionError:
                 pe_ratio = "EPS is zero"
 
-    return render_template("index.html", symbol=symbol, price=price, eps=eps,
-                           pe_ratio=pe_ratio, valuation=valuation,
-                           market_cap=market_cap, error_message=error_message)
+    return render_template("index.html", symbol=symbol, company_name=company_name,
+                           price=price, eps=eps, pe_ratio=pe_ratio,
+                           valuation=valuation, market_cap=market_cap,
+                           error_message=error_message)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
