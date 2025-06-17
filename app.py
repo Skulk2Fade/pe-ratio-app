@@ -17,25 +17,39 @@ def format_market_cap(value):
     return str(value)
 
 def get_stock_data(symbol):
-    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
+    quote_url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
+    profile_url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}"
+
     try:
-        response = requests.get(url, timeout=10)
-        data = response.json()
-        if isinstance(data, list) and len(data) > 0:
-            quote = data[0]
-            name = quote.get("name")
-            price = quote.get("price")
-            eps = quote.get("eps")
-            market_cap = format_market_cap(quote.get("marketCap"))
-            return name, price, eps, market_cap
+        # Get quote data
+        quote_response = requests.get(quote_url, timeout=10)
+        quote_data = quote_response.json()
+        if not isinstance(quote_data, list) or len(quote_data) == 0:
+            return None, None, None, None, None, None
+        quote = quote_data[0]
+
+        # Get profile data (logo + company name)
+        profile_response = requests.get(profile_url, timeout=10)
+        profile_data = profile_response.json()
+        profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
+
+        name = profile.get("companyName", "")
+        logo_url = profile.get("image", "")
+
+        price = quote.get("price")
+        eps = quote.get("eps")
+        market_cap = format_market_cap(quote.get("marketCap"))
+
+        return name, logo_url, price, eps, market_cap
     except Exception as e:
         print(f"API error: {e}")
-    return None, None, None, None
+        return None, None, None, None, None, None
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
     company_name = ""
+    logo_url = ""
     price = ""
     eps = ""
     market_cap = ""
@@ -45,7 +59,7 @@ def index():
 
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
-        company_name, price, eps, market_cap = get_stock_data(symbol)
+        company_name, logo_url, price, eps, market_cap = get_stock_data(symbol)
 
         if price is None or eps is None:
             error_message = "Ticker not found or unsupported by data provider."
@@ -62,7 +76,7 @@ def index():
                 pe_ratio = "EPS is zero"
 
     return render_template("index.html", symbol=symbol, company_name=company_name,
-                           price=price, eps=eps, pe_ratio=pe_ratio,
+                           logo_url=logo_url, price=price, eps=eps, pe_ratio=pe_ratio,
                            valuation=valuation, market_cap=market_cap,
                            error_message=error_message)
 
