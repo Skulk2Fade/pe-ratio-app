@@ -36,7 +36,13 @@
                                 {% if company_name %}
                                     <h5>{{ company_name }}</h5>
                                 {% endif %}
-                                <p class="text-muted">({{ symbol }})</p>
+                                {% if sector %}
+                                    <p><strong>Sector:</strong> {{ sector }}</p>
+                                {% endif %}
+                                {% if industry %}
+                                    <p><strong>Industry:</strong> {{ industry }}</p>
+                                {% endif %}
+                                                                <p class="text-muted">({{ symbol }})</p>
                             </div>
                             <p><strong>Price:</strong> {{ price }}</p>
                             <p><strong>EPS:</strong> {{ eps }}</p>
