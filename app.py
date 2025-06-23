@@ -4,14 +4,64 @@ from babel.numbers import format_currency
 import csv
 import io
 from fpdf import FPDF
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
+    UserMixin,
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "change_this_secret"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
 
 API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
 # Threshold for triggering a P/E ratio alert
 ALERT_PE_THRESHOLD = 30
+
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password_hash = db.Column(db.String(150), nullable=False)
+
+
+class WatchlistItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
+class Alert(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10))
+    message = db.Column(db.String(200))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
+class History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 def get_historical_prices(symbol, days=30):
@@ -103,7 +153,19 @@ def index():
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = error_message = alert_message = None
     history_dates = history_prices = []
-    history = session.get("history", [])
+
+    symbol = request.args.get("ticker", "").upper() or symbol
+
+    if current_user.is_authenticated:
+        history_entries = (
+            History.query.filter_by(user_id=current_user.id)
+            .order_by(History.timestamp.desc())
+            .limit(10)
+            .all()
+        )
+        history = [h.symbol for h in history_entries]
+    else:
+        history = session.get("history", [])
 
     if request.method == "POST":
         symbol = request.form["ticker"].upper()
@@ -135,6 +197,11 @@ def index():
                     alert_message = (
                         f"P/E ratio {pe_ratio} exceeds threshold of {ALERT_PE_THRESHOLD}"
                     )
+                    if current_user.is_authenticated:
+                        db.session.add(
+                            Alert(symbol=symbol, message=alert_message, user_id=current_user.id)
+                        )
+                        db.session.commit()
             elif price is None or eps is None:
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
@@ -144,13 +211,19 @@ def index():
             if eps is not None:
                 eps = format_currency(eps, currency, locale="en_US")
         
-            # update history in session
+            # update history
             if symbol:
-                if symbol in history:
-                    history.remove(symbol)
-                history.insert(0, symbol)
-                history = history[:10]
-                session["history"] = history
+                if current_user.is_authenticated:
+                    db.session.add(History(symbol=symbol, user_id=current_user.id))
+                    db.session.commit()
+                    history.insert(0, symbol)
+                    history = history[:10]
+                else:
+                    if symbol in history:
+                        history.remove(symbol)
+                    history.insert(0, symbol)
+                    history = history[:10]
+                    session["history"] = history
 
         except Exception as e:
             error_message = str(e)
@@ -180,7 +253,11 @@ def index():
 
 @app.route("/clear_history")
 def clear_history():
-    session.pop("history", None)
+    if current_user.is_authenticated:
+        History.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+    else:
+        session.pop("history", None)
     return redirect(url_for("index"))
 
 
@@ -283,5 +360,97 @@ def download():
     else:
         return "Invalid format", 400
 
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    error = None
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if User.query.filter_by(username=username).first():
+            error = "Username already exists"
+        else:
+            user = User(username=username, password_hash=generate_password_hash(password))
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for("index"))
+    return render_template("signup.html", error=error)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return redirect(url_for("index"))
+        else:
+            error = "Invalid credentials"
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+
+@app.route("/watchlist", methods=["GET", "POST"])
+@login_required
+def watchlist():
+    if request.method == "POST":
+        symbol = request.form["symbol"].upper()
+        if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+            db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id))
+            db.session.commit()
+    items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
+    return render_template("watchlist.html", items=items)
+
+
+@app.route("/watchlist/delete/<int:item_id>")
+@login_required
+def delete_watchlist_item(item_id):
+    item = WatchlistItem.query.get_or_404(item_id)
+    if item.user_id == current_user.id:
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for("watchlist"))
+
+
+@app.route("/add_watchlist/<symbol>")
+@login_required
+def add_watchlist(symbol):
+    symbol = symbol.upper()
+    if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+        db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id))
+        db.session.commit()
+    return redirect(url_for("index", ticker=symbol))
+
+
+@app.route("/export_history")
+@login_required
+def export_history():
+    entries = (
+        History.query.filter_by(user_id=current_user.id)
+        .order_by(History.timestamp.desc())
+        .all()
+    )
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Symbol", "Timestamp"])
+    for e in entries:
+        writer.writerow([e.symbol, e.timestamp.isoformat()])
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=history.csv"
+    response.headers["Content-Type"] = "text/csv"
+    return response
+
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(host="0.0.0.0", port=5000, debug=True)
