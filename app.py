@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import requests
+from babel.numbers import format_currency
 
 app = Flask(__name__)
 
@@ -26,16 +27,21 @@ def get_historical_prices(symbol, days=30):
         print(f"Historical API error: {e}")
         return [], []
 
-def format_market_cap(value):
+def format_market_cap(value, currency):
     if value is None:
         return "N/A"
+    suffix = ""
     if value >= 1_000_000_000_000:
-        return f"{value / 1_000_000_000_000:.2f}T"
+        value /= 1_000_000_000_000
+        suffix = "T"
     elif value >= 1_000_000_000:
-        return f"{value / 1_000_000_000:.2f}B"
+        value /= 1_000_000_000
+        suffix = "B"
     elif value >= 1_000_000:
-        return f"{value / 1_000_000:.2f}M"
-    return str(value)
+        value /= 1_000_000
+        suffix = "M"
+    formatted = format_currency(value, currency, locale="en_US")
+    return f"{formatted}{suffix}"
 
 def get_stock_data(symbol):
     quote_url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
@@ -47,7 +53,7 @@ def get_stock_data(symbol):
         quote_response = requests.get(quote_url, timeout=10)
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            return None, None, None, None, None, None, None, None, None
+            return None, None, None, None, None, None, None, None, None, None
         quote = quote_data[0]
 
         # Get profile data
@@ -66,10 +72,11 @@ def get_stock_data(symbol):
         sector = profile.get("sector", "")
         industry = profile.get("industry", "")
         exchange = profile.get("exchangeShortName", "")
+        currency = profile.get("currency", "USD")
 
         price = quote.get("price")
         eps = quote.get("eps")
-        market_cap = format_market_cap(quote.get("marketCap"))
+        market_cap = format_market_cap(quote.get("marketCap"), currency)
 
         return (
             name,
@@ -77,6 +84,7 @@ def get_stock_data(symbol):
             sector,
             industry,
             exchange,
+            currency,
             price,
             eps,
             market_cap,
@@ -84,12 +92,12 @@ def get_stock_data(symbol):
         )
     except Exception as e:
         print(f"API error: {e}")
-        return None, None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None, None
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
-    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = debt_to_equity = error_message = alert_message = None
+    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = error_message = alert_message = None
     history_dates = history_prices = []
 
     if request.method == "POST":
@@ -101,6 +109,7 @@ def index():
                 sector,
                 industry,
                 exchange,
+                currency,
                 price,
                 eps,
                 market_cap,
@@ -125,6 +134,10 @@ def index():
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
                 debt_to_equity = round(debt_to_equity, 2)
+            if price is not None:
+                price = format_currency(price, currency, locale="en_US")
+            if eps is not None:
+                eps = format_currency(eps, currency, locale="en_US")
         except Exception as e:
             error_message = str(e)
 
@@ -141,6 +154,7 @@ def index():
         sector=sector,
         industry=industry,
         exchange=exchange,
+        currency=currency,
         debt_to_equity=debt_to_equity,
         error_message=error_message,
         alert_message=alert_message,
