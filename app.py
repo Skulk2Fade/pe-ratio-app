@@ -132,6 +132,8 @@ def get_stock_data(symbol):
     quote_url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
     profile_url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}"
     ratios_url = f"https://financialmodelingprep.com/api/v3/ratios-ttm/{symbol}?apikey={API_KEY}"
+    rating_url = f"https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}"
+    growth_url = f"https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}"
 
     try:
         # Get quote data
@@ -148,9 +150,27 @@ def get_stock_data(symbol):
 
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
-        debt_to_equity = None
+        debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
-            debt_to_equity = ratio_data[0].get("debtEquityRatioTTM")
+            r = ratio_data[0]
+            debt_to_equity = r.get("debtEquityRatioTTM")
+            pb_ratio = r.get("priceToBookRatioTTM")
+            roe = r.get("returnOnEquityTTM")
+            roa = r.get("returnOnAssetsTTM")
+            profit_margin = r.get("netProfitMarginTTM")
+            dividend_yield = r.get("dividendYielTTM") or r.get("dividendYieldTTM")
+
+        rating_response = requests.get(rating_url, timeout=10)
+        rating_data = rating_response.json()
+        analyst_rating = None
+        if isinstance(rating_data, list) and len(rating_data) > 0:
+            analyst_rating = rating_data[0].get("ratingRecommendation") or rating_data[0].get("rating")
+
+        growth_response = requests.get(growth_url, timeout=10)
+        growth_data = growth_response.json()
+        earnings_growth = None
+        if isinstance(growth_data, list) and len(growth_data) > 0:
+            earnings_growth = growth_data[0].get("growthEPS") or growth_data[0].get("epsgrowth")
 
         name = profile.get("companyName", "")
         logo_url = profile.get("image", "")
@@ -174,10 +194,35 @@ def get_stock_data(symbol):
             eps,
             market_cap,
             debt_to_equity,
+            pb_ratio,
+            roe,
+            roa,
+            profit_margin,
+            analyst_rating,
+            dividend_yield,
+            earnings_growth,
         )
     except Exception as e:
         print(f"API error: {e}")
-        return None, None, None, None, None, None, None, None, None, None
+        return (
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
 
 
 def check_watchlists():
@@ -198,6 +243,7 @@ def check_watchlists():
                 eps,
                 _market_cap,
                 _debt_to_equity,
+                *_rest,
             ) = get_stock_data(item.symbol)
             if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
@@ -214,7 +260,9 @@ def check_watchlists():
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
-    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = error_message = alert_message = None
+    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = None
+    pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = earnings_growth = None
+    error_message = alert_message = None
     history_dates = history_prices = []
 
     symbol = request.args.get("ticker", "").upper() or symbol
@@ -244,6 +292,13 @@ def index():
                 eps,
                 market_cap,
                 debt_to_equity,
+                pb_ratio,
+                roe,
+                roa,
+                profit_margin,
+                analyst_rating,
+                dividend_yield,
+                earnings_growth,
             ) = get_stock_data(symbol)
 
             history_dates, history_prices = get_historical_prices(symbol)
@@ -269,6 +324,18 @@ def index():
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
                 debt_to_equity = round(debt_to_equity, 2)
+            if pb_ratio is not None:
+                pb_ratio = round(pb_ratio, 2)
+            if roe is not None:
+                roe = round(roe * 100, 2)
+            if roa is not None:
+                roa = round(roa * 100, 2)
+            if profit_margin is not None:
+                profit_margin = round(profit_margin * 100, 2)
+            if dividend_yield is not None:
+                dividend_yield = round(dividend_yield * 100, 2)
+            if earnings_growth is not None:
+                earnings_growth = round(earnings_growth * 100, 2)
             if price is not None:
                 price = format_currency(price, currency, locale="en_US")
             if eps is not None:
@@ -306,6 +373,13 @@ def index():
         exchange=exchange,
         currency=currency,
         debt_to_equity=debt_to_equity,
+        pb_ratio=pb_ratio,
+        roe=roe,
+        roa=roa,
+        profit_margin=profit_margin,
+        analyst_rating=analyst_rating,
+        dividend_yield=dividend_yield,
+        earnings_growth=earnings_growth,
         error_message=error_message,
         alert_message=alert_message,
         history_dates=history_dates,
@@ -342,6 +416,13 @@ def download():
         eps,
         market_cap,
         debt_to_equity,
+        pb_ratio,
+        roe,
+        roa,
+        profit_margin,
+        analyst_rating,
+        dividend_yield,
+        earnings_growth,
     ) = get_stock_data(symbol)
 
     if price is not None and eps:
@@ -357,6 +438,18 @@ def download():
 
     if debt_to_equity is not None:
         debt_to_equity = round(debt_to_equity, 2)
+    if pb_ratio is not None:
+        pb_ratio = round(pb_ratio, 2)
+    if roe is not None:
+        roe = round(roe * 100, 2)
+    if roa is not None:
+        roa = round(roa * 100, 2)
+    if profit_margin is not None:
+        profit_margin = round(profit_margin * 100, 2)
+    if dividend_yield is not None:
+        dividend_yield = round(dividend_yield * 100, 2)
+    if earnings_growth is not None:
+        earnings_growth = round(earnings_growth * 100, 2)
 
     if fmt == "csv":
         output = io.StringIO()
@@ -371,6 +464,13 @@ def download():
                 "Valuation",
                 "Market Cap",
                 "Debt/Equity",
+                "P/B",
+                "ROE %",
+                "ROA %",
+                "Profit Margin %",
+                "Analyst Rating",
+                "Dividend Yield %",
+                "Earnings Growth %",
                 "Sector",
                 "Industry",
                 "Exchange",
@@ -386,6 +486,13 @@ def download():
             valuation,
             market_cap,
             debt_to_equity,
+            pb_ratio,
+            roe,
+            roa,
+            profit_margin,
+            analyst_rating,
+            dividend_yield,
+            earnings_growth,
             sector,
             industry,
             exchange,
@@ -408,6 +515,13 @@ def download():
             ("Valuation", valuation),
             ("Market Cap", market_cap),
             ("Debt/Equity", debt_to_equity),
+            ("P/B", pb_ratio),
+            ("ROE %", roe),
+            ("ROA %", roa),
+            ("Profit Margin %", profit_margin),
+            ("Analyst Rating", analyst_rating),
+            ("Dividend Yield %", dividend_yield),
+            ("Earnings Growth %", earnings_growth),
             ("Sector", sector),
             ("Industry", industry),
             ("Exchange", exchange),
