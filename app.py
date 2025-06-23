@@ -301,7 +301,7 @@ def index():
                 earnings_growth,
             ) = get_stock_data(symbol)
 
-            history_dates, history_prices = get_historical_prices(symbol)
+            history_dates, history_prices = get_historical_prices(symbol, days=90)
 
             if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
