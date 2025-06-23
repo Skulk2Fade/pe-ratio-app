@@ -1,11 +1,16 @@
+"""Flask app for calculating P/E and debt-to-equity ratios."""
+
 from flask import Flask, render_template, request
+import os
 import requests
 
 app = Flask(__name__)
 
-API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
+API_KEY = os.getenv("FMP_API_KEY", "fM7Qz7WUnr08q65xIA720mnBnnLbUhav")
 
 def format_market_cap(value):
+    """Return a human-friendly market cap string."""
+
     if value is None:
         return "N/A"
     if value >= 1_000_000_000_000:
@@ -17,6 +22,8 @@ def format_market_cap(value):
     return str(value)
 
 def get_stock_data(symbol):
+    """Return stock and ratio data from Financial Modeling Prep."""
+
     quote_url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
     profile_url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}"
     ratios_url = f"https://financialmodelingprep.com/api/v3/ratios-ttm/{symbol}?apikey={API_KEY}"
@@ -24,6 +31,7 @@ def get_stock_data(symbol):
     try:
         # Get quote data
         quote_response = requests.get(quote_url, timeout=10)
+        quote_response.raise_for_status()
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
             return None, None, None, None, None, None, None, None, None
@@ -31,10 +39,12 @@ def get_stock_data(symbol):
 
         # Get profile data
         profile_response = requests.get(profile_url, timeout=10)
+        profile_response.raise_for_status()
         profile_data = profile_response.json()
         profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
 
         ratio_response = requests.get(ratios_url, timeout=10)
+        ratio_response.raise_for_status()
         ratio_data = ratio_response.json()
         debt_to_equity = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
@@ -67,6 +77,7 @@ def get_stock_data(symbol):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    """Main page that displays calculated ratios."""
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = debt_to_equity = error_message = None
 
