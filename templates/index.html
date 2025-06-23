@@ -52,6 +52,9 @@
                             <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
                             <p><strong>Valuation:</strong> {{ valuation }}</p>
                             <p><strong>Market Cap:</strong> {{ market_cap }}</p>
+                            {% if debt_to_equity %}
+                                <p><strong>Debt/Equity Ratio:</strong> {{ debt_to_equity }}</p>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
