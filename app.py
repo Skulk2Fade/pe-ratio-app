@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, session, redirect, url_for
 import requests
 from babel.numbers import format_currency
 import csv
@@ -6,6 +6,7 @@ import io
 from fpdf import FPDF
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "change_this_secret"
 
 API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
@@ -102,6 +103,7 @@ def index():
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = error_message = alert_message = None
     history_dates = history_prices = []
+    history = session.get("history", [])
 
     if request.method == "POST":
         symbol = request.form["ticker"].upper()
@@ -141,6 +143,15 @@ def index():
                 price = format_currency(price, currency, locale="en_US")
             if eps is not None:
                 eps = format_currency(eps, currency, locale="en_US")
+        
+            # update history in session
+            if symbol:
+                if symbol in history:
+                    history.remove(symbol)
+                history.insert(0, symbol)
+                history = history[:10]
+                session["history"] = history
+
         except Exception as e:
             error_message = str(e)
 
@@ -163,7 +174,14 @@ def index():
         alert_message=alert_message,
         history_dates=history_dates,
         history_prices=history_prices,
+        history=history,
     )
+
+
+@app.route("/clear_history")
+def clear_history():
+    session.pop("history", None)
+    return redirect(url_for("index"))
 
 
 @app.route("/download")

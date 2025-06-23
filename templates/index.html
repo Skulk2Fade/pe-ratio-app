@@ -22,11 +22,23 @@
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">Fetch Live Data</button>
                             </div>
-                        </form>
+                            </form>
 
-                        {% if error_message %}
-                            <div class="alert alert-danger mt-4">{{ error_message }}</div>
-                        {% endif %}
+                            {% if history %}
+                                <div class="mt-3">
+                                    <h5>Search History</h5>
+                                    <ul class="list-group">
+                                    {% for item in history %}
+                                        <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                    <a href="{{ url_for('clear_history') }}" class="btn btn-sm btn-danger mt-2">Clear History</a>
+                                </div>
+                            {% endif %}
+
+                            {% if error_message %}
+                                <div class="alert alert-danger mt-4">{{ error_message }}</div>
+                            {% endif %}
 
                         {% if pe_ratio %}
                             <hr>
