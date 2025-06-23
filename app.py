@@ -1,6 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 import requests
 from babel.numbers import format_currency
+import csv
+import io
+from fpdf import FPDF
 
 app = Flask(__name__)
 
@@ -161,6 +164,106 @@ def index():
         history_dates=history_dates,
         history_prices=history_prices,
     )
+
+
+@app.route("/download")
+def download():
+    symbol = request.args.get("symbol", "").upper()
+    fmt = request.args.get("format", "csv").lower()
+    if not symbol:
+        return "Symbol missing", 400
+
+    (
+        company_name,
+        _logo_url,
+        sector,
+        industry,
+        exchange,
+        currency,
+        price,
+        eps,
+        market_cap,
+        debt_to_equity,
+    ) = get_stock_data(symbol)
+
+    if price is not None and eps:
+        pe_ratio = round(price / eps, 2)
+        if pe_ratio < 15:
+            valuation = "Undervalued?"
+        elif pe_ratio > 25:
+            valuation = "Overvalued?"
+        else:
+            valuation = "Fairly Valued"
+    else:
+        pe_ratio = valuation = "N/A"
+
+    if debt_to_equity is not None:
+        debt_to_equity = round(debt_to_equity, 2)
+
+    if fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "Company Name",
+                "Symbol",
+                "Price",
+                "EPS",
+                "P/E Ratio",
+                "Valuation",
+                "Market Cap",
+                "Debt/Equity",
+                "Sector",
+                "Industry",
+                "Exchange",
+                "Currency",
+            ]
+        )
+        writer.writerow([
+            company_name,
+            symbol,
+            price,
+            eps,
+            pe_ratio,
+            valuation,
+            market_cap,
+            debt_to_equity,
+            sector,
+            industry,
+            exchange,
+            currency,
+        ])
+        response = make_response(output.getvalue())
+        response.headers["Content-Disposition"] = f"attachment; filename={symbol}_data.csv"
+        response.headers["Content-Type"] = "text/csv"
+        return response
+    elif fmt == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, txt=f"Stock Data for {symbol}", ln=1)
+        fields = [
+            ("Company Name", company_name),
+            ("Price", price),
+            ("EPS", eps),
+            ("P/E Ratio", pe_ratio),
+            ("Valuation", valuation),
+            ("Market Cap", market_cap),
+            ("Debt/Equity", debt_to_equity),
+            ("Sector", sector),
+            ("Industry", industry),
+            ("Exchange", exchange),
+            ("Currency", currency),
+        ]
+        for label, value in fields:
+            pdf.cell(0, 10, txt=f"{label}: {value}", ln=1)
+        pdf_output = pdf.output(dest="S").encode("latin-1")
+        response = make_response(pdf_output)
+        response.headers["Content-Disposition"] = f"attachment; filename={symbol}_data.pdf"
+        response.headers["Content-Type"] = "application/pdf"
+        return response
+    else:
+        return "Invalid format", 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
