@@ -3,3 +3,5 @@ yfinance
 requests
 babel
 fpdf
+Flask-Login
+Flask-SQLAlchemy
