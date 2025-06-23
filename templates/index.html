@@ -51,6 +51,9 @@
                             <p><strong>Price:</strong> {{ price }}</p>
                             <p><strong>EPS:</strong> {{ eps }}</p>
                             <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
+                            {% if alert_message %}
+                                <div class="alert alert-warning mt-2">{{ alert_message }}</div>
+                            {% endif %}
                             <p><strong>Valuation:</strong> {{ valuation }}</p>
                             <p><strong>Market Cap:</strong> {{ market_cap }}</p>
                             {% if debt_to_equity %}
