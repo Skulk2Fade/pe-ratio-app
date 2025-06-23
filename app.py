@@ -15,11 +15,19 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "change_this_secret"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SMTP_SERVER"] = "smtp.example.com"
+app.config["SMTP_PORT"] = 587
+app.config["SMTP_USERNAME"] = "user@example.com"
+app.config["SMTP_PASSWORD"] = "password"
 
 db = SQLAlchemy(app)
 
@@ -36,6 +44,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=True)
 
 
 class WatchlistItem(db.Model):
@@ -62,6 +71,28 @@ class History(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+def send_email(to, subject, body):
+    smtp_server = app.config.get("SMTP_SERVER")
+    smtp_port = app.config.get("SMTP_PORT", 587)
+    smtp_user = app.config.get("SMTP_USERNAME")
+    smtp_pass = app.config.get("SMTP_PASSWORD")
+    if not all([smtp_server, smtp_user, smtp_pass]):
+        print("Email configuration incomplete")
+        return
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = smtp_user
+    msg["To"] = to
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Email error: {e}")
 
 
 def get_historical_prices(symbol, days=30):
@@ -147,6 +178,38 @@ def get_stock_data(symbol):
     except Exception as e:
         print(f"API error: {e}")
         return None, None, None, None, None, None, None, None, None, None
+
+
+def check_watchlists():
+    with app.app_context():
+        items = WatchlistItem.query.all()
+        for item in items:
+            user = User.query.get(item.user_id)
+            if not user or not getattr(user, "email", None):
+                continue
+            (
+                _name,
+                _logo_url,
+                _sector,
+                _industry,
+                _exchange,
+                currency,
+                price,
+                eps,
+                _market_cap,
+                _debt_to_equity,
+            ) = get_stock_data(item.symbol)
+            if price is not None and eps:
+                pe_ratio = round(price / eps, 2)
+                if pe_ratio > ALERT_PE_THRESHOLD:
+                    msg = (
+                        f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {ALERT_PE_THRESHOLD}"
+                    )
+                    send_email(user.email, "P/E Ratio Alert", msg)
+                    db.session.add(
+                        Alert(symbol=item.symbol, message=msg, user_id=user.id)
+                    )
+                    db.session.commit()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -366,11 +429,16 @@ def signup():
     error = None
     if request.method == "POST":
         username = request.form["username"]
+        email = request.form.get("email")
         password = request.form["password"]
         if User.query.filter_by(username=username).first():
             error = "Username already exists"
         else:
-            user = User(username=username, password_hash=generate_password_hash(password))
+            user = User(
+                username=username,
+                password_hash=generate_password_hash(password),
+                email=email,
+            )
             db.session.add(user)
             db.session.commit()
             login_user(user)
@@ -453,4 +521,8 @@ def export_history():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(check_watchlists, "interval", hours=1)
+    scheduler.start()
+    atexit.register(lambda: scheduler.shutdown())
     app.run(host="0.0.0.0", port=5000, debug=True)
