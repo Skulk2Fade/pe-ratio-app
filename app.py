@@ -5,6 +5,9 @@ app = Flask(__name__)
 
 API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
+# Threshold for triggering a P/E ratio alert
+ALERT_PE_THRESHOLD = 30
+
 
 def get_historical_prices(symbol, days=30):
     """Fetch historical closing prices for the given symbol."""
@@ -86,7 +89,7 @@ def get_stock_data(symbol):
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
-    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = debt_to_equity = error_message = None
+    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = debt_to_equity = error_message = alert_message = None
     history_dates = history_prices = []
 
     if request.method == "POST":
@@ -114,6 +117,10 @@ def index():
                     valuation = "Overvalued?"
                 else:
                     valuation = "Fairly Valued"
+                if pe_ratio > ALERT_PE_THRESHOLD:
+                    alert_message = (
+                        f"P/E ratio {pe_ratio} exceeds threshold of {ALERT_PE_THRESHOLD}"
+                    )
             elif price is None or eps is None:
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
@@ -136,6 +143,7 @@ def index():
         exchange=exchange,
         debt_to_equity=debt_to_equity,
         error_message=error_message,
+        alert_message=alert_message,
         history_dates=history_dates,
         history_prices=history_prices,
     )
