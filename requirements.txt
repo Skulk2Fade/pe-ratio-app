@@ -6,3 +6,4 @@ fpdf
 Flask-Login
 Flask-SQLAlchemy
 APScheduler
+plotly
