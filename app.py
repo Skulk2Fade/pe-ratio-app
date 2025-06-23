@@ -5,6 +5,24 @@ app = Flask(__name__)
 
 API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
+
+def get_historical_prices(symbol, days=30):
+    """Fetch historical closing prices for the given symbol."""
+    url = (
+        f"https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}?"
+        f"serietype=line&timeseries={days}&apikey={API_KEY}"
+    )
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        historical = data.get("historical", [])
+        dates = [item.get("date") for item in historical][::-1]
+        prices = [item.get("close") for item in historical][::-1]
+        return dates, prices
+    except Exception as e:
+        print(f"Historical API error: {e}")
+        return [], []
+
 def format_market_cap(value):
     if value is None:
         return "N/A"
@@ -69,6 +87,7 @@ def get_stock_data(symbol):
 def index():
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = debt_to_equity = error_message = None
+    history_dates = history_prices = []
 
     if request.method == "POST":
         symbol = request.form["ticker"].upper()
@@ -84,6 +103,8 @@ def index():
                 market_cap,
                 debt_to_equity,
             ) = get_stock_data(symbol)
+
+            history_dates, history_prices = get_historical_prices(symbol)
 
             if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
@@ -115,6 +136,8 @@ def index():
         exchange=exchange,
         debt_to_equity=debt_to_equity,
         error_message=error_message,
+        history_dates=history_dates,
+        history_prices=history_prices,
     )
 
 if __name__ == "__main__":
