@@ -1,6 +1,17 @@
-from flask import Flask, render_template, request, make_response, session, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    request,
+    make_response,
+    session,
+    redirect,
+    url_for,
+    has_request_context,
+)
 import requests
-from babel.numbers import format_currency
+from babel import Locale
+from babel.numbers import format_currency, format_decimal
+from babel.dates import format_datetime
 import csv
 import io
 from fpdf import FPDF
@@ -38,6 +49,17 @@ API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
 
 # Threshold for triggering a P/E ratio alert
 ALERT_PE_THRESHOLD = 30
+
+
+def get_locale():
+    """Determine best match locale from the request."""
+    if has_request_context():
+        loc = request.accept_languages.best or "en_US"
+        try:
+            return str(Locale.parse(loc))
+        except Exception:
+            return "en_US"
+    return "en_US"
 
 
 class User(db.Model, UserMixin):
@@ -125,7 +147,7 @@ def format_market_cap(value, currency):
     elif value >= 1_000_000:
         value /= 1_000_000
         suffix = "M"
-    formatted = format_currency(value, currency, locale="en_US")
+    formatted = format_currency(value, currency, locale=get_locale())
     return f"{formatted}{suffix}"
 
 def get_stock_data(symbol):
@@ -304,16 +326,17 @@ def index():
             history_dates, history_prices = get_historical_prices(symbol, days=90)
 
             if price is not None and eps:
-                pe_ratio = round(price / eps, 2)
-                if pe_ratio < 15:
+                pe_ratio_val = round(price / eps, 2)
+                pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
+                if pe_ratio_val < 15:
                     valuation = "Undervalued?"
-                elif pe_ratio > 25:
+                elif pe_ratio_val > 25:
                     valuation = "Overvalued?"
                 else:
                     valuation = "Fairly Valued"
-                if pe_ratio > ALERT_PE_THRESHOLD:
+                if pe_ratio_val > ALERT_PE_THRESHOLD:
                     alert_message = (
-                        f"P/E ratio {pe_ratio} exceeds threshold of {ALERT_PE_THRESHOLD}"
+                        f"P/E ratio {pe_ratio_val} exceeds threshold of {ALERT_PE_THRESHOLD}"
                     )
                     if current_user.is_authenticated:
                         db.session.add(
@@ -323,23 +346,23 @@ def index():
             elif price is None or eps is None:
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
-                debt_to_equity = round(debt_to_equity, 2)
+                debt_to_equity = format_decimal(round(debt_to_equity, 2), locale=get_locale())
             if pb_ratio is not None:
-                pb_ratio = round(pb_ratio, 2)
+                pb_ratio = format_decimal(round(pb_ratio, 2), locale=get_locale())
             if roe is not None:
-                roe = round(roe * 100, 2)
+                roe = format_decimal(round(roe * 100, 2), locale=get_locale())
             if roa is not None:
-                roa = round(roa * 100, 2)
+                roa = format_decimal(round(roa * 100, 2), locale=get_locale())
             if profit_margin is not None:
-                profit_margin = round(profit_margin * 100, 2)
+                profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
             if dividend_yield is not None:
-                dividend_yield = round(dividend_yield * 100, 2)
+                dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
             if earnings_growth is not None:
-                earnings_growth = round(earnings_growth * 100, 2)
+                earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
             if price is not None:
-                price = format_currency(price, currency, locale="en_US")
+                price = format_currency(price, currency, locale=get_locale())
             if eps is not None:
-                eps = format_currency(eps, currency, locale="en_US")
+                eps = format_currency(eps, currency, locale=get_locale())
         
             # update history
             if symbol:
@@ -426,30 +449,36 @@ def download():
     ) = get_stock_data(symbol)
 
     if price is not None and eps:
-        pe_ratio = round(price / eps, 2)
-        if pe_ratio < 15:
+        pe_ratio_val = round(price / eps, 2)
+        if pe_ratio_val < 15:
             valuation = "Undervalued?"
-        elif pe_ratio > 25:
+        elif pe_ratio_val > 25:
             valuation = "Overvalued?"
         else:
             valuation = "Fairly Valued"
+        pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
     else:
         pe_ratio = valuation = "N/A"
 
     if debt_to_equity is not None:
-        debt_to_equity = round(debt_to_equity, 2)
+        debt_to_equity = format_decimal(round(debt_to_equity, 2), locale=get_locale())
     if pb_ratio is not None:
-        pb_ratio = round(pb_ratio, 2)
+        pb_ratio = format_decimal(round(pb_ratio, 2), locale=get_locale())
     if roe is not None:
-        roe = round(roe * 100, 2)
+        roe = format_decimal(round(roe * 100, 2), locale=get_locale())
     if roa is not None:
-        roa = round(roa * 100, 2)
+        roa = format_decimal(round(roa * 100, 2), locale=get_locale())
     if profit_margin is not None:
-        profit_margin = round(profit_margin * 100, 2)
+        profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
     if dividend_yield is not None:
-        dividend_yield = round(dividend_yield * 100, 2)
+        dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
     if earnings_growth is not None:
-        earnings_growth = round(earnings_growth * 100, 2)
+        earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
+
+    if price is not None:
+        price = format_currency(price, currency, locale=get_locale())
+    if eps is not None:
+        eps = format_currency(eps, currency, locale=get_locale())
 
     if fmt == "csv":
         output = io.StringIO()
@@ -626,7 +655,8 @@ def export_history():
     writer = csv.writer(output)
     writer.writerow(["Symbol", "Timestamp"])
     for e in entries:
-        writer.writerow([e.symbol, e.timestamp.isoformat()])
+        timestamp = format_datetime(e.timestamp, locale=get_locale())
+        writer.writerow([e.symbol, timestamp])
     response = make_response(output.getvalue())
     response.headers["Content-Disposition"] = "attachment; filename=history.csv"
     response.headers["Content-Type"] = "text/csv"
