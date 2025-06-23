@@ -87,6 +87,27 @@
                             {% if debt_to_equity %}
                                 <p><strong>Debt/Equity Ratio:</strong> {{ debt_to_equity }}</p>
                             {% endif %}
+                            {% if pb_ratio %}
+                                <p><strong>P/B Ratio:</strong> {{ pb_ratio }}</p>
+                            {% endif %}
+                            {% if roe is not none %}
+                                <p><strong>ROE:</strong> {{ roe }}%</p>
+                            {% endif %}
+                            {% if roa is not none %}
+                                <p><strong>ROA:</strong> {{ roa }}%</p>
+                            {% endif %}
+                            {% if profit_margin is not none %}
+                                <p><strong>Profit Margin:</strong> {{ profit_margin }}%</p>
+                            {% endif %}
+                            {% if analyst_rating %}
+                                <p><strong>Analyst Rating:</strong> {{ analyst_rating }}</p>
+                            {% endif %}
+                            {% if dividend_yield is not none %}
+                                <p><strong>Dividend Yield:</strong> {{ dividend_yield }}%</p>
+                            {% endif %}
+                            {% if earnings_growth is not none %}
+                                <p><strong>Earnings Growth:</strong> {{ earnings_growth }}%</p>
+                            {% endif %}
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
                             {% endif %}
