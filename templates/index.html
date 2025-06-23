@@ -46,6 +46,9 @@
                                 {% if exchange %}
                                     <p><strong>Exchange:</strong> {{ exchange }}</p>
                                 {% endif %}
+                                {% if currency %}
+                                    <p><strong>Currency:</strong> {{ currency }}</p>
+                                {% endif %}
                                                                 <p class="text-muted">({{ symbol }})</p>
                             </div>
                             <p><strong>Price:</strong> {{ price }}</p>
