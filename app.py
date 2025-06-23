@@ -37,15 +37,16 @@ def get_stock_data(symbol):
         logo_url = profile.get("image", "")
         sector = profile.get("sector", "")
         industry = profile.get("industry", "")
+        exchange = profile.get("exchangeShortName", "")
 
         price = quote.get("price")
         eps = quote.get("eps")
         market_cap = format_market_cap(quote.get("marketCap"))
 
-        return name, logo_url, sector, industry, price, eps, market_cap
+        return name, logo_url, sector, industry, exchange, price, eps, market_cap
     except Exception as e:
         print(f"API error: {e}")
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -63,7 +64,7 @@ def index():
 
     if request.method == "POST":
         symbol = request.form.get("ticker").strip().upper()
-        company_name, logo_url, sector, industry, price, eps, market_cap = get_stock_data(symbol)
+        company_name, logo_url, sector, industry, exchange, price, eps, market_cap = get_stock_data(symbol)
 
         if price is None or eps is None:
             error_message = "Ticker not found or unsupported by data provider."
@@ -80,10 +81,11 @@ def index():
                 pe_ratio = "EPS is zero"
 
     return render_template("index.html", symbol=symbol, company_name=company_name,
-                           logo_url=logo_url, sector=sector, industry=industry,
-                           price=price, eps=eps, pe_ratio=pe_ratio,
-                           valuation=valuation, market_cap=market_cap,
-                           error_message=error_message)
+                        logo_url=logo_url, sector=sector, industry=industry,
+                        price=price, eps=eps, pe_ratio=pe_ratio,
+                        valuation=valuation, market_cap=market_cap,
+                        exchange=exchange,  # <-- ADD THIS LINE
+                        error_message=error_message)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
