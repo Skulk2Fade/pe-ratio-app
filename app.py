@@ -51,41 +51,50 @@ def get_stock_data(symbol):
 @app.route("/", methods=["GET", "POST"])
 def index():
     symbol = ""
-    company_name = ""
-    logo_url = ""
-    sector = ""
-    industry = ""
-    price = ""
-    eps = ""
-    market_cap = ""
-    pe_ratio = None
-    valuation = None
-    error_message = ""
+    price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = error_message = None
 
     if request.method == "POST":
-        symbol = request.form.get("ticker").strip().upper()
-        company_name, logo_url, sector, industry, exchange, price, eps, market_cap = get_stock_data(symbol)
+        symbol = request.form["ticker"].upper()
+        try:
+            (
+                company_name,
+                logo_url,
+                sector,
+                industry,
+                exchange,
+                price,
+                eps,
+                market_cap,
+            ) = get_stock_data(symbol)
 
-        if price is None or eps is None:
-            error_message = "Ticker not found or unsupported by data provider."
-        else:
-            try:
+            if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
-                if pe_ratio < 10:
+                if pe_ratio < 15:
                     valuation = "Undervalued?"
-                elif pe_ratio <= 25:
-                    valuation = "Fairly Valued"
-                else:
+                elif pe_ratio > 25:
                     valuation = "Overvalued?"
-            except ZeroDivisionError:
-                pe_ratio = "EPS is zero"
+                else:
+                    valuation = "Fairly Valued"
+            elif price is None or eps is None:
+                error_message = "Price or EPS data is missing."
+        except Exception as e:
+            error_message = str(e)
 
-    return render_template("index.html", symbol=symbol, company_name=company_name,
-                        logo_url=logo_url, sector=sector, industry=industry,
-                        price=price, eps=eps, pe_ratio=pe_ratio,
-                        valuation=valuation, market_cap=market_cap,
-                        exchange=exchange,  # <-- ADD THIS LINE
-                        error_message=error_message)
+    return render_template(
+        "index.html",
+        symbol=symbol,
+        price=price,
+        eps=eps,
+        pe_ratio=pe_ratio,
+        valuation=valuation,
+        company_name=company_name,
+        logo_url=logo_url,
+        market_cap=market_cap,
+        sector=sector,
+        industry=industry,
+        exchange=exchange,
+        error_message=error_message,
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
