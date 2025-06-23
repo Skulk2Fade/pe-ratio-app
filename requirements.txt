@@ -5,3 +5,4 @@ babel
 fpdf
 Flask-Login
 Flask-SQLAlchemy
+APScheduler
