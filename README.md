@@ -81,6 +81,10 @@ page after logging in to choose an alert frequency in hours. The default is 24
 hours. The background job runs hourly and only sends alerts when your selected
 interval has elapsed.
 
+## Viewing Alerts
+
+Triggered alerts are saved in the database. After logging in click the *Alerts* link to review them. The page also lets you clear old alerts.
+
 ## Progressive Web App Notes
 
 The app registers a small service worker so it can behave like a Progressive
