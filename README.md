@@ -28,3 +28,9 @@ Run the application:
 python app.py
 ```
 
+## Custom P/E Thresholds
+
+When adding tickers to your watchlist you can specify a custom P/E ratio
+threshold for each stock. Alerts and warnings use this per-stock value. If no
+threshold is provided the default of 30 is used.
+

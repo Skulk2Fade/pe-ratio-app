@@ -88,6 +88,7 @@ class WatchlistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    pe_threshold = db.Column(db.Float, default=ALERT_PE_THRESHOLD)
 
 
 class FavoriteTicker(db.Model):
@@ -290,9 +291,10 @@ def check_watchlists():
             ) = get_stock_data(item.symbol)
             if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
-                if pe_ratio > ALERT_PE_THRESHOLD:
+                threshold = item.pe_threshold or ALERT_PE_THRESHOLD
+                if pe_ratio > threshold:
                     msg = (
-                        f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {ALERT_PE_THRESHOLD}"
+                        f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
                     )
                     send_email(user.email, "P/E Ratio Alert", msg)
                     db.session.add(
@@ -355,13 +357,24 @@ def index():
                     valuation = "Overvalued?"
                 else:
                     valuation = "Fairly Valued"
-                if pe_ratio_val > ALERT_PE_THRESHOLD:
+                threshold = ALERT_PE_THRESHOLD
+                if current_user.is_authenticated:
+                    item = WatchlistItem.query.filter_by(
+                        user_id=current_user.id, symbol=symbol
+                    ).first()
+                    if item and item.pe_threshold is not None:
+                        threshold = item.pe_threshold
+                if pe_ratio_val > threshold:
                     alert_message = (
-                        f"P/E ratio {pe_ratio_val} exceeds threshold of {ALERT_PE_THRESHOLD}"
+                        f"P/E ratio {pe_ratio_val} exceeds threshold of {threshold}"
                     )
                     if current_user.is_authenticated:
                         db.session.add(
-                            Alert(symbol=symbol, message=alert_message, user_id=current_user.id)
+                            Alert(
+                                symbol=symbol,
+                                message=alert_message,
+                                user_id=current_user.id,
+                            )
                         )
                         db.session.commit()
             elif price is None or eps is None:
@@ -636,12 +649,29 @@ def logout():
 @login_required
 def watchlist():
     if request.method == "POST":
-        symbol = request.form["symbol"].upper()
-        if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
-            db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id))
-            db.session.commit()
+        if request.form.get("item_id"):
+            item_id = int(request.form["item_id"])
+            threshold = request.form.get("threshold", type=float)
+            item = WatchlistItem.query.get_or_404(item_id)
+            if item.user_id == current_user.id:
+                item.pe_threshold = threshold or ALERT_PE_THRESHOLD
+                db.session.commit()
+        else:
+            symbol = request.form["symbol"].upper()
+            threshold = request.form.get("threshold", type=float) or ALERT_PE_THRESHOLD
+            if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                db.session.add(
+                    WatchlistItem(
+                        symbol=symbol,
+                        user_id=current_user.id,
+                        pe_threshold=threshold,
+                    )
+                )
+                db.session.commit()
     items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
-    return render_template("watchlist.html", items=items)
+    return render_template(
+        "watchlist.html", items=items, default_threshold=ALERT_PE_THRESHOLD
+    )
 
 
 @app.route("/watchlist/delete/<int:item_id>")
@@ -659,7 +689,13 @@ def delete_watchlist_item(item_id):
 def add_watchlist(symbol):
     symbol = symbol.upper()
     if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
-        db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id))
+        db.session.add(
+            WatchlistItem(
+                symbol=symbol,
+                user_id=current_user.id,
+                pe_threshold=ALERT_PE_THRESHOLD,
+            )
+        )
         db.session.commit()
     return redirect(url_for("index", ticker=symbol))
 

@@ -13,15 +13,25 @@
         <form method="POST" class="mb-3">
             <div class="input-group">
                 <input type="text" name="symbol" class="form-control" placeholder="Ticker symbol" required>
+                <input type="number" step="0.01" name="threshold" class="form-control" placeholder="P/E threshold" value="{{ default_threshold }}">
                 <button class="btn btn-primary" type="submit">Add</button>
             </div>
         </form>
         {% if items %}
         <ul class="list-group">
             {% for item in items %}
-            <li class="list-group-item d-flex justify-content-between">
-                {{ item.symbol }}
-                <a href="{{ url_for('delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
+            <li class="list-group-item">
+                <form method="POST" class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {{ item.symbol }}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                    </div>
+                    <div class="input-group" style="width: 200px;">
+                        <input type="number" step="0.01" name="threshold" class="form-control form-control-sm" value="{{ item.pe_threshold }}">
+                        <button class="btn btn-sm btn-primary" type="submit">Update</button>
+                        <a href="{{ url_for('delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger ms-1">Delete</a>
+                    </div>
+                </form>
             </li>
             {% endfor %}
         </ul>
