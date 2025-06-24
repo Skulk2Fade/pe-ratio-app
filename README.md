@@ -51,6 +51,13 @@ Run the application:
 python app.py
 ```
 
+## Account Verification and Password Reset
+
+After signing up the app sends a verification email containing a link to
+activate your account. Users must verify their email address before being able
+to log in. If you forget your password you can request a reset link from the
+login page which will allow you to choose a new password.
+
 ## Custom P/E Thresholds
 
 When adding tickers to your watchlist you can specify a custom P/E ratio
