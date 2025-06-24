@@ -23,6 +23,7 @@ store secrets in the source code:
 * `API_KEY` &ndash; Financial Modeling Prep API key (required).
 * `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` &ndash; SMTP
   credentials for sending alert emails.
+* `FLASK_DEBUG` &ndash; Set to `1` to enable Flask debug mode (defaults to `0`).
 
 Example:
 
@@ -33,6 +34,7 @@ export SMTP_SERVER="smtp.example.com"
 export SMTP_PORT=587
 export SMTP_USERNAME="user@example.com"
 export SMTP_PASSWORD="password"
+export FLASK_DEBUG=1
 ```
 
 ## Setup

@@ -781,4 +781,5 @@ if __name__ == "__main__":
     scheduler.add_job(check_watchlists, "interval", hours=1)
     scheduler.start()
     atexit.register(lambda: scheduler.shutdown())
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in ["1", "true", "yes"]
+    app.run(host="0.0.0.0", port=5000, debug=debug_mode)
