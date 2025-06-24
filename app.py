@@ -90,6 +90,12 @@ class WatchlistItem(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
 
+class FavoriteTicker(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
 class Alert(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10))
@@ -654,6 +660,38 @@ def add_watchlist(symbol):
     symbol = symbol.upper()
     if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
         db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id))
+        db.session.commit()
+    return redirect(url_for("index", ticker=symbol))
+
+
+@app.route("/favorites", methods=["GET", "POST"])
+@login_required
+def favorites():
+    if request.method == "POST":
+        symbol = request.form["symbol"].upper()
+        if not FavoriteTicker.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+            db.session.add(FavoriteTicker(symbol=symbol, user_id=current_user.id))
+            db.session.commit()
+    items = FavoriteTicker.query.filter_by(user_id=current_user.id).all()
+    return render_template("favorites.html", items=items)
+
+
+@app.route("/favorites/delete/<int:item_id>")
+@login_required
+def delete_favorite(item_id):
+    item = FavoriteTicker.query.get_or_404(item_id)
+    if item.user_id == current_user.id:
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for("favorites"))
+
+
+@app.route("/add_favorite/<symbol>")
+@login_required
+def add_favorite(symbol):
+    symbol = symbol.upper()
+    if not FavoriteTicker.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+        db.session.add(FavoriteTicker(symbol=symbol, user_id=current_user.id))
         db.session.commit()
     return redirect(url_for("index", ticker=symbol))
 
