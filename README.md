@@ -1,0 +1,30 @@
+# Stock Analysis App
+
+This Flask application calculates P/E ratios and stores user data using SQLAlchemy. Authentication is handled via **Flask-Login**.
+
+## Database Configuration
+
+The app uses SQLite by default for local development. To deploy to platforms like Render with PostgreSQL, set a `DATABASE_URL` environment variable. When `DATABASE_URL` starts with `postgres://` it will automatically be converted to the `postgresql://` format expected by SQLAlchemy.
+
+Example:
+
+```bash
+export DATABASE_URL="postgres://user:password@hostname:5432/dbname"
+```
+
+If `DATABASE_URL` is not provided, a local `app.db` SQLite file will be used.
+
+## Setup
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the application:
+
+```bash
+python app.py
+```
+

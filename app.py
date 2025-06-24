@@ -9,6 +9,7 @@ from flask import (
     has_request_context,
     send_from_directory,
 )
+import os
 import requests
 from babel import Locale
 from babel.numbers import format_currency, format_decimal
@@ -34,7 +35,14 @@ import atexit
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "change_this_secret"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+
+# Use DATABASE_URL if provided (e.g. when deployed on Render), otherwise
+# default to a local SQLite database.
+db_url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SMTP_SERVER"] = "smtp.example.com"
 app.config["SMTP_PORT"] = 587
