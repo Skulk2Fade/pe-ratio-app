@@ -5,6 +5,7 @@ babel
 fpdf
 Flask-Login
 Flask-SQLAlchemy
+Flask-WTF
 APScheduler
 plotly
 psycopg2-binary

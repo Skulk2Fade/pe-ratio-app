@@ -31,6 +31,7 @@
                     <div class="card-body">
                         <h3 class="card-title text-center mb-4">P/E Ratio Calculator</h3>
                         <form method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label for="ticker" class="form-label">Ticker Symbol:</label>
                                 <input type="text" id="ticker" name="ticker" value="{{ symbol }}" class="form-control" required>

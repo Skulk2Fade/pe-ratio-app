@@ -17,6 +17,7 @@ from babel.dates import format_datetime
 import csv
 import io
 from fpdf import FPDF
+from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -51,6 +52,7 @@ app.config["SMTP_USERNAME"] = os.environ.get("SMTP_USERNAME", "user@example.com"
 app.config["SMTP_PASSWORD"] = os.environ.get("SMTP_PASSWORD", "password")
 
 db = SQLAlchemy(app)
+csrf = CSRFProtect(app)
 
 
 @app.route("/service-worker.js")
@@ -60,6 +62,11 @@ def service_worker():
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+@app.context_processor
+def inject_csrf_token():
+    from flask_wtf.csrf import generate_csrf
+    return dict(csrf_token=generate_csrf)
 
 API_KEY = os.environ.get("API_KEY")
 if not API_KEY:
