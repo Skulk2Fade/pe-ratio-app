@@ -1,7 +1,5 @@
-const CACHE_NAME = 'pe-ratio-cache-v1';
+const CACHE_NAME = 'pe-ratio-cache-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
