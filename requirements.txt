@@ -7,3 +7,4 @@ Flask-Login
 Flask-SQLAlchemy
 APScheduler
 plotly
+psycopg2-binary
