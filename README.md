@@ -49,6 +49,10 @@ Run the application:
 python app.py
 ```
 
+The Flask code is now organized as a package under `app/` using Blueprints.
+The `app.py` file simply creates the application via `create_app()` and starts
+the server.
+
 ## Custom P/E Thresholds
 
 When adding tickers to your watchlist you can specify a custom P/E ratio
