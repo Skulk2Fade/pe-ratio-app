@@ -207,6 +207,7 @@ def get_stock_data(symbol):
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = None
+        price_to_sales = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
             debt_to_equity = r.get("debtEquityRatioTTM")
@@ -215,6 +216,7 @@ def get_stock_data(symbol):
             roa = r.get("returnOnAssetsTTM")
             profit_margin = r.get("netProfitMarginTTM")
             dividend_yield = r.get("dividendYielTTM") or r.get("dividendYieldTTM")
+            price_to_sales = r.get("priceToSalesRatioTTM")
 
         rating_response = requests.get(rating_url, timeout=10)
         rating_data = rating_response.json()
@@ -239,6 +241,21 @@ def get_stock_data(symbol):
         eps = quote.get("eps")
         market_cap = format_market_cap(quote.get("marketCap"), currency)
 
+        forward_pe = None
+        if price is not None and eps is not None:
+            growth = None
+            try:
+                growth = float(earnings_growth) if earnings_growth is not None else None
+            except (TypeError, ValueError):
+                growth = None
+            if growth is not None:
+                try:
+                    forward_eps = eps * (1 + growth)
+                    forward_pe = round(price / forward_eps, 2) if forward_eps else None
+                except Exception:
+                    forward_pe = None
+
+
         return (
             name,
             logo_url,
@@ -257,10 +274,14 @@ def get_stock_data(symbol):
             analyst_rating,
             dividend_yield,
             earnings_growth,
+            forward_pe,
+            price_to_sales,
         )
     except Exception as e:
         print(f"API error: {e}")
         return (
+            None,
+            None,
             None,
             None,
             None,
@@ -326,6 +347,7 @@ def index():
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = sector = industry = exchange = currency = debt_to_equity = None
     pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = earnings_growth = None
+    forward_pe = price_to_sales = None
     error_message = alert_message = None
     history_dates = history_prices = []
 
@@ -367,6 +389,8 @@ def index():
                 analyst_rating,
                 dividend_yield,
                 earnings_growth,
+                forward_pe,
+                price_to_sales,
             ) = get_stock_data(symbol)
 
             history_dates, history_prices = get_historical_prices(symbol, days=90)
@@ -416,6 +440,10 @@ def index():
                 dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
             if earnings_growth is not None:
                 earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
+            if forward_pe is not None:
+                forward_pe = format_decimal(round(forward_pe, 2), locale=get_locale())
+            if price_to_sales is not None:
+                price_to_sales = format_decimal(round(price_to_sales, 2), locale=get_locale())
             if price is not None:
                 price = format_currency(price, currency, locale=get_locale())
             if eps is not None:
@@ -460,6 +488,8 @@ def index():
         analyst_rating=analyst_rating,
         dividend_yield=dividend_yield,
         earnings_growth=earnings_growth,
+        forward_pe=forward_pe,
+        price_to_sales=price_to_sales,
         error_message=error_message,
         alert_message=alert_message,
         history_dates=history_dates,
@@ -503,6 +533,8 @@ def download():
         analyst_rating,
         dividend_yield,
         earnings_growth,
+        forward_pe,
+        price_to_sales,
     ) = get_stock_data(symbol)
 
     if price is not None and eps:
@@ -531,6 +563,10 @@ def download():
         dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
     if earnings_growth is not None:
         earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
+    if forward_pe is not None:
+        forward_pe = format_decimal(round(forward_pe, 2), locale=get_locale())
+    if price_to_sales is not None:
+        price_to_sales = format_decimal(round(price_to_sales, 2), locale=get_locale())
 
     if price is not None:
         price = format_currency(price, currency, locale=get_locale())
@@ -557,6 +593,8 @@ def download():
                 "Analyst Rating",
                 "Dividend Yield %",
                 "Earnings Growth %",
+                "Forward P/E",
+                "P/S Ratio",
                 "Sector",
                 "Industry",
                 "Exchange",
@@ -579,6 +617,8 @@ def download():
             analyst_rating,
             dividend_yield,
             earnings_growth,
+            forward_pe,
+            price_to_sales,
             sector,
             industry,
             exchange,
@@ -608,6 +648,8 @@ def download():
             ("Analyst Rating", analyst_rating),
             ("Dividend Yield %", dividend_yield),
             ("Earnings Growth %", earnings_growth),
+            ("Forward P/E", forward_pe),
+            ("P/S Ratio", price_to_sales),
             ("Sector", sector),
             ("Industry", industry),
             ("Exchange", exchange),

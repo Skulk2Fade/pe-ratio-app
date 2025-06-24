@@ -111,6 +111,12 @@
                             {% if earnings_growth is not none %}
                                 <p><strong>Earnings Growth:</strong> {{ earnings_growth }}%</p>
                             {% endif %}
+                            {% if forward_pe is not none %}
+                                <p><strong>Forward P/E:</strong> {{ forward_pe }}</p>
+                            {% endif %}
+                            {% if price_to_sales is not none %}
+                                <p><strong>P/S Ratio:</strong> {{ price_to_sales }}</p>
+                            {% endif %}
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
                                 <a href="{{ url_for('add_favorite', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Favorites</a>
