@@ -329,7 +329,9 @@ def index():
     error_message = alert_message = None
     history_dates = history_prices = []
 
-    symbol = request.args.get("ticker", "").upper() or symbol
+    # Ticker may be provided via query string to allow GET requests without CSRF
+    if request.method == "GET":
+        symbol = request.args.get("ticker", "").upper() or symbol
 
     if current_user.is_authenticated:
         history_entries = (
@@ -342,8 +344,10 @@ def index():
     else:
         history = session.get("history", [])
 
-    if request.method == "POST":
-        symbol = request.form["ticker"].upper()
+    # Handle form submissions as well as ticker provided via GET
+    if request.method == "POST" or symbol:
+        if request.method == "POST":
+            symbol = request.form["ticker"].upper()
         try:
             (
                 company_name,
