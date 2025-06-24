@@ -65,3 +65,9 @@ page after logging in to choose an alert frequency in hours. The default is 24
 hours. The background job runs hourly and only sends alerts when your selected
 interval has elapsed.
 
+## Progressive Web App Notes
+
+The app registers a small service worker so it can behave like a Progressive
+Web App. Only static assets are cached. The main pages are always fetched from
+the server so that dynamic CSRF tokens stay valid.
+
