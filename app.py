@@ -880,6 +880,25 @@ def settings():
     return render_template("settings.html", frequency=current_user.alert_frequency)
 
 
+@app.route("/alerts")
+@login_required
+def alerts():
+    entries = (
+        Alert.query.filter_by(user_id=current_user.id)
+        .order_by(Alert.timestamp.desc())
+        .all()
+    )
+    return render_template("alerts.html", alerts=entries)
+
+
+@app.route("/clear_alerts")
+@login_required
+def clear_alerts():
+    Alert.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return redirect(url_for("alerts"))
+
+
 @app.route("/export_history")
 @login_required
 def export_history():
