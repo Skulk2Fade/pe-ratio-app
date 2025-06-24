@@ -34,3 +34,11 @@ When adding tickers to your watchlist you can specify a custom P/E ratio
 threshold for each stock. Alerts and warnings use this per-stock value. If no
 threshold is provided the default of 30 is used.
 
+## Scheduled Alerts
+
+Alert emails are sent on a schedule using **APScheduler**. Each user can
+configure how often their watchlist should be checked. Visit the *Settings*
+page after logging in to choose an alert frequency in hours. The default is 24
+hours. The background job runs hourly and only sends alerts when your selected
+interval has elapsed.
+

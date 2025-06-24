@@ -27,7 +27,7 @@ from flask_login import (
     UserMixin,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -82,6 +82,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=True)
+    alert_frequency = db.Column(db.Integer, default=24)
+    last_alert_time = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class WatchlistItem(db.Model):
@@ -271,36 +273,43 @@ def get_stock_data(symbol):
 
 def check_watchlists():
     with app.app_context():
-        items = WatchlistItem.query.all()
-        for item in items:
-            user = User.query.get(item.user_id)
-            if not user or not getattr(user, "email", None):
+        now = datetime.utcnow()
+        users = User.query.all()
+        for user in users:
+            if not user.email:
                 continue
-            (
-                _name,
-                _logo_url,
-                _sector,
-                _industry,
-                _exchange,
-                currency,
-                price,
-                eps,
-                _market_cap,
-                _debt_to_equity,
-                *_rest,
-            ) = get_stock_data(item.symbol)
-            if price is not None and eps:
-                pe_ratio = round(price / eps, 2)
-                threshold = item.pe_threshold or ALERT_PE_THRESHOLD
-                if pe_ratio > threshold:
-                    msg = (
-                        f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
-                    )
-                    send_email(user.email, "P/E Ratio Alert", msg)
-                    db.session.add(
-                        Alert(symbol=item.symbol, message=msg, user_id=user.id)
-                    )
-                    db.session.commit()
+            freq = user.alert_frequency or 24
+            last = user.last_alert_time or datetime.min
+            if now - last < timedelta(hours=freq):
+                continue
+            items = WatchlistItem.query.filter_by(user_id=user.id).all()
+            for item in items:
+                (
+                    _name,
+                    _logo_url,
+                    _sector,
+                    _industry,
+                    _exchange,
+                    currency,
+                    price,
+                    eps,
+                    _market_cap,
+                    _debt_to_equity,
+                    *_rest,
+                ) = get_stock_data(item.symbol)
+                if price is not None and eps:
+                    pe_ratio = round(price / eps, 2)
+                    threshold = item.pe_threshold or ALERT_PE_THRESHOLD
+                    if pe_ratio > threshold:
+                        msg = (
+                            f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
+                        )
+                        send_email(user.email, "P/E Ratio Alert", msg)
+                        db.session.add(
+                            Alert(symbol=item.symbol, message=msg, user_id=user.id)
+                        )
+            user.last_alert_time = now
+        db.session.commit()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -730,6 +739,17 @@ def add_favorite(symbol):
         db.session.add(FavoriteTicker(symbol=symbol, user_id=current_user.id))
         db.session.commit()
     return redirect(url_for("index", ticker=symbol))
+
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        freq = request.form.get("frequency", type=int)
+        if freq and freq > 0:
+            current_user.alert_frequency = freq
+            db.session.commit()
+    return render_template("settings.html", frequency=current_user.alert_frequency)
 
 
 @app.route("/export_history")
