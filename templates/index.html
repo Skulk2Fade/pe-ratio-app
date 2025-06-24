@@ -14,6 +14,7 @@
             {% if current_user.is_authenticated %}
                 <span class="navbar-text me-2">Logged in as {{ current_user.username }}</span>
                 <a href="{{ url_for('watchlist') }}" class="btn btn-sm btn-outline-primary me-2">Watchlist</a>
+                <a href="{{ url_for('favorites') }}" class="btn btn-sm btn-outline-primary me-2">Favorites</a>
                 <a href="{{ url_for('export_history') }}" class="btn btn-sm btn-outline-secondary me-2">Export History</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
             {% else %}
@@ -111,6 +112,7 @@
                             {% endif %}
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
+                                <a href="{{ url_for('add_favorite', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Favorites</a>
                             {% endif %}
 
                             {% if history_prices %}
