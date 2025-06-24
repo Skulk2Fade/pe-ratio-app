@@ -7,6 +7,7 @@ from flask import (
     redirect,
     url_for,
     has_request_context,
+    send_from_directory,
 )
 import requests
 from babel import Locale
@@ -41,6 +42,12 @@ app.config["SMTP_USERNAME"] = "user@example.com"
 app.config["SMTP_PASSWORD"] = "password"
 
 db = SQLAlchemy(app)
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    """Serve the service worker file with correct scope."""
+    return app.send_static_file("service-worker.js")
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
