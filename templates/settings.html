@@ -11,6 +11,7 @@
     <div class="container py-5">
         <h3 class="mb-4">Alert Settings</h3>
         <form method="POST" class="mb-3" style="max-width:300px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label class="form-label">Alert Frequency (hours)</label>
             <input type="number" name="frequency" min="1" class="form-control" value="{{ frequency }}" required>
             <button class="btn btn-primary mt-3" type="submit">Save</button>
