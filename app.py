@@ -34,7 +34,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "change_this_secret"
+# Load sensitive configuration from environment variables
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change_this_secret")
 
 # Use DATABASE_URL if provided (e.g. when deployed on Render), otherwise
 # default to a local SQLite database.
@@ -44,10 +45,10 @@ if db_url.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SMTP_SERVER"] = "smtp.example.com"
-app.config["SMTP_PORT"] = 587
-app.config["SMTP_USERNAME"] = "user@example.com"
-app.config["SMTP_PASSWORD"] = "password"
+app.config["SMTP_SERVER"] = os.environ.get("SMTP_SERVER", "smtp.example.com")
+app.config["SMTP_PORT"] = int(os.environ.get("SMTP_PORT", 587))
+app.config["SMTP_USERNAME"] = os.environ.get("SMTP_USERNAME", "user@example.com")
+app.config["SMTP_PASSWORD"] = os.environ.get("SMTP_PASSWORD", "password")
 
 db = SQLAlchemy(app)
 
@@ -60,7 +61,9 @@ def service_worker():
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
-API_KEY = "fM7Qz7WUnr08q65xIA720mnBnnLbUhav"
+API_KEY = os.environ.get("API_KEY")
+if not API_KEY:
+    raise RuntimeError("API_KEY environment variable not set")
 
 # Threshold for triggering a P/E ratio alert
 ALERT_PE_THRESHOLD = 30
