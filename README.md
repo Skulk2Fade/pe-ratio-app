@@ -57,6 +57,15 @@ When adding tickers to your watchlist you can specify a custom P/E ratio
 threshold for each stock. Alerts and warnings use this per-stock value. If no
 threshold is provided the default of 30 is used.
 
+## Additional Metrics
+
+Alongside the standard P/E ratio the app now fetches and displays:
+
+* **Forward P/E** – estimated using the latest EPS growth data.
+* **Price-to-Sales (P/S) ratio** – retrieved from Financial Modeling Prep.
+
+These extra metrics appear on the main page and in exported CSV/PDF files.
+
 ## Scheduled Alerts
 
 Alert emails are sent on a schedule using **APScheduler**. Each user can
