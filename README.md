@@ -76,6 +76,14 @@ Alongside the standard P/E ratio the app now fetches and displays:
 
 These extra metrics appear on the main page and in exported CSV/PDF files.
 
+## Finance Calculators
+
+The main page also hosts several quick calculators:
+
+* Simple interest
+* Compound interest
+* **Loan/Mortgage payment** – computes monthly payment, total interest and shows a full amortization schedule.
+
 ## Scheduled Alerts
 
 Alert emails are sent on a schedule using **APScheduler**. Each user can
