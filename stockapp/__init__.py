@@ -8,7 +8,11 @@ from .tasks import start_scheduler
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder="../templates",
+        static_folder="../static",
+    )
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_this_secret')
 
