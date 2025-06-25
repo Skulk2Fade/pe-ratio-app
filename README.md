@@ -47,6 +47,9 @@ pip install -r requirements.txt
 
 Run the application:
 
+The codebase is organized as a Flask package named `stockapp`. The main `app.py` file simply creates the Flask app from this package.
+
+
 ```bash
 python app.py
 ```
