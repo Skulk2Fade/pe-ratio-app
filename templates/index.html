@@ -18,10 +18,10 @@
                 <a href="{{ url_for('watch.alerts') }}" class="btn btn-sm btn-outline-primary me-2">Alerts</a>
                 <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2">Export History</a>
                 <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2">Settings</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">Logout</a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-primary me-2">Login</a>
-                <a href="{{ url_for('signup') }}" class="btn btn-sm btn-outline-secondary">Sign Up</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2">Login</a>
+                <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary">Sign Up</a>
             {% endif %}
         </div>
     </nav>
