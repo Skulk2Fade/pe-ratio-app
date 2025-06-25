@@ -30,6 +30,8 @@ def index():
     earnings_growth = forward_pe = price_to_sales = None
     error_message = alert_message = None
     history_dates = history_prices = []
+    interest_amount = interest_rate = interest_result = None
+    active_tab = 'pe'
 
     if request.method == 'GET':
         symbol = request.args.get('ticker', '').upper() or symbol
@@ -45,9 +47,19 @@ def index():
     else:
         history = session.get('history', [])
 
-    if request.method == 'POST' or symbol:
-        if request.method == 'POST':
+    if request.method == 'POST':
+        if request.form.get('calc_type') == 'interest':
+            active_tab = 'interest'
+            try:
+                interest_amount = float(request.form.get('amount', 0))
+                interest_rate = float(request.form.get('rate', 0))
+                interest_result = round(interest_amount * interest_rate / 100, 2)
+            except ValueError:
+                error_message = 'Invalid amount or interest rate.'
+        else:
             symbol = request.form['ticker'].upper()
+
+    if (request.method == 'POST' and request.form.get('calc_type') != 'interest') or symbol:
         try:
             (
                 company_name,
@@ -161,6 +173,10 @@ def index():
         history_dates=history_dates,
         history_prices=history_prices,
         history=history,
+        interest_amount=interest_amount,
+        interest_rate=interest_rate,
+        interest_result=interest_result,
+        active_tab=active_tab,
     )
 
 
