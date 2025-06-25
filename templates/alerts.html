@@ -24,11 +24,11 @@
             </li>
             {% endfor %}
         </ul>
-        <a href="{{ url_for('clear_alerts') }}" class="btn btn-sm btn-danger mt-3">Clear Alerts</a>
+        <a href="{{ url_for('watch.clear_alerts') }}" class="btn btn-sm btn-danger mt-3">Clear Alerts</a>
         {% else %}
         <p>No alerts recorded.</p>
         {% endif %}
-        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
     </div>
     <script>
         if ('serviceWorker' in navigator) {

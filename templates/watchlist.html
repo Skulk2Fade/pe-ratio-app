@@ -31,7 +31,7 @@
                     <div class="input-group" style="width: 200px;">
                         <input type="number" step="0.01" name="threshold" class="form-control form-control-sm" value="{{ item.pe_threshold }}">
                         <button class="btn btn-sm btn-primary" type="submit">Update</button>
-                        <a href="{{ url_for('delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger ms-1">Delete</a>
+                        <a href="{{ url_for('watch.delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger ms-1">Delete</a>
                     </div>
                 </form>
             </li>
@@ -40,8 +40,8 @@
         {% else %}
         <p>No watchlist items.</p>
         {% endif %}
-    <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3 me-2">Back</a>
-    <a href="{{ url_for('favorites') }}" class="btn btn-secondary mt-3">Favorites</a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3 me-2">Back</a>
+    <a href="{{ url_for('watch.favorites') }}" class="btn btn-secondary mt-3">Favorites</a>
     </div>
     <script>
         if ('serviceWorker' in navigator) {
