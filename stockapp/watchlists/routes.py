@@ -212,6 +212,9 @@ def portfolio():
                     db.session.commit()
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
     data = []
+    total_value = 0.0
+    total_pl = 0.0
+    totals_currency = None
     for item in items:
         (
             _name,
@@ -225,8 +228,14 @@ def portfolio():
         ) = get_stock_data(item.symbol)
         if price is not None:
             current_price = format_currency(price, currency, locale=get_locale())
-            value = format_currency(price * item.quantity, currency, locale=get_locale())
-            pl = format_currency((price - item.price_paid) * item.quantity, currency, locale=get_locale())
+            value_num = price * item.quantity
+            pl_num = (price - item.price_paid) * item.quantity
+            value = format_currency(value_num, currency, locale=get_locale())
+            pl = format_currency(pl_num, currency, locale=get_locale())
+            total_value += value_num
+            total_pl += pl_num
+            if totals_currency is None:
+                totals_currency = currency
         else:
             current_price = value = pl = None
         data.append(
@@ -237,7 +246,13 @@ def portfolio():
                 'profit_loss': pl,
             }
         )
-    return render_template('portfolio.html', items=data, symbol=symbol_prefill)
+    totals = None
+    if items and totals_currency:
+        totals = {
+            'value': format_currency(total_value, totals_currency, locale=get_locale()),
+            'profit_loss': format_currency(total_pl, totals_currency, locale=get_locale()),
+        }
+    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals)
 
 
 @watch_bp.route('/portfolio/delete/<int:item_id>')
