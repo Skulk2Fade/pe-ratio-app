@@ -5,8 +5,16 @@ import io
 from babel.dates import format_datetime
 
 from ..extensions import db
-from ..models import WatchlistItem, FavoriteTicker, Alert, History
-from ..utils import get_locale, ALERT_PE_THRESHOLD
+from babel.numbers import format_currency
+
+from ..models import (
+    WatchlistItem,
+    FavoriteTicker,
+    Alert,
+    History,
+    PortfolioItem,
+)
+from ..utils import get_locale, ALERT_PE_THRESHOLD, get_stock_data
 
 watch_bp = Blueprint('watch', __name__)
 
@@ -132,3 +140,74 @@ def export_history():
     response.headers['Content-Disposition'] = 'attachment; filename=history.csv'
     response.headers['Content-Type'] = 'text/csv'
     return response
+
+
+@watch_bp.route('/portfolio', methods=['GET', 'POST'])
+@login_required
+def portfolio():
+    symbol_prefill = request.args.get('symbol', '').upper()
+    if request.method == 'POST':
+        if request.form.get('item_id'):
+            item_id = int(request.form['item_id'])
+            quantity = request.form.get('quantity', type=float)
+            price_paid = request.form.get('price_paid', type=float)
+            item = PortfolioItem.query.get_or_404(item_id)
+            if item.user_id == current_user.id:
+                if quantity is not None:
+                    item.quantity = quantity
+                if price_paid is not None:
+                    item.price_paid = price_paid
+                db.session.commit()
+        else:
+            symbol = request.form['symbol'].upper()
+            quantity = request.form.get('quantity', type=float)
+            price_paid = request.form.get('price_paid', type=float)
+            if quantity is not None and price_paid is not None:
+                if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                    db.session.add(
+                        PortfolioItem(
+                            symbol=symbol,
+                            quantity=quantity,
+                            price_paid=price_paid,
+                            user_id=current_user.id,
+                        )
+                    )
+                    db.session.commit()
+    items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
+    data = []
+    for item in items:
+        (
+            _name,
+            _logo_url,
+            _sector,
+            _industry,
+            _exchange,
+            currency,
+            price,
+            *_rest,
+        ) = get_stock_data(item.symbol)
+        if price is not None:
+            current_price = format_currency(price, currency, locale=get_locale())
+            value = format_currency(price * item.quantity, currency, locale=get_locale())
+            pl = format_currency((price - item.price_paid) * item.quantity, currency, locale=get_locale())
+        else:
+            current_price = value = pl = None
+        data.append(
+            {
+                'item': item,
+                'current_price': current_price,
+                'value': value,
+                'profit_loss': pl,
+            }
+        )
+    return render_template('portfolio.html', items=data, symbol=symbol_prefill)
+
+
+@watch_bp.route('/portfolio/delete/<int:item_id>')
+@login_required
+def delete_portfolio_item(item_id):
+    item = PortfolioItem.query.get_or_404(item_id)
+    if item.user_id == current_user.id:
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for('watch.portfolio'))

@@ -15,6 +15,7 @@
                 <span class="navbar-text me-2">Logged in as {{ current_user.username }}</span>
                 <a href="{{ url_for('watch.watchlist') }}" class="btn btn-sm btn-outline-primary me-2">Watchlist</a>
                 <a href="{{ url_for('watch.favorites') }}" class="btn btn-sm btn-outline-primary me-2">Favorites</a>
+                <a href="{{ url_for('watch.portfolio') }}" class="btn btn-sm btn-outline-primary me-2">Portfolio</a>
                 <a href="{{ url_for('watch.alerts') }}" class="btn btn-sm btn-outline-primary me-2">Alerts</a>
                 <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2">Export History</a>
                 <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2">Settings</a>
@@ -138,6 +139,7 @@
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('watch.add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
                                 <a href="{{ url_for('watch.add_favorite', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Favorites</a>
+                                <a href="{{ url_for('watch.portfolio') }}?symbol={{ symbol }}" class="btn btn-sm btn-outline-primary mb-2">Add to Portfolio</a>
                             {% endif %}
 
                             {% if history_prices %}
