@@ -47,6 +47,7 @@
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane fade {% if active_tab == 'pe' %}show active{% endif %}" id="pe" role="tabpanel" aria-labelledby="pe-tab">
+                                <p class="small text-muted">Adding a PEG ratio (Price/Earnings-to-Growth) calculator would extend the metrics already provided in the app. The README notes that the app currently shows P/E, forward P/E, and price-to-sales ratios. Since get_stock_data already fetches earnings growth data in stockapp/utils.py, computing the PEG ratio would involve dividing the P/E ratio by the earnings growth percentage. This would help users see how a company&rsquo;s valuation compares to its expected growth.</p>
                         <form method="GET">
                             <div class="mb-3">
                                 <label for="ticker" class="form-label">Ticker Symbol:</label>
