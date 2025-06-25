@@ -54,6 +54,17 @@ The codebase is organized as a Flask package named `stockapp`. The main `app.py`
 python app.py
 ```
 
+### Default Login
+
+On startup the app creates a verified user if it doesn't already exist. The
+default credentials are:
+
+* Username: `testuser`
+* Password: `testpass`
+
+You can override these by setting the `DEFAULT_USERNAME` and `DEFAULT_PASSWORD`
+environment variables before running the app.
+
 ## Account Verification and Password Reset
 
 After signing up the app sends a verification email containing a link to

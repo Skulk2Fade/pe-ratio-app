@@ -1,6 +1,8 @@
 import os
 from flask import Flask
+from werkzeug.security import generate_password_hash
 from .extensions import db, login_manager, csrf
+from .models import User
 from .auth import auth_bp
 from .main import main_bp
 from .watchlists import watch_bp
@@ -43,6 +45,19 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+
+        # Create a default user for testing if credentials provided
+        default_user = os.environ.get('DEFAULT_USERNAME', 'testuser')
+        default_pass = os.environ.get('DEFAULT_PASSWORD', 'testpass')
+        if default_user and default_pass:
+            if not User.query.filter_by(username=default_user).first():
+                user = User(
+                    username=default_user,
+                    password_hash=generate_password_hash(default_pass),
+                    is_verified=True,
+                )
+                db.session.add(user)
+                db.session.commit()
 
     start_scheduler()
     return app
