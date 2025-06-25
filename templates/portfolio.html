@@ -70,6 +70,14 @@
                         </form>
                     </tr>
                     {% endfor %}
+                    {% if totals %}
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="4" class="text-end">Totals</td>
+                        <td>{{ totals.value }}</td>
+                        <td>{{ totals.profit_loss }}</td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
