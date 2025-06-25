@@ -16,7 +16,7 @@
             <input type="number" name="frequency" min="1" class="form-control" value="{{ frequency }}" required>
             <button class="btn btn-primary mt-3" type="submit">Save</button>
         </form>
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back</a>
     </div>
     <script>
         if ('serviceWorker' in navigator) {

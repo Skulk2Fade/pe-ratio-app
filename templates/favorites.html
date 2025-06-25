@@ -22,14 +22,14 @@
             {% for item in items %}
             <li class="list-group-item d-flex justify-content-between">
                 {{ item.symbol }}
-                <a href="{{ url_for('delete_favorite', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                <a href="{{ url_for('watch.delete_favorite', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
             </li>
             {% endfor %}
         </ul>
         {% else %}
         <p>No favorites saved.</p>
         {% endif %}
-    <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back</a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
     </div>
     <script>
         if ('serviceWorker' in navigator) {
