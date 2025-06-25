@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, make_response
+from flask import Blueprint, render_template, request, session, redirect, url_for, make_response, current_app
 from flask_login import current_user
 import csv
 import io
@@ -18,7 +18,7 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/service-worker.js')
 def service_worker():
-    return main_bp.send_static_file('service-worker.js')
+    return current_app.send_static_file('service-worker.js')
 
 
 @main_bp.route('/', methods=['GET', 'POST'])
