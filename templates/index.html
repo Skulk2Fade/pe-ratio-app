@@ -33,14 +33,17 @@
                         <h3 class="card-title text-center mb-4">Finance Tools</h3>
                         <ul class="nav nav-tabs mb-3" id="calcTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link {% if active_tab != 'interest' %}active{% endif %}" id="pe-tab" data-bs-toggle="tab" data-bs-target="#pe" type="button" role="tab" aria-controls="pe" aria-selected="{{ 'true' if active_tab != 'interest' else 'false' }}">P/E Ratio</button>
+                                <button class="nav-link {% if active_tab == 'pe' %}active{% endif %}" id="pe-tab" data-bs-toggle="tab" data-bs-target="#pe" type="button" role="tab" aria-controls="pe" aria-selected="{{ 'true' if active_tab == 'pe' else 'false' }}">P/E Ratio</button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link {% if active_tab == 'interest' %}active{% endif %}" id="interest-tab" data-bs-toggle="tab" data-bs-target="#interest" type="button" role="tab" aria-controls="interest" aria-selected="{{ 'true' if active_tab == 'interest' else 'false' }}">Interest</button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {% if active_tab == 'compound' %}active{% endif %}" id="compound-tab" data-bs-toggle="tab" data-bs-target="#compound" type="button" role="tab" aria-controls="compound" aria-selected="{{ 'true' if active_tab == 'compound' else 'false' }}">Compound Interest</button>
+                            </li>
                         </ul>
                         <div class="tab-content">
-                            <div class="tab-pane fade {% if active_tab != 'interest' %}show active{% endif %}" id="pe" role="tabpanel" aria-labelledby="pe-tab">
+                            <div class="tab-pane fade {% if active_tab == 'pe' %}show active{% endif %}" id="pe" role="tabpanel" aria-labelledby="pe-tab">
                         <form method="GET">
                             <div class="mb-3">
                                 <label for="ticker" class="form-label">Ticker Symbol:</label>
@@ -192,6 +195,34 @@
                                 </form>
                                 {% if interest_result is not none %}
                                     <p class="mt-3"><strong>Interest Earned:</strong> {{ interest_result }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="tab-pane fade {% if active_tab == 'compound' %}show active{% endif %}" id="compound" role="tabpanel" aria-labelledby="compound-tab">
+                                <form method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="calc_type" value="compound">
+                                    <div class="mb-3">
+                                        <label for="principal" class="form-label">Principal</label>
+                                        <input type="number" step="any" id="principal" name="principal" value="{{ comp_principal }}" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comp_rate" class="form-label">Interest Rate (%)</label>
+                                        <input type="number" step="any" id="comp_rate" name="rate" value="{{ comp_rate }}" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="years" class="form-label">Years</label>
+                                        <input type="number" step="any" id="years" name="years" value="{{ comp_years }}" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="frequency" class="form-label">Compounds per Year</label>
+                                        <input type="number" id="frequency" name="frequency" value="{{ comp_freq or 1 }}" class="form-control" required>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">Calculate</button>
+                                    </div>
+                                </form>
+                                {% if comp_result is not none %}
+                                    <p class="mt-3"><strong>Future Value:</strong> {{ comp_result }}</p>
                                 {% endif %}
                             </div>
                         </div>

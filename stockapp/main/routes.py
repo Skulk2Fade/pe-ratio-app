@@ -31,6 +31,7 @@ def index():
     error_message = alert_message = None
     history_dates = history_prices = []
     interest_amount = interest_rate = interest_result = None
+    comp_principal = comp_rate = comp_years = comp_freq = comp_result = None
     active_tab = 'pe'
 
     if request.method == 'GET':
@@ -48,7 +49,8 @@ def index():
         history = session.get('history', [])
 
     if request.method == 'POST':
-        if request.form.get('calc_type') == 'interest':
+        calc_type = request.form.get('calc_type')
+        if calc_type == 'interest':
             active_tab = 'interest'
             try:
                 interest_amount = float(request.form.get('amount', 0))
@@ -56,10 +58,23 @@ def index():
                 interest_result = round(interest_amount * interest_rate / 100, 2)
             except ValueError:
                 error_message = 'Invalid amount or interest rate.'
+        elif calc_type == 'compound':
+            active_tab = 'compound'
+            try:
+                comp_principal = float(request.form.get('principal', 0))
+                comp_rate = float(request.form.get('rate', 0))
+                comp_years = float(request.form.get('years', 0))
+                comp_freq = int(request.form.get('frequency', 1))
+                comp_result = round(
+                    comp_principal * (1 + (comp_rate / 100) / comp_freq) ** (comp_freq * comp_years),
+                    2,
+                )
+            except ValueError:
+                error_message = 'Invalid input for compound interest.'
         else:
             symbol = request.form['ticker'].upper()
 
-    if (request.method == 'POST' and request.form.get('calc_type') != 'interest') or symbol:
+    if (request.method == 'POST' and request.form.get('calc_type') not in ['interest', 'compound']) or symbol:
         try:
             (
                 company_name,
@@ -176,6 +191,11 @@ def index():
         interest_amount=interest_amount,
         interest_rate=interest_rate,
         interest_result=interest_result,
+        comp_principal=comp_principal,
+        comp_rate=comp_rate,
+        comp_years=comp_years,
+        comp_freq=comp_freq,
+        comp_result=comp_result,
         active_tab=active_tab,
     )
 
