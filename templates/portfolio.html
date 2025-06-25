@@ -81,6 +81,23 @@
                 </tbody>
             </table>
         </div>
+        {% if diversification %}
+        <div class="mt-4">
+            <h5>Portfolio Diversification Analyzer</h5>
+            <p class="small text-muted">Automatic analysis of asset diversification and risk exposure.</p>
+            <ul class="list-group mb-2">
+                {% for d in diversification %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ d.sector }}
+                    <span>{{ d.percentage }}%</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if risk_assessment %}
+            <div class="alert alert-info">{{ risk_assessment }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
         {% else %}
         <p>No portfolio items.</p>
         {% endif %}

@@ -215,11 +215,12 @@ def portfolio():
     total_value = 0.0
     total_pl = 0.0
     totals_currency = None
+    sector_totals = {}
     for item in items:
         (
             _name,
             _logo_url,
-            _sector,
+            sector,
             _industry,
             _exchange,
             currency,
@@ -236,8 +237,11 @@ def portfolio():
             total_pl += pl_num
             if totals_currency is None:
                 totals_currency = currency
+            if sector:
+                sector_totals[sector] = sector_totals.get(sector, 0) + value_num
         else:
             current_price = value = pl = None
+            value_num = 0
         data.append(
             {
                 'item': item,
@@ -252,7 +256,22 @@ def portfolio():
             'value': format_currency(total_value, totals_currency, locale=get_locale()),
             'profit_loss': format_currency(total_pl, totals_currency, locale=get_locale()),
         }
-    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals)
+    diversification = []
+    risk_assessment = None
+    if total_value > 0:
+        for sec, val in sector_totals.items():
+            pct = round(val / total_value * 100, 2)
+            diversification.append({'sector': sec, 'percentage': pct})
+        diversification.sort(key=lambda x: x['percentage'], reverse=True)
+        if diversification:
+            top = diversification[0]
+            if top['percentage'] > 50:
+                risk_assessment = f"High concentration in {top['sector']}"
+            elif top['percentage'] > 30:
+                risk_assessment = f"Moderate concentration in {top['sector']}"
+            else:
+                risk_assessment = 'Well diversified across sectors.'
+    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals, diversification=diversification, risk_assessment=risk_assessment)
 
 
 @watch_bp.route('/portfolio/delete/<int:item_id>')
