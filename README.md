@@ -87,6 +87,12 @@ Alongside the standard P/E ratio the app now fetches and displays:
 
 These extra metrics appear on the main page and in exported CSV/PDF files.
 
+## Portfolio CSV Import/Export
+
+Within the Portfolio page you can now export all holdings to a CSV file or
+import a file to quickly populate your portfolio. The CSV format uses the
+columns `Symbol`, `Quantity` and `Price Paid`.
+
 ## Finance Calculators
 
 The main page also hosts several quick calculators:

@@ -142,12 +142,49 @@ def export_history():
     return response
 
 
+@watch_bp.route('/export_portfolio')
+@login_required
+def export_portfolio():
+    items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Symbol', 'Quantity', 'Price Paid'])
+    for item in items:
+        writer.writerow([item.symbol, item.quantity, item.price_paid])
+    response = make_response(output.getvalue())
+    response.headers['Content-Disposition'] = 'attachment; filename=portfolio.csv'
+    response.headers['Content-Type'] = 'text/csv'
+    return response
+
+
 @watch_bp.route('/portfolio', methods=['GET', 'POST'])
 @login_required
 def portfolio():
     symbol_prefill = request.args.get('symbol', '').upper()
     if request.method == 'POST':
-        if request.form.get('item_id'):
+        if request.files.get('file'):
+            file = request.files['file']
+            content = file.read().decode('utf-8')
+            reader = csv.DictReader(io.StringIO(content))
+            for row in reader:
+                symbol = row.get('Symbol', '').upper()
+                try:
+                    quantity = float(row.get('Quantity', 0))
+                    price_paid = float(row.get('Price Paid', 0))
+                except (TypeError, ValueError):
+                    continue
+                if symbol and quantity and price_paid:
+                    if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                        db.session.add(
+                            PortfolioItem(
+                                symbol=symbol,
+                                quantity=quantity,
+                                price_paid=price_paid,
+                                user_id=current_user.id,
+                            )
+                        )
+            db.session.commit()
+        elif request.form.get('item_id'):
             item_id = int(request.form['item_id'])
             quantity = request.form.get('quantity', type=float)
             price_paid = request.form.get('price_paid', type=float)
