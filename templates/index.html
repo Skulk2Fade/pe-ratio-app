@@ -142,6 +142,9 @@
                             {% if ev_to_ebitda is not none %}
                                 <p><strong>EV/EBITDA:</strong> {{ ev_to_ebitda }}</p>
                             {% endif %}
+                            {% if price_to_fcf is not none %}
+                                <p><strong>P/FCF Ratio:</strong> {{ price_to_fcf }}</p>
+                            {% endif %}
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('watch.add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
                                 <a href="{{ url_for('watch.add_favorite', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Favorites</a>

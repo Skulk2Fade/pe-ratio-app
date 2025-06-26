@@ -86,6 +86,7 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **PEG ratio** – P/E divided by the earnings growth rate.
 * **Price-to-Sales (P/S) ratio** – retrieved from Financial Modeling Prep.
 * **Enterprise Value/EBITDA** – helps assess valuation considering both debt and equity financing.
+* **Price-to-Free-Cash-Flow (P/FCF) ratio** – calculates valuation using free cash flow per share.
 
 These extra metrics appear on the main page and in exported CSV/PDF files.
 
