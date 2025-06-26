@@ -26,7 +26,7 @@ def index():
     symbol = ''
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = None
     sector = industry = exchange = currency = debt_to_equity = None
-    pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = None
+    pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = payout_ratio = None
     earnings_growth = forward_pe = price_to_sales = ev_to_ebitda = price_to_fcf = None
     peg_ratio = None
     error_message = alert_message = None
@@ -132,6 +132,7 @@ def index():
                 profit_margin,
                 analyst_rating,
                 dividend_yield,
+                payout_ratio,
                 earnings_growth,
                 forward_pe,
                 price_to_sales,
@@ -184,6 +185,8 @@ def index():
                 profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
             if dividend_yield is not None:
                 dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
+            if payout_ratio is not None:
+                payout_ratio = format_decimal(round(payout_ratio * 100, 2), locale=get_locale())
             if earnings_growth is not None:
                 earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
             if forward_pe is not None:
@@ -236,6 +239,7 @@ def index():
         profit_margin=profit_margin,
         analyst_rating=analyst_rating,
         dividend_yield=dividend_yield,
+        payout_ratio=payout_ratio,
         earnings_growth=earnings_growth,
         forward_pe=forward_pe,
         price_to_sales=price_to_sales,
@@ -296,6 +300,7 @@ def download():
         profit_margin,
         analyst_rating,
         dividend_yield,
+        payout_ratio,
         earnings_growth,
         forward_pe,
         price_to_sales,
@@ -340,6 +345,8 @@ def download():
         profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
     if dividend_yield is not None:
         dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
+    if payout_ratio is not None:
+        payout_ratio = format_decimal(round(payout_ratio * 100, 2), locale=get_locale())
     if earnings_growth is not None:
         earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
     if forward_pe is not None:
@@ -375,6 +382,7 @@ def download():
             'Profit Margin %',
             'Analyst Rating',
             'Dividend Yield %',
+            'Dividend Payout Ratio %',
             'Earnings Growth %',
             'Forward P/E',
             'P/S Ratio',
@@ -401,6 +409,7 @@ def download():
             profit_margin,
             analyst_rating,
             dividend_yield,
+            payout_ratio,
             earnings_growth,
             forward_pe,
             price_to_sales,
@@ -435,6 +444,7 @@ def download():
             ('Profit Margin %', profit_margin),
             ('Analyst Rating', analyst_rating),
             ('Dividend Yield %', dividend_yield),
+            ('Dividend Payout Ratio %', payout_ratio),
             ('Earnings Growth %', earnings_growth),
             ('Forward P/E', forward_pe),
             ('P/S Ratio', price_to_sales),

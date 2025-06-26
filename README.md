@@ -87,6 +87,7 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **Price-to-Sales (P/S) ratio** – retrieved from Financial Modeling Prep.
 * **Enterprise Value/EBITDA** – helps assess valuation considering both debt and equity financing.
 * **Price-to-Free-Cash-Flow (P/FCF) ratio** – calculates valuation using free cash flow per share.
+* **Dividend Payout Ratio** – shows what percentage of earnings are distributed as dividends.
 
 These extra metrics appear on the main page and in exported CSV/PDF files.
 

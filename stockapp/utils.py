@@ -110,7 +110,7 @@ def _get_asx_stock_data(symbol):
         resp = requests.get(url, timeout=10)
         data = resp.json().get("quoteResponse", {}).get("result", [])
         if not data:
-            return (None,) * 21
+            return (None,) * 22
         info = data[0]
         name = info.get("longName") or info.get("shortName", "")
         price = info.get("regularMarketPrice")
@@ -139,10 +139,12 @@ def _get_asx_stock_data(symbol):
             None,
             None,
             None,
+            None,
+            None,
         )
     except Exception as e:
         print(f"ASX API error: {e}")
-        return (None,) * 21
+        return (None,) * 22
 
 
 def get_stock_data(symbol):
@@ -158,7 +160,7 @@ def get_stock_data(symbol):
         quote_response = requests.get(quote_url, timeout=10)
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            return (None,) * 21
+            return (None,) * 22
         quote = quote_data[0]
 
         profile_response = requests.get(profile_url, timeout=10)
@@ -167,7 +169,7 @@ def get_stock_data(symbol):
 
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
-        debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = None
+        debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
         price_to_sales = ev_to_ebitda = price_to_fcf = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
@@ -177,6 +179,7 @@ def get_stock_data(symbol):
             roa = r.get('returnOnAssetsTTM')
             profit_margin = r.get('netProfitMarginTTM')
             dividend_yield = r.get('dividendYielTTM') or r.get('dividendYieldTTM')
+            payout_ratio = r.get('payoutRatioTTM') or r.get('payoutRatio')
             price_to_sales = r.get('priceToSalesRatioTTM')
             price_to_fcf = (
                 r.get('priceToFreeCashFlowRatioTTM')
@@ -257,6 +260,7 @@ def get_stock_data(symbol):
             profit_margin,
             analyst_rating,
             dividend_yield,
+            payout_ratio,
             earnings_growth,
             forward_pe,
             price_to_sales,
@@ -265,4 +269,4 @@ def get_stock_data(symbol):
         )
     except Exception as e:
         print(f'API error: {e}')
-        return (None,) * 21
+        return (None,) * 22

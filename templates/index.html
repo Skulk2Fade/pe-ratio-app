@@ -127,6 +127,9 @@
                             {% if dividend_yield is not none %}
                                 <p><strong>Dividend Yield:</strong> {{ dividend_yield }}%</p>
                             {% endif %}
+                            {% if payout_ratio is not none %}
+                                <p><strong>Dividend Payout Ratio:</strong> {{ payout_ratio }}%</p>
+                            {% endif %}
                             {% if earnings_growth is not none %}
                                 <p><strong>Earnings Growth:</strong> {{ earnings_growth }}%</p>
                             {% endif %}
