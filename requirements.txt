@@ -9,3 +9,4 @@ Flask-WTF
 APScheduler
 plotly
 psycopg2-binary
+pytest
