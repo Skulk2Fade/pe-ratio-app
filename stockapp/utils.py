@@ -85,7 +85,7 @@ def get_stock_data(symbol):
         quote_response = requests.get(quote_url, timeout=10)
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            return (None,) * 19
+            return (None,) * 20
         quote = quote_data[0]
 
         profile_response = requests.get(profile_url, timeout=10)
@@ -95,7 +95,7 @@ def get_stock_data(symbol):
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = None
-        price_to_sales = None
+        price_to_sales = ev_to_ebitda = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
             debt_to_equity = r.get('debtEquityRatioTTM')
@@ -105,6 +105,17 @@ def get_stock_data(symbol):
             profit_margin = r.get('netProfitMarginTTM')
             dividend_yield = r.get('dividendYielTTM') or r.get('dividendYieldTTM')
             price_to_sales = r.get('priceToSalesRatioTTM')
+
+        metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
+        metrics_response = requests.get(metrics_url, timeout=10)
+        metrics_data = metrics_response.json()
+        if isinstance(metrics_data, list) and len(metrics_data) > 0:
+            m = metrics_data[0]
+            ev_to_ebitda = (
+                m.get('evToEbitdaTTM')
+                or m.get('evToEbitda')
+                or m.get('enterpriseValueOverEBITDA')
+            )
 
         rating_response = requests.get(rating_url, timeout=10)
         rating_data = rating_response.json()
@@ -162,7 +173,8 @@ def get_stock_data(symbol):
             earnings_growth,
             forward_pe,
             price_to_sales,
+            ev_to_ebitda,
         )
     except Exception as e:
         print(f'API error: {e}')
-        return (None,) * 19
+        return (None,) * 20

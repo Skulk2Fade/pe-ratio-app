@@ -85,6 +85,7 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **Forward P/E** – estimated using the latest EPS growth data.
 * **PEG ratio** – P/E divided by the earnings growth rate.
 * **Price-to-Sales (P/S) ratio** – retrieved from Financial Modeling Prep.
+* **Enterprise Value/EBITDA** – helps assess valuation considering both debt and equity financing.
 
 These extra metrics appear on the main page and in exported CSV/PDF files.
 
