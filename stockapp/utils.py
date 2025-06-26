@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -7,12 +8,38 @@ from babel import Locale
 from babel.numbers import format_currency, format_decimal
 from babel.dates import format_datetime
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 API_KEY = os.environ.get('API_KEY')
 if not API_KEY:
     raise RuntimeError('API_KEY environment variable not set')
 
 ALERT_PE_THRESHOLD = 30
+
+# Use a requests Session with retries for better resilience
+session = requests.Session()
+retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+adapter = HTTPAdapter(max_retries=retries)
+session.mount('http://', adapter)
+session.mount('https://', adapter)
+
+# Simple in-memory cache for API responses
+CACHE_TTL = int(os.environ.get('API_CACHE_TTL', 3600))
+_cache = {}
+
+def _get_cached(key):
+    data = _cache.get(key)
+    if not data:
+        return None
+    value, ts = data
+    if time.time() - ts < CACHE_TTL:
+        return value
+    _cache.pop(key, None)
+    return None
+
+def _set_cached(key, value):
+    _cache[key] = (value, time.time())
 
 def get_locale():
     if has_request_context():
@@ -51,7 +78,7 @@ def _get_asx_historical_prices(symbol, days=30):
         f"range={range_str}&interval=1d"
     )
     try:
-        resp = requests.get(url, timeout=10)
+        resp = session.get(url, timeout=10)
         data = resp.json()
         result = data.get("chart", {}).get("result", [])
         if not result:
@@ -69,23 +96,34 @@ def _get_asx_historical_prices(symbol, days=30):
 
 def get_historical_prices(symbol, days=30):
     """Retrieve historical prices for a ticker."""
+    cache_key = ("hist", symbol, days)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
     if symbol.lower().endswith(".ax"):
-        return _get_asx_historical_prices(symbol, days)
+        result = _get_asx_historical_prices(symbol, days)
+        if result[0]:
+            _set_cached(cache_key, result)
+        return result
 
     url = (
         f"https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}"
         f"?serietype=line&timeseries={days}&apikey={API_KEY}"
     )
     try:
-        response = requests.get(url, timeout=10)
+        response = session.get(url, timeout=10)
         data = response.json()
         historical = data.get("historical", [])
         dates = [item.get("date") for item in historical][::-1]
         prices = [item.get("close") for item in historical][::-1]
-        return dates, prices
+        result = (dates, prices)
+        if dates:
+            _set_cached(cache_key, result)
+        return result
     except Exception as e:
         print(f"Historical API error: {e}")
-        return [], []
+        cached = _get_cached(cache_key)
+        return cached if cached else ([], [])
 
 def format_market_cap(value, currency):
     if value is None:
@@ -107,7 +145,7 @@ def _get_asx_stock_data(symbol):
     """Retrieve stock information for ASX tickers using Yahoo Finance."""
     try:
         url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
-        resp = requests.get(url, timeout=10)
+        resp = session.get(url, timeout=10)
         data = resp.json().get("quoteResponse", {}).get("result", [])
         if not data:
             return (None,) * 22
@@ -149,8 +187,16 @@ def _get_asx_stock_data(symbol):
 
 
 def get_stock_data(symbol):
+    cache_key = ("stock", symbol)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+
     if symbol.lower().endswith('.ax'):
-        return _get_asx_stock_data(symbol)
+        data = _get_asx_stock_data(symbol)
+        if any(item is not None for item in data):
+            _set_cached(cache_key, data)
+        return data
 
     quote_url = f'https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}'
     profile_url = f'https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}'
@@ -158,17 +204,17 @@ def get_stock_data(symbol):
     rating_url = f'https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}'
     growth_url = f'https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}'
     try:
-        quote_response = requests.get(quote_url, timeout=10)
+        quote_response = session.get(quote_url, timeout=10)
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            return (None,) * 22
+            raise ValueError('No quote data')
         quote = quote_data[0]
 
-        profile_response = requests.get(profile_url, timeout=10)
+        profile_response = session.get(profile_url, timeout=10)
         profile_data = profile_response.json()
         profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
 
-        ratio_response = requests.get(ratios_url, timeout=10)
+        ratio_response = session.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
         price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
@@ -191,7 +237,7 @@ def get_stock_data(symbol):
             current_ratio = r.get('currentRatioTTM')
 
         metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
-        metrics_response = requests.get(metrics_url, timeout=10)
+        metrics_response = session.get(metrics_url, timeout=10)
         metrics_data = metrics_response.json()
         fcf_per_share = None
         if isinstance(metrics_data, list) and len(metrics_data) > 0:
@@ -203,13 +249,13 @@ def get_stock_data(symbol):
             )
             fcf_per_share = m.get('freeCashFlowPerShareTTM') or m.get('freeCashFlowPerShare')
 
-        rating_response = requests.get(rating_url, timeout=10)
+        rating_response = session.get(rating_url, timeout=10)
         rating_data = rating_response.json()
         analyst_rating = None
         if isinstance(rating_data, list) and len(rating_data) > 0:
             analyst_rating = rating_data[0].get('ratingRecommendation') or rating_data[0].get('rating')
 
-        growth_response = requests.get(growth_url, timeout=10)
+        growth_response = session.get(growth_url, timeout=10)
         growth_data = growth_response.json()
         earnings_growth = None
         if isinstance(growth_data, list) and len(growth_data) > 0:
@@ -245,7 +291,7 @@ def get_stock_data(symbol):
             except Exception:
                 price_to_fcf = None
 
-        return (
+        result = (
             name,
             logo_url,
             sector,
@@ -270,6 +316,10 @@ def get_stock_data(symbol):
             price_to_fcf,
             current_ratio,
         )
+        if any(item is not None for item in result):
+            _set_cached(cache_key, result)
+        return result
     except Exception as e:
         print(f'API error: {e}')
-        return (None,) * 23
+        cached = _get_cached(cache_key)
+        return cached if cached else (None,) * 23
