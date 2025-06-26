@@ -13,6 +13,7 @@ from ..models import (
     Alert,
     History,
     PortfolioItem,
+    StockRecord,
 )
 from ..utils import get_locale, ALERT_PE_THRESHOLD, get_stock_data
 
@@ -282,3 +283,22 @@ def delete_portfolio_item(item_id):
         db.session.delete(item)
         db.session.commit()
     return redirect(url_for('watch.portfolio'))
+
+
+@watch_bp.route('/records')
+@login_required
+def records():
+    entries = (
+        StockRecord.query.filter_by(user_id=current_user.id)
+        .order_by(StockRecord.timestamp.desc())
+        .all()
+    )
+    return render_template('records.html', records=entries)
+
+
+@watch_bp.route('/clear_records')
+@login_required
+def clear_records():
+    StockRecord.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return redirect(url_for('watch.records'))
