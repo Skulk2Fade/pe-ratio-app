@@ -110,7 +110,7 @@ def _get_asx_stock_data(symbol):
         resp = requests.get(url, timeout=10)
         data = resp.json().get("quoteResponse", {}).get("result", [])
         if not data:
-            return (None,) * 20
+            return (None,) * 21
         info = data[0]
         name = info.get("longName") or info.get("shortName", "")
         price = info.get("regularMarketPrice")
@@ -138,10 +138,11 @@ def _get_asx_stock_data(symbol):
             None,
             None,
             None,
+            None,
         )
     except Exception as e:
         print(f"ASX API error: {e}")
-        return (None,) * 20
+        return (None,) * 21
 
 
 def get_stock_data(symbol):
@@ -157,7 +158,7 @@ def get_stock_data(symbol):
         quote_response = requests.get(quote_url, timeout=10)
         quote_data = quote_response.json()
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            return (None,) * 20
+            return (None,) * 21
         quote = quote_data[0]
 
         profile_response = requests.get(profile_url, timeout=10)
@@ -167,7 +168,7 @@ def get_stock_data(symbol):
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = None
-        price_to_sales = ev_to_ebitda = None
+        price_to_sales = ev_to_ebitda = price_to_fcf = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
             debt_to_equity = r.get('debtEquityRatioTTM')
@@ -177,10 +178,17 @@ def get_stock_data(symbol):
             profit_margin = r.get('netProfitMarginTTM')
             dividend_yield = r.get('dividendYielTTM') or r.get('dividendYieldTTM')
             price_to_sales = r.get('priceToSalesRatioTTM')
+            price_to_fcf = (
+                r.get('priceToFreeCashFlowRatioTTM')
+                or r.get('priceToFreeCashFlowsRatioTTM')
+                or r.get('priceFreeCashFlowRatioTTM')
+                or r.get('priceCashFlowRatioTTM')
+            )
 
         metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
         metrics_response = requests.get(metrics_url, timeout=10)
         metrics_data = metrics_response.json()
+        fcf_per_share = None
         if isinstance(metrics_data, list) and len(metrics_data) > 0:
             m = metrics_data[0]
             ev_to_ebitda = (
@@ -188,6 +196,7 @@ def get_stock_data(symbol):
                 or m.get('evToEbitda')
                 or m.get('enterpriseValueOverEBITDA')
             )
+            fcf_per_share = m.get('freeCashFlowPerShareTTM') or m.get('freeCashFlowPerShare')
 
         rating_response = requests.get(rating_url, timeout=10)
         rating_data = rating_response.json()
@@ -225,6 +234,12 @@ def get_stock_data(symbol):
                 except Exception:
                     forward_pe = None
 
+        if price_to_fcf is None and price is not None and fcf_per_share:
+            try:
+                price_to_fcf = round(price / fcf_per_share, 2)
+            except Exception:
+                price_to_fcf = None
+
         return (
             name,
             logo_url,
@@ -246,7 +261,8 @@ def get_stock_data(symbol):
             forward_pe,
             price_to_sales,
             ev_to_ebitda,
+            price_to_fcf,
         )
     except Exception as e:
         print(f'API error: {e}')
-        return (None,) * 20
+        return (None,) * 21
