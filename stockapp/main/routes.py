@@ -28,6 +28,7 @@ def index():
     sector = industry = exchange = currency = debt_to_equity = None
     pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = None
     earnings_growth = forward_pe = price_to_sales = None
+    peg_ratio = None
     error_message = alert_message = None
     history_dates = history_prices = []
     interest_amount = interest_rate = interest_result = None
@@ -141,6 +142,16 @@ def index():
             if price is not None and eps:
                 pe_ratio_val = round(price / eps, 2)
                 pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
+                peg_ratio_val = None
+                if earnings_growth not in (None, 0):
+                    try:
+                        growth_pct = float(earnings_growth)
+                        if growth_pct != 0:
+                            peg_ratio_val = pe_ratio_val / (growth_pct * 100)
+                    except (TypeError, ValueError):
+                        peg_ratio_val = None
+                if peg_ratio_val is not None:
+                    peg_ratio = format_decimal(round(peg_ratio_val, 2), locale=get_locale())
                 if pe_ratio_val < 15:
                     valuation = 'Undervalued?'
                 elif pe_ratio_val > 25:
@@ -203,6 +214,7 @@ def index():
         price=price,
         eps=eps,
         pe_ratio=pe_ratio,
+        peg_ratio=peg_ratio,
         valuation=valuation,
         company_name=company_name,
         logo_url=logo_url,
@@ -283,6 +295,14 @@ def download():
 
     if price is not None and eps:
         pe_ratio_val = round(price / eps, 2)
+        peg_ratio_val = None
+        if earnings_growth not in (None, 0):
+            try:
+                growth_pct = float(earnings_growth)
+                if growth_pct != 0:
+                    peg_ratio_val = pe_ratio_val / (growth_pct * 100)
+            except (TypeError, ValueError):
+                peg_ratio_val = None
         if pe_ratio_val < 15:
             valuation = 'Undervalued?'
         elif pe_ratio_val > 25:
@@ -290,8 +310,13 @@ def download():
         else:
             valuation = 'Fairly Valued'
         pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
+        peg_ratio = (
+            format_decimal(round(peg_ratio_val, 2), locale=get_locale())
+            if peg_ratio_val is not None
+            else 'N/A'
+        )
     else:
-        pe_ratio = valuation = 'N/A'
+        pe_ratio = valuation = peg_ratio = 'N/A'
 
     if debt_to_equity is not None:
         debt_to_equity = format_decimal(round(debt_to_equity, 2), locale=get_locale())
@@ -326,6 +351,7 @@ def download():
             'Price',
             'EPS',
             'P/E Ratio',
+            'PEG Ratio',
             'Valuation',
             'Market Cap',
             'Debt/Equity',
@@ -349,6 +375,7 @@ def download():
             price,
             eps,
             pe_ratio,
+            peg_ratio,
             valuation,
             market_cap,
             debt_to_equity,
@@ -380,6 +407,7 @@ def download():
             ('Price', price),
             ('EPS', eps),
             ('P/E Ratio', pe_ratio),
+            ('PEG Ratio', peg_ratio),
             ('Valuation', valuation),
             ('Market Cap', market_cap),
             ('Debt/Equity', debt_to_equity),
