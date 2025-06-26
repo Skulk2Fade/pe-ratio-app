@@ -5,7 +5,7 @@ import io
 from fpdf import FPDF
 from babel.numbers import format_currency, format_decimal
 from ..extensions import db
-from ..models import History, Alert, WatchlistItem
+from ..models import History, Alert, WatchlistItem, StockRecord
 from ..utils import (
     get_stock_data,
     get_historical_prices,
@@ -143,9 +143,14 @@ def index():
 
             history_dates, history_prices = get_historical_prices(symbol, days=90)
 
+            raw_price = price
+            raw_eps = eps
+            raw_pe_ratio_val = None
+
             if price is not None and eps:
                 pe_ratio_val = round(price / eps, 2)
                 pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
+                raw_pe_ratio_val = pe_ratio_val
                 peg_ratio_val = None
                 if earnings_growth not in (None, 0):
                     try:
@@ -208,6 +213,15 @@ def index():
             if symbol:
                 if current_user.is_authenticated:
                     db.session.add(History(symbol=symbol, user_id=current_user.id))
+                    db.session.add(
+                        StockRecord(
+                            symbol=symbol,
+                            price=raw_price,
+                            eps=raw_eps,
+                            pe_ratio=raw_pe_ratio_val,
+                            user_id=current_user.id,
+                        )
+                    )
                     db.session.commit()
                     history.insert(0, symbol)
                     history = history[:10]
