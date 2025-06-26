@@ -21,6 +21,12 @@ def service_worker():
     return current_app.send_static_file('service-worker.js')
 
 
+@main_bp.route('/health')
+def health():
+    """Simple health check endpoint."""
+    return 'OK', 200
+
+
 @main_bp.route('/', methods=['GET', 'POST'])
 def index():
     symbol = ''

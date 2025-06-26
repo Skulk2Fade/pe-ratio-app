@@ -54,6 +54,9 @@ The codebase is organized as a Flask package named `stockapp`. The main `app.py`
 python app.py
 ```
 
+When deploying you can use `/health` to verify that the application is running.
+The endpoint simply returns `OK`.
+
 ### Default Login
 
 On startup the app creates a verified user if it doesn't already exist. The

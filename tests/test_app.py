@@ -24,6 +24,12 @@ def test_index_route(client):
     assert res.status_code == 200
     assert b'MarketMinder' in res.data
 
+
+def test_health_route(client):
+    res = client.get('/health')
+    assert res.status_code == 200
+    assert res.data == b'OK'
+
 def test_format_market_cap():
     from stockapp.utils import format_market_cap
     result = format_market_cap(1_500_000_000, 'USD')
