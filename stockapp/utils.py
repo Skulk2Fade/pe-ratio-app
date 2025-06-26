@@ -141,10 +141,11 @@ def _get_asx_stock_data(symbol):
             None,
             None,
             None,
+            None,
         )
     except Exception as e:
         print(f"ASX API error: {e}")
-        return (None,) * 22
+        return (None,) * 23
 
 
 def get_stock_data(symbol):
@@ -170,7 +171,7 @@ def get_stock_data(symbol):
         ratio_response = requests.get(ratios_url, timeout=10)
         ratio_data = ratio_response.json()
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
-        price_to_sales = ev_to_ebitda = price_to_fcf = None
+        price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
             debt_to_equity = r.get('debtEquityRatioTTM')
@@ -187,6 +188,7 @@ def get_stock_data(symbol):
                 or r.get('priceFreeCashFlowRatioTTM')
                 or r.get('priceCashFlowRatioTTM')
             )
+            current_ratio = r.get('currentRatioTTM')
 
         metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
         metrics_response = requests.get(metrics_url, timeout=10)
@@ -266,7 +268,8 @@ def get_stock_data(symbol):
             price_to_sales,
             ev_to_ebitda,
             price_to_fcf,
+            current_ratio,
         )
     except Exception as e:
         print(f'API error: {e}')
-        return (None,) * 22
+        return (None,) * 23
