@@ -35,9 +35,12 @@ def create_app():
     csrf.init_app(app)
 
     @app.context_processor
-    def inject_csrf_token():
+    def inject_globals():
         from flask_wtf.csrf import generate_csrf
-        return dict(csrf_token=generate_csrf)
+        return {
+            'csrf_token': generate_csrf,
+            'app_name': 'MarketMinder'
+        }
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)

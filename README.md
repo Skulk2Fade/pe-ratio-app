@@ -1,4 +1,4 @@
-# Stock Analysis App
+# MarketMinder
 
 This Flask application calculates P/E ratios and stores user data using SQLAlchemy. Authentication is handled via **Flask-Login**.
 
