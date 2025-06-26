@@ -1,6 +1,6 @@
 {
-  "name": "P/E Ratio Analyzer",
-  "short_name": "PE Ratio",
+  "name": "MarketMinder",
+  "short_name": "Minder",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
