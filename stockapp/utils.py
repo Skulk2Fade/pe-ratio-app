@@ -43,20 +43,48 @@ def send_email(to, subject, body):
     except Exception as e:
         print(f'Email error: {e}')
 
-def get_historical_prices(symbol, days=30):
+def _get_asx_historical_prices(symbol, days=30):
+    """Fetch historical prices from Yahoo Finance for ASX tickers."""
+    range_str = f"{days}d"
     url = (
-        f'https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}'
-        f'?serietype=line&timeseries={days}&apikey={API_KEY}'
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?"
+        f"range={range_str}&interval=1d"
+    )
+    try:
+        resp = requests.get(url, timeout=10)
+        data = resp.json()
+        result = data.get("chart", {}).get("result", [])
+        if not result:
+            return [], []
+        chart = result[0]
+        timestamps = chart.get("timestamp", [])
+        indicators = chart.get("indicators", {}).get("quote", [{}])[0]
+        closes = indicators.get("close", [])
+        dates = [datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") for ts in timestamps]
+        return dates, closes
+    except Exception as e:
+        print(f"ASX historical error: {e}")
+        return [], []
+
+
+def get_historical_prices(symbol, days=30):
+    """Retrieve historical prices for a ticker."""
+    if symbol.lower().endswith(".ax"):
+        return _get_asx_historical_prices(symbol, days)
+
+    url = (
+        f"https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}"
+        f"?serietype=line&timeseries={days}&apikey={API_KEY}"
     )
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
-        historical = data.get('historical', [])
-        dates = [item.get('date') for item in historical][::-1]
-        prices = [item.get('close') for item in historical][::-1]
+        historical = data.get("historical", [])
+        dates = [item.get("date") for item in historical][::-1]
+        prices = [item.get("close") for item in historical][::-1]
         return dates, prices
     except Exception as e:
-        print(f'Historical API error: {e}')
+        print(f"Historical API error: {e}")
         return [], []
 
 def format_market_cap(value, currency):
@@ -75,7 +103,51 @@ def format_market_cap(value, currency):
     formatted = format_currency(value, currency, locale=get_locale())
     return f'{formatted}{suffix}'
 
+def _get_asx_stock_data(symbol):
+    """Retrieve stock information for ASX tickers using Yahoo Finance."""
+    try:
+        url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
+        resp = requests.get(url, timeout=10)
+        data = resp.json().get("quoteResponse", {}).get("result", [])
+        if not data:
+            return (None,) * 20
+        info = data[0]
+        name = info.get("longName") or info.get("shortName", "")
+        price = info.get("regularMarketPrice")
+        eps = info.get("epsTrailingTwelveMonths")
+        currency = info.get("currency", "AUD")
+        market_cap = format_market_cap(info.get("marketCap"), currency)
+        exchange = info.get("fullExchangeName", "ASX")
+        return (
+            name,
+            '',
+            info.get('sector', ''),
+            info.get('industry', ''),
+            exchange,
+            currency,
+            price,
+            eps,
+            market_cap,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+    except Exception as e:
+        print(f"ASX API error: {e}")
+        return (None,) * 20
+
+
 def get_stock_data(symbol):
+    if symbol.lower().endswith('.ax'):
+        return _get_asx_stock_data(symbol)
+
     quote_url = f'https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}'
     profile_url = f'https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}'
     ratios_url = f'https://financialmodelingprep.com/api/v3/ratios-ttm/{symbol}?apikey={API_KEY}'
