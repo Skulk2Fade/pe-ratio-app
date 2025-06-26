@@ -27,7 +27,7 @@ def index():
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = None
     sector = industry = exchange = currency = debt_to_equity = None
     pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = payout_ratio = None
-    earnings_growth = forward_pe = price_to_sales = ev_to_ebitda = price_to_fcf = None
+    earnings_growth = forward_pe = price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
     peg_ratio = None
     error_message = alert_message = None
     history_dates = history_prices = []
@@ -138,6 +138,7 @@ def index():
                 price_to_sales,
                 ev_to_ebitda,
                 price_to_fcf,
+                current_ratio,
             ) = get_stock_data(symbol)
 
             history_dates, history_prices = get_historical_prices(symbol, days=90)
@@ -197,6 +198,8 @@ def index():
                 ev_to_ebitda = format_decimal(round(ev_to_ebitda, 2), locale=get_locale())
             if price_to_fcf is not None:
                 price_to_fcf = format_decimal(round(price_to_fcf, 2), locale=get_locale())
+            if current_ratio is not None:
+                current_ratio = format_decimal(round(current_ratio, 2), locale=get_locale())
             if price is not None:
                 price = format_currency(price, currency, locale=get_locale())
             if eps is not None:
@@ -245,6 +248,7 @@ def index():
         price_to_sales=price_to_sales,
         ev_to_ebitda=ev_to_ebitda,
         price_to_fcf=price_to_fcf,
+        current_ratio=current_ratio,
         error_message=error_message,
         alert_message=alert_message,
         history_dates=history_dates,
@@ -306,6 +310,7 @@ def download():
         price_to_sales,
         ev_to_ebitda,
         price_to_fcf,
+        current_ratio,
     ) = get_stock_data(symbol)
 
     if price is not None and eps:
@@ -357,6 +362,8 @@ def download():
         ev_to_ebitda = format_decimal(round(ev_to_ebitda, 2), locale=get_locale())
     if price_to_fcf is not None:
         price_to_fcf = format_decimal(round(price_to_fcf, 2), locale=get_locale())
+    if current_ratio is not None:
+        current_ratio = format_decimal(round(current_ratio, 2), locale=get_locale())
 
     if price is not None:
         price = format_currency(price, currency, locale=get_locale())
@@ -388,6 +395,7 @@ def download():
             'P/S Ratio',
             'EV/EBITDA',
             'P/FCF Ratio',
+            'Current Ratio',
             'Sector',
             'Industry',
             'Exchange',
@@ -415,6 +423,7 @@ def download():
             price_to_sales,
             ev_to_ebitda,
             price_to_fcf,
+            current_ratio,
             sector,
             industry,
             exchange,
@@ -450,6 +459,7 @@ def download():
             ('P/S Ratio', price_to_sales),
             ('EV/EBITDA', ev_to_ebitda),
             ('P/FCF Ratio', price_to_fcf),
+            ('Current Ratio', current_ratio),
             ('Sector', sector),
             ('Industry', industry),
             ('Exchange', exchange),
