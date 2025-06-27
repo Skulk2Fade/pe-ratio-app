@@ -1,5 +1,6 @@
 import os
 import time
+import pickle
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -10,6 +11,11 @@ from babel.dates import format_datetime
 from datetime import datetime
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+
+try:
+    import redis
+except Exception:  # pragma: no cover - optional dependency
+    redis = None
 
 API_KEY = os.environ.get('API_KEY')
 if not API_KEY:
@@ -24,11 +30,27 @@ adapter = HTTPAdapter(max_retries=retries)
 session.mount('http://', adapter)
 session.mount('https://', adapter)
 
-# Simple in-memory cache for API responses
+# Cache configuration. Uses Redis when available with in-memory fallback
 CACHE_TTL = int(os.environ.get('API_CACHE_TTL', 3600))
+REDIS_URL = os.environ.get('REDIS_URL')
 _cache = {}
+_redis = None
+if redis and REDIS_URL:
+    try:
+        _redis = redis.Redis.from_url(REDIS_URL)
+        _redis.ping()
+    except Exception as e:  # pragma: no cover - handle missing Redis
+        print(f'Redis error: {e}; falling back to local cache')
+        _redis = None
 
 def _get_cached(key):
+    if _redis:
+        try:
+            val = _redis.get(key)
+            if val is not None:
+                return pickle.loads(val)
+        except Exception as e:  # pragma: no cover - redis failure
+            print(f'Redis get error: {e}')
     data = _cache.get(key)
     if not data:
         return None
@@ -39,6 +61,12 @@ def _get_cached(key):
     return None
 
 def _set_cached(key, value):
+    if _redis:
+        try:
+            _redis.setex(key, CACHE_TTL, pickle.dumps(value))
+            return
+        except Exception as e:  # pragma: no cover - redis failure
+            print(f'Redis set error: {e}')
     _cache[key] = (value, time.time())
 
 def get_locale():
