@@ -33,7 +33,7 @@
             </div>
         </form>
         <div class="mb-3">
-            <a href="{{ url_for('watch.export_portfolio') }}" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+            <a href="{{ url_for('portfolio.export_portfolio') }}" class="btn btn-outline-secondary btn-sm">Export CSV</a>
             <form method="POST" enctype="multipart/form-data" class="d-inline-block ms-2">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="file" name="file" accept=".csv" required class="form-control form-control-sm d-inline-block" style="width:auto; display:inline-block;">
@@ -69,7 +69,7 @@
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-primary" type="submit">Update</button>
-                                    <a href="{{ url_for('watch.delete_portfolio_item', item_id=row.item.id) }}" class="btn btn-danger">Delete</a>
+                                    <a href="{{ url_for('portfolio.delete_portfolio_item', item_id=row.item.id) }}" class="btn btn-danger">Delete</a>
                                 </div>
                             </td>
                         </form>

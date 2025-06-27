@@ -6,6 +6,8 @@ from .models import User
 from .auth import auth_bp
 from .main import main_bp
 from .watchlists import watch_bp
+from .portfolio import portfolio_bp
+from .alerts import alerts_bp
 from .tasks import start_scheduler
 
 
@@ -45,6 +47,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(watch_bp)
+    app.register_blueprint(portfolio_bp)
+    app.register_blueprint(alerts_bp)
 
     with app.app_context():
         db.create_all()
