@@ -1,0 +1,74 @@
+from datetime import datetime, timedelta
+
+from werkzeug.security import generate_password_hash
+
+from stockapp.models import User, WatchlistItem, Alert
+
+
+def test_signup_login_logout(client, app, monkeypatch):
+    sent = []
+    monkeypatch.setattr('stockapp.utils.send_email', lambda *args, **kw: sent.append(args))
+    resp = client.post('/signup', data={'username':'new','email':'n@e.com','password':'pass'}, follow_redirects=True)
+    assert b'Check your email' in resp.data
+    with app.app_context():
+        user = User.query.filter_by(username='new').first()
+        token = user.verification_token
+    resp = client.get(f'/verify/{token}', follow_redirects=True)
+    assert b'Email verified' in resp.data
+    resp = client.post('/login', data={'username':'new','password':'pass'}, follow_redirects=True)
+    assert b'MarketMinder' in resp.data
+    resp = client.get('/logout', follow_redirects=True)
+    assert b'Login' in resp.data
+
+
+def test_watchlist_modifications(auth_client, app):
+    resp = auth_client.post('/watchlist', data={'symbol':'TEST','threshold':15}, follow_redirects=True)
+    assert b'TEST' in resp.data
+    with app.app_context():
+        item = WatchlistItem.query.filter_by(symbol='TEST').first()
+        item_id = item.id
+    auth_client.post('/watchlist', data={'item_id':item_id,'threshold':20}, follow_redirects=True)
+    with app.app_context():
+        assert WatchlistItem.query.get(item_id).pe_threshold == 20
+    auth_client.get(f'/watchlist/delete/{item_id}', follow_redirects=True)
+    with app.app_context():
+        assert WatchlistItem.query.get(item_id) is None
+
+
+def test_portfolio_calculations(auth_client, app, monkeypatch):
+    def fake_get_stock_data(symbol):
+        return (
+            'Test Corp','', 'Tech','Software','NASDAQ','USD',
+            100, 5, '1B', 0.5, None,None,None,None,None,None,None,None,
+            None,None,None,None,None
+        )
+    monkeypatch.setattr('stockapp.portfolio.routes.get_stock_data', fake_get_stock_data)
+    auth_client.post('/portfolio', data={'symbol':'AAA','quantity':2,'price_paid':90}, follow_redirects=True)
+    auth_client.post('/portfolio', data={'symbol':'BBB','quantity':1,'price_paid':110}, follow_redirects=True)
+    resp = auth_client.get('/portfolio', follow_redirects=True)
+    assert b'High concentration in Tech' in resp.data
+
+
+def test_check_watchlists(app, monkeypatch):
+    def fake_get_stock(symbol):
+        return (
+            'Test Corp','', 'Tech','Software','NASDAQ','USD',
+            100, 5, '1B', 0.5, None,None,None,None,None,None,None,None,
+            None,None,None,None,None
+        )
+    emails = []
+    monkeypatch.setattr('stockapp.tasks.get_stock_data', fake_get_stock)
+    monkeypatch.setattr('stockapp.tasks.send_email', lambda to, subject, body: emails.append((to, subject, body)))
+    from stockapp.extensions import db
+    with app.app_context():
+        u = User(username='alert', email='a@b.com', password_hash=generate_password_hash('x'), is_verified=True, alert_frequency=1, last_alert_time=datetime.utcnow()-timedelta(hours=2))
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(WatchlistItem(symbol='AAA', user_id=u.id, pe_threshold=10))
+        db.session.commit()
+    from stockapp import tasks
+    tasks.check_watchlists()
+    assert emails
+    with app.app_context():
+        alert = Alert.query.filter_by(user_id=u.id).first()
+        assert alert is not None
