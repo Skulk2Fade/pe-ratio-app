@@ -24,6 +24,7 @@ store secrets in the source code:
 * `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` &ndash; SMTP
   credentials for sending alert emails.
 * `FLASK_DEBUG` &ndash; Set to `1` to enable Flask debug mode (defaults to `0`).
+* `REDIS_URL` &ndash; Optional Redis connection string for caching API responses.
 
 Example:
 
@@ -35,6 +36,7 @@ export SMTP_PORT=587
 export SMTP_USERNAME="user@example.com"
 export SMTP_PASSWORD="password"
 export FLASK_DEBUG=1
+export REDIS_URL="redis://localhost:6379/0"
 ```
 
 ## Setup

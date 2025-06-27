@@ -10,3 +10,4 @@ APScheduler
 plotly
 psycopg2-binary
 pytest
+redis
