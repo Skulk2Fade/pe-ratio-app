@@ -66,5 +66,6 @@ def create_app():
                 db.session.add(user)
                 db.session.commit()
 
-    start_scheduler()
+    if os.environ.get('ENABLE_SCHEDULER', 'true').lower() in ('1', 'true', 'yes'):
+        start_scheduler()
     return app
