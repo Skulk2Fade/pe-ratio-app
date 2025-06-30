@@ -25,7 +25,8 @@ store secrets in the source code:
   credentials for sending alert emails.
 * `FLASK_DEBUG` &ndash; Set to `1` to enable Flask debug mode (defaults to `0`).
 * `REDIS_URL` &ndash; Optional Redis connection string for caching API responses.
-* `ENABLE_SCHEDULER` &ndash; Set to `0` to disable background alert scheduling.
+* `CELERY_BROKER_URL` &ndash; Message broker for background tasks (defaults to a local Redis instance).
+* `CELERY_RESULT_BACKEND` &ndash; Storage for Celery task results (defaults to the same Redis instance).
 
 Example:
 
@@ -38,6 +39,8 @@ export SMTP_USERNAME="user@example.com"
 export SMTP_PASSWORD="password"
 export FLASK_DEBUG=1
 export REDIS_URL="redis://localhost:6379/0"
+export CELERY_BROKER_URL="redis://localhost:6379/0"
+export CELERY_RESULT_BACKEND="redis://localhost:6379/0"
 ```
 
 ## Setup
@@ -55,6 +58,12 @@ The codebase is organized as a Flask package named `stockapp`. The main `app.py`
 
 ```bash
 python app.py
+```
+
+Start the Celery worker in a separate terminal so that scheduled tasks run:
+
+```bash
+celery -A stockapp.tasks.celery worker -B --loglevel=info
 ```
 
 When deploying you can use `/health` to verify that the application is running.
@@ -116,7 +125,7 @@ The main page also hosts several quick calculators:
 
 ## Scheduled Alerts
 
-Alert emails are sent on a schedule using **APScheduler**. Each user can
+Alert emails are sent on a schedule using **Celery**. Each user can
 configure how often their watchlist should be checked. Visit the *Settings*
 page after logging in to choose an alert frequency in hours. The default is 24
 hours. The background job runs hourly and only sends alerts when your selected

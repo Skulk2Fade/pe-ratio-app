@@ -67,7 +67,7 @@ def test_check_watchlists(app, monkeypatch):
         db.session.add(WatchlistItem(symbol='AAA', user_id=u.id, pe_threshold=10))
         db.session.commit()
     from stockapp import tasks
-    tasks.check_watchlists()
+    tasks._check_watchlists()
     assert emails
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
