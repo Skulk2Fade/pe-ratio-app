@@ -61,7 +61,15 @@ def test_check_watchlists(app, monkeypatch):
     monkeypatch.setattr('stockapp.tasks.send_email', lambda to, subject, body: emails.append((to, subject, body)))
     from stockapp.extensions import db
     with app.app_context():
-        u = User(username='alert', email='a@b.com', password_hash=generate_password_hash('x'), is_verified=True, alert_frequency=1, last_alert_time=datetime.utcnow()-timedelta(hours=2))
+        u = User(
+            username='alert',
+            email='a@b.com',
+            password_hash=generate_password_hash('x'),
+            is_verified=True,
+            alert_frequency=1,
+            last_alert_time=datetime.utcnow()-timedelta(hours=2),
+            mfa_enabled=False
+        )
         db.session.add(u)
         db.session.commit()
         db.session.add(WatchlistItem(symbol='AAA', user_id=u.id, pe_threshold=10))
@@ -72,3 +80,23 @@ def test_check_watchlists(app, monkeypatch):
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert is not None
+
+def test_mfa_login_flow(client, app, monkeypatch):
+    sent = []
+    monkeypatch.setattr('stockapp.utils.send_email', lambda *args: sent.append(args))
+    from stockapp.extensions import db
+    with app.app_context():
+        user = User(
+            username='mfa',
+            email='mfa@example.com',
+            password_hash=generate_password_hash('pass'),
+            is_verified=True,
+            mfa_enabled=True,
+        )
+        db.session.add(user)
+        db.session.commit()
+    resp = client.post('/login', data={'username':'mfa','password':'pass'}, follow_redirects=True)
+    assert b'Enter the 6-digit code' in resp.data
+    code = sent[-1][2].split()[-1]
+    resp = client.post('/mfa_verify', data={'code': code}, follow_redirects=True)
+    assert b'MarketMinder' in resp.data

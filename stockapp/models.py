@@ -12,6 +12,9 @@ class User(db.Model, UserMixin):
     reset_token = db.Column(db.String(100), unique=True)
     alert_frequency = db.Column(db.Integer, default=24)
     last_alert_time = db.Column(db.DateTime, default=datetime.utcnow)
+    mfa_enabled = db.Column(db.Boolean, default=False)
+    mfa_code = db.Column(db.String(20))
+    mfa_expiry = db.Column(db.DateTime)
 
 class WatchlistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
