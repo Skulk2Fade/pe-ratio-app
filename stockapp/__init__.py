@@ -8,7 +8,7 @@ from .main import main_bp
 from .watchlists import watch_bp
 from .portfolio import portfolio_bp
 from .alerts import alerts_bp
-from .tasks import start_scheduler
+from .tasks import init_celery
 
 
 def create_app():
@@ -30,6 +30,13 @@ def create_app():
     app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
     app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME', 'user@example.com')
     app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD', 'password')
+
+    app.config['CELERY_BROKER_URL'] = os.environ.get(
+        'CELERY_BROKER_URL', 'redis://localhost:6379/0'
+    )
+    app.config['CELERY_RESULT_BACKEND'] = os.environ.get(
+        'CELERY_RESULT_BACKEND', 'redis://localhost:6379/0'
+    )
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -66,6 +73,5 @@ def create_app():
                 db.session.add(user)
                 db.session.commit()
 
-    if os.environ.get('ENABLE_SCHEDULER', 'true').lower() in ('1', 'true', 'yes'):
-        start_scheduler()
+    init_celery(app)
     return app

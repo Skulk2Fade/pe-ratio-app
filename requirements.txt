@@ -6,7 +6,7 @@ fpdf
 Flask-Login
 Flask-SQLAlchemy
 Flask-WTF
-APScheduler
+celery
 plotly
 psycopg2-binary
 pytest

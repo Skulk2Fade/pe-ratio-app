@@ -8,7 +8,6 @@ def app(monkeypatch):
     os.environ.setdefault('API_KEY', 'demo')
     os.environ['DEFAULT_USERNAME'] = 'tester'
     os.environ['DEFAULT_PASSWORD'] = 'password'
-    os.environ['ENABLE_SCHEDULER'] = '0'
     app = create_app()
     app.config['TESTING'] = True
     yield app
