@@ -6,7 +6,9 @@ from babel.numbers import format_currency
 
 from ..extensions import db
 from ..models import PortfolioItem
-from ..utils import get_locale, get_stock_data
+from statistics import correlation, stdev
+
+from ..utils import get_locale, get_stock_data, get_historical_prices
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
@@ -115,6 +117,8 @@ def portfolio():
                 'current_price': current_price,
                 'value': value,
                 'profit_loss': pl,
+                'price_num': price,
+                'value_num': value_num,
             }
         )
     totals = None
@@ -138,7 +142,61 @@ def portfolio():
                 risk_assessment = f"Moderate concentration in {top['sector']}"
             else:
                 risk_assessment = 'Well diversified across sectors.'
-    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals, diversification=diversification, risk_assessment=risk_assessment)
+        # Calculate correlations and portfolio volatility
+        returns = {}
+        weights = {}
+        for row in data:
+            sym = row['item'].symbol
+            price_num = row['price_num']
+            if price_num is None:
+                continue
+            weights[sym] = row['value_num'] / total_value if total_value else 0
+            _dates, prices = get_historical_prices(sym, days=30)
+            if len(prices) > 1:
+                r = []
+                for i in range(1, len(prices)):
+                    try:
+                        if prices[i-1]:
+                            r.append((prices[i] - prices[i-1]) / prices[i-1])
+                    except Exception:
+                        pass
+                if r:
+                    returns[sym] = r
+        correlations = []
+        if returns:
+            syms = list(returns.keys())
+            for i in range(len(syms)):
+                r1 = returns[syms[i]]
+                for j in range(i + 1, len(syms)):
+                    r2 = returns[syms[j]]
+                    n = min(len(r1), len(r2))
+                    if n > 1:
+                        try:
+                            c = correlation(r1[-n:], r2[-n:])
+                            correlations.append({'pair': f'{syms[i]}-{syms[j]}', 'value': round(c, 2)})
+                        except Exception:
+                            pass
+        portfolio_volatility = None
+        if returns and len(returns) > 0:
+            n = min(len(r) for r in returns.values())
+            if n > 1:
+                portfolio_returns = []
+                for idx in range(-n, 0):
+                    day_ret = 0.0
+                    for sym, r in returns.items():
+                        if len(r) >= n:
+                            day_ret += weights.get(sym, 0) * r[idx]
+                    portfolio_returns.append(day_ret)
+                if len(portfolio_returns) > 1:
+                    try:
+                        vol = stdev(portfolio_returns) * (252 ** 0.5)
+                        portfolio_volatility = round(vol * 100, 2)
+                    except Exception:
+                        portfolio_volatility = None
+    else:
+        correlations = []
+        portfolio_volatility = None
+    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals, diversification=diversification, risk_assessment=risk_assessment, correlations=correlations, portfolio_volatility=portfolio_volatility)
 
 @portfolio_bp.route('/portfolio/delete/<int:item_id>')
 @login_required
