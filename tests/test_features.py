@@ -49,6 +49,28 @@ def test_portfolio_calculations(auth_client, app, monkeypatch):
     assert b'High concentration in Tech' in resp.data
 
 
+def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
+    def fake_get_stock_data(symbol):
+        return (
+            'Test Corp','', 'Tech','Software','NASDAQ','USD',
+            100, 5, '1B', 0.5, None,None,None,None,None,None,None,None,
+            None,None,None,None,None
+        )
+
+    historical = {
+        'AAA': (['d1','d2','d3'], [100, 102, 101]),
+        'BBB': (['d1','d2','d3'], [50, 49, 51]),
+    }
+
+    monkeypatch.setattr('stockapp.portfolio.routes.get_stock_data', fake_get_stock_data)
+    monkeypatch.setattr('stockapp.portfolio.routes.get_historical_prices', lambda s, days=30: historical[s])
+    auth_client.post('/portfolio', data={'symbol':'AAA','quantity':1,'price_paid':90}, follow_redirects=True)
+    auth_client.post('/portfolio', data={'symbol':'BBB','quantity':1,'price_paid':110}, follow_redirects=True)
+    resp = auth_client.get('/portfolio', follow_redirects=True)
+    assert b'Asset Correlations' in resp.data
+    assert b'Portfolio Volatility' in resp.data
+
+
 def test_check_watchlists(app, monkeypatch):
     def fake_get_stock(symbol):
         return (
