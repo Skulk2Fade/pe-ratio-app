@@ -25,6 +25,7 @@ store secrets in the source code:
   credentials for sending alert emails.
 * `FLASK_DEBUG` &ndash; Set to `1` to enable Flask debug mode (defaults to `0`).
 * `REDIS_URL` &ndash; Optional Redis connection string for caching API responses.
+* `ENABLE_SCHEDULER` &ndash; Set to `0` to disable background alert scheduling.
 
 Example:
 
