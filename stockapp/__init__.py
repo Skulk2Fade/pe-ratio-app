@@ -9,34 +9,28 @@ from .watchlists import watch_bp
 from .portfolio import portfolio_bp
 from .alerts import alerts_bp
 from .tasks import init_celery
+from .config import Config, DevelopmentConfig, ProductionConfig
 
 
-def create_app():
+def create_app(config_class=None):
+    """Application factory accepting an optional configuration class."""
     app = Flask(
         __name__,
         template_folder="../templates",
         static_folder="../static",
     )
 
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change_this_secret')
+    # Determine which configuration to use
+    if config_class is None:
+        env = os.environ.get("FLASK_ENV")
+        if env == "development":
+            config_class = DevelopmentConfig
+        elif env == "production":
+            config_class = ProductionConfig
+        else:
+            config_class = Config
 
-    db_url = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
-    if db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    app.config['SMTP_SERVER'] = os.environ.get('SMTP_SERVER', 'smtp.example.com')
-    app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
-    app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME', 'user@example.com')
-    app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD', 'password')
-
-    app.config['CELERY_BROKER_URL'] = os.environ.get(
-        'CELERY_BROKER_URL', 'redis://localhost:6379/0'
-    )
-    app.config['CELERY_RESULT_BACKEND'] = os.environ.get(
-        'CELERY_RESULT_BACKEND', 'redis://localhost:6379/0'
-    )
+    app.config.from_object(config_class())
 
     db.init_app(app)
     login_manager.init_app(app)
