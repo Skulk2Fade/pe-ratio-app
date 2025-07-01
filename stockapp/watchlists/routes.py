@@ -13,6 +13,7 @@ from ..models import (
     StockRecord,
 )
 from ..utils import get_locale, ALERT_PE_THRESHOLD, get_stock_data
+from ..forms import WatchlistAddForm, WatchlistUpdateForm
 
 watch_bp = Blueprint('watch', __name__)
 
@@ -20,22 +21,26 @@ watch_bp = Blueprint('watch', __name__)
 @watch_bp.route('/watchlist', methods=['GET', 'POST'])
 @login_required
 def watchlist():
+    add_form = WatchlistAddForm()
+    update_form = WatchlistUpdateForm()
     if request.method == 'POST':
         if request.form.get('item_id'):
-            item_id = int(request.form['item_id'])
-            threshold = request.form.get('threshold', type=float)
-            item = WatchlistItem.query.get_or_404(item_id)
-            if item.user_id == current_user.id:
-                item.pe_threshold = threshold or ALERT_PE_THRESHOLD
-                db.session.commit()
+            if update_form.validate_on_submit():
+                item_id = update_form.item_id.data
+                threshold = update_form.threshold.data
+                item = WatchlistItem.query.get_or_404(item_id)
+                if item.user_id == current_user.id:
+                    item.pe_threshold = threshold or ALERT_PE_THRESHOLD
+                    db.session.commit()
         else:
-            symbol = request.form['symbol'].upper()
-            threshold = request.form.get('threshold', type=float) or ALERT_PE_THRESHOLD
-            if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
-                db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id, pe_threshold=threshold))
-                db.session.commit()
+            if add_form.validate_on_submit():
+                symbol = add_form.symbol.data.upper()
+                threshold = add_form.threshold.data or ALERT_PE_THRESHOLD
+                if not WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                    db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id, pe_threshold=threshold))
+                    db.session.commit()
     items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
-    return render_template('watchlist.html', items=items, default_threshold=ALERT_PE_THRESHOLD)
+    return render_template('watchlist.html', items=items, add_form=add_form, update_form=update_form, default_threshold=ALERT_PE_THRESHOLD)
 
 
 @watch_bp.route('/watchlist/delete/<int:item_id>')
