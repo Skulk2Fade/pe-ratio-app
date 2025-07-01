@@ -1,19 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ app_name }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+{% extends "base.html" %}
+
+{% block head %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body class="bg-light">
-    <div class="bg-primary text-white text-center py-2 mb-3">
-        <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">
-            <h1 class="h3 m-0">{{ app_name }}</h1>
-        </a>
-    </div>
+{% endblock %}
+
+{% block content %}
     <nav class="navbar navbar-light bg-white shadow-sm">
         <div class="container">
             {% if current_user.is_authenticated %}
@@ -307,13 +298,4 @@
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-</body>
-</html>
+{% endblock %}
