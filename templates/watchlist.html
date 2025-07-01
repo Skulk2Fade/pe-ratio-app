@@ -16,10 +16,10 @@
     <div class="container py-5">
         <h3 class="mb-4">Watchlist</h3>
         <form method="POST" class="mb-3">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {{ add_form.hidden_tag() }}
             <div class="input-group">
-                <input type="text" name="symbol" class="form-control" placeholder="Ticker symbol" required>
-                <input type="number" step="0.01" name="threshold" class="form-control" placeholder="P/E threshold" value="{{ default_threshold }}">
+                {{ add_form.symbol(class="form-control", placeholder="Ticker symbol") }}
+                {{ add_form.threshold(class="form-control", placeholder="P/E threshold", value=default_threshold) }}
                 <button class="btn btn-primary" type="submit">Add</button>
             </div>
         </form>
@@ -28,13 +28,13 @@
             {% for item in items %}
             <li class="list-group-item">
                 <form method="POST" class="d-flex justify-content-between align-items-center">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {{ update_form.csrf_token }}
                     <div>
                         {{ item.symbol }}
-                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        {{ update_form.item_id(value=item.id) }}
                     </div>
                     <div class="input-group" style="width: 200px;">
-                        <input type="number" step="0.01" name="threshold" class="form-control form-control-sm" value="{{ item.pe_threshold }}">
+                        {{ update_form.threshold(class="form-control form-control-sm", value=item.pe_threshold) }}
                         <button class="btn btn-sm btn-primary" type="submit">Update</button>
                         <a href="{{ url_for('watch.delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger ms-1">Delete</a>
                     </div>

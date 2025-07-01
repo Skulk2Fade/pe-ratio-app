@@ -16,16 +16,16 @@
     <div class="container py-5">
         <h3 class="mb-4">Portfolio</h3>
         <form method="POST" class="mb-3">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {{ add_form.hidden_tag() }}
             <div class="row g-2">
                 <div class="col-md-3 col-sm-6">
-                    <input type="text" name="symbol" value="{{ symbol }}" class="form-control" placeholder="Ticker" required>
+                    {{ add_form.symbol(class="form-control", value=symbol, placeholder="Ticker") }}
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <input type="number" step="any" name="quantity" class="form-control" placeholder="Quantity" required>
+                    {{ add_form.quantity(class="form-control", placeholder="Quantity") }}
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <input type="number" step="any" name="price_paid" class="form-control" placeholder="Purchase Price" required>
+                    {{ add_form.price_paid(class="form-control", placeholder="Purchase Price") }}
                 </div>
                 <div class="col-md-3 col-sm-6 d-grid">
                     <button class="btn btn-primary" type="submit">Add</button>
@@ -35,8 +35,8 @@
         <div class="mb-3">
             <a href="{{ url_for('portfolio.export_portfolio') }}" class="btn btn-outline-secondary btn-sm">Export CSV</a>
             <form method="POST" enctype="multipart/form-data" class="d-inline-block ms-2">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="file" name="file" accept=".csv" required class="form-control form-control-sm d-inline-block" style="width:auto; display:inline-block;">
+                {{ import_form.hidden_tag() }}
+                {{ import_form.file(class="form-control form-control-sm d-inline-block", accept=".csv", style="width:auto; display:inline-block;") }}
                 <button class="btn btn-outline-primary btn-sm" type="submit">Import CSV</button>
             </form>
         </div>
@@ -58,11 +58,11 @@
                     {% for row in items %}
                     <tr>
                         <form method="POST">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="item_id" value="{{ row.item.id }}">
+                            {{ update_form.csrf_token }}
+                            {{ update_form.item_id(value=row.item.id) }}
                             <td>{{ row.item.symbol }}</td>
-                            <td><input type="number" step="any" name="quantity" value="{{ row.item.quantity }}" class="form-control form-control-sm"></td>
-                            <td><input type="number" step="any" name="price_paid" value="{{ row.item.price_paid }}" class="form-control form-control-sm"></td>
+                            <td>{{ update_form.quantity(class="form-control form-control-sm", value=row.item.quantity) }}</td>
+                            <td>{{ update_form.price_paid(class="form-control form-control-sm", value=row.item.price_paid) }}</td>
                             <td>{{ row.current_price or 'N/A' }}</td>
                             <td>{{ row.value or 'N/A' }}</td>
                             <td>{{ row.profit_loss or 'N/A' }}</td>

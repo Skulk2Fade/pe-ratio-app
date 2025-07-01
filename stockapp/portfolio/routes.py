@@ -9,6 +9,7 @@ from ..models import PortfolioItem
 from statistics import correlation, stdev
 
 from ..utils import get_locale, get_stock_data, get_historical_prices
+from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
 
 portfolio_bp = Blueprint('portfolio', __name__)
 
@@ -30,13 +31,18 @@ def export_portfolio():
 @login_required
 def portfolio():
     symbol_prefill = request.args.get('symbol', '').upper()
+    add_form = PortfolioAddForm(symbol=symbol_prefill)
+    import_form = PortfolioImportForm()
+    update_form = PortfolioUpdateForm()
+
     if request.method == 'POST':
         if request.files.get('file'):
-            file = request.files['file']
-            content = file.read().decode('utf-8')
-            reader = csv.DictReader(io.StringIO(content))
-            for row in reader:
-                symbol = row.get('Symbol', '').upper()
+            if import_form.validate_on_submit():
+                file = request.files['file']
+                content = file.read().decode('utf-8')
+                reader = csv.DictReader(io.StringIO(content))
+                for row in reader:
+                    symbol = row.get('Symbol', '').upper()
                 try:
                     quantity = float(row.get('Quantity', 0))
                     price_paid = float(row.get('Price Paid', 0))
@@ -52,33 +58,35 @@ def portfolio():
                                 user_id=current_user.id,
                             )
                         )
-            db.session.commit()
-        elif request.form.get('item_id'):
-            item_id = int(request.form['item_id'])
-            quantity = request.form.get('quantity', type=float)
-            price_paid = request.form.get('price_paid', type=float)
-            item = PortfolioItem.query.get_or_404(item_id)
-            if item.user_id == current_user.id:
-                if quantity is not None:
-                    item.quantity = quantity
-                if price_paid is not None:
-                    item.price_paid = price_paid
                 db.session.commit()
-        else:
-            symbol = request.form['symbol'].upper()
-            quantity = request.form.get('quantity', type=float)
-            price_paid = request.form.get('price_paid', type=float)
-            if quantity is not None and price_paid is not None:
-                if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
-                    db.session.add(
-                        PortfolioItem(
-                            symbol=symbol,
-                            quantity=quantity,
-                            price_paid=price_paid,
-                            user_id=current_user.id,
-                        )
-                    )
+        elif request.form.get('item_id'):
+            if update_form.validate_on_submit():
+                item_id = update_form.item_id.data
+                quantity = update_form.quantity.data
+                price_paid = update_form.price_paid.data
+                item = PortfolioItem.query.get_or_404(item_id)
+                if item.user_id == current_user.id:
+                    if quantity is not None:
+                        item.quantity = quantity
+                    if price_paid is not None:
+                        item.price_paid = price_paid
                     db.session.commit()
+        else:
+            if add_form.validate_on_submit():
+                symbol = add_form.symbol.data.upper()
+                quantity = add_form.quantity.data
+                price_paid = add_form.price_paid.data
+                if quantity is not None and price_paid is not None:
+                    if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                        db.session.add(
+                            PortfolioItem(
+                                symbol=symbol,
+                                quantity=quantity,
+                                price_paid=price_paid,
+                                user_id=current_user.id,
+                            )
+                        )
+                        db.session.commit()
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
     data = []
     total_value = 0.0
@@ -196,7 +204,19 @@ def portfolio():
     else:
         correlations = []
         portfolio_volatility = None
-    return render_template('portfolio.html', items=data, symbol=symbol_prefill, totals=totals, diversification=diversification, risk_assessment=risk_assessment, correlations=correlations, portfolio_volatility=portfolio_volatility)
+    return render_template(
+        'portfolio.html',
+        items=data,
+        symbol=symbol_prefill,
+        totals=totals,
+        diversification=diversification,
+        risk_assessment=risk_assessment,
+        correlations=correlations,
+        portfolio_volatility=portfolio_volatility,
+        add_form=add_form,
+        import_form=import_form,
+        update_form=update_form,
+    )
 
 @portfolio_bp.route('/portfolio/delete/<int:item_id>')
 @login_required

@@ -7,6 +7,7 @@ import secrets
 from ..extensions import db, login_manager
 from ..models import User
 from ..utils import send_email
+from ..forms import SignupForm, LoginForm
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -16,12 +17,13 @@ def load_user(user_id):
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
+    form = SignupForm()
     error = None
     message = None
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form.get('email')
-        password = request.form['password']
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
         if User.query.filter_by(username=username).first():
             error = 'Username already exists'
         else:
@@ -37,7 +39,7 @@ def signup():
             verify_link = url_for('auth.verify_email', token=token, _external=True)
             send_email(email, 'Verify your account', f'Please click the link to verify your account: {verify_link}')
             message = 'Check your email to verify your account.'
-    return render_template('signup.html', error=error, message=message)
+    return render_template('signup.html', form=form, error=error, message=message)
 
 
 @auth_bp.route('/verify/<token>')
@@ -55,11 +57,12 @@ def verify_email(token):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    form = LoginForm()
     error = None
     message = None
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             if not user.is_verified:
@@ -77,7 +80,7 @@ def login():
                 return redirect(url_for('main.index'))
         else:
             error = 'Invalid credentials'
-    return render_template('login.html', error=error, message=message)
+    return render_template('login.html', form=form, error=error, message=message)
 
 
 @auth_bp.route('/mfa_verify', methods=['GET', 'POST'])
