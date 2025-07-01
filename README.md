@@ -19,7 +19,8 @@ If `DATABASE_URL` is not provided, a local `app.db` SQLite file will be used.
 Several settings are loaded from environment variables so you do not need to
 store secrets in the source code:
 
-* `SECRET_KEY` &ndash; Flask session secret.
+* `SECRET_KEY` &ndash; Flask session secret. If omitted, a random key is generated
+  at startup (recommended to set in production).
 * `API_KEY` &ndash; Financial Modeling Prep API key (required).
 * `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` &ndash; SMTP
   credentials for sending alert emails.

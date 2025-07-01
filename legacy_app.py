@@ -37,7 +37,7 @@ import secrets
 
 app = Flask(__name__)
 # Load sensitive configuration from environment variables
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change_this_secret")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", secrets.token_hex(16))
 
 # Use DATABASE_URL if provided (e.g. when deployed on Render), otherwise
 # default to a local SQLite database.

@@ -1,10 +1,11 @@
 import os
+import secrets
 
 
 class Config:
     """Base configuration with defaults suitable for production."""
 
-    SECRET_KEY = 'change_this_secret'
+    SECRET_KEY = secrets.token_hex(16)
     SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
