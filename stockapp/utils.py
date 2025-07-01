@@ -1,6 +1,7 @@
 import os
 import time
 import pickle
+import logging
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -23,6 +24,8 @@ if not API_KEY:
 
 ALERT_PE_THRESHOLD = 30
 
+logger = logging.getLogger(__name__)
+
 # Use a requests Session with retries for better resilience
 session = requests.Session()
 retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
@@ -40,7 +43,7 @@ if redis and REDIS_URL:
         _redis = redis.Redis.from_url(REDIS_URL)
         _redis.ping()
     except Exception as e:  # pragma: no cover - handle missing Redis
-        print(f'Redis error: {e}; falling back to local cache')
+        logger.error('Redis error: %s; falling back to local cache', e)
         _redis = None
 
 def _get_cached(key):
@@ -50,7 +53,7 @@ def _get_cached(key):
             if val is not None:
                 return pickle.loads(val)
         except Exception as e:  # pragma: no cover - redis failure
-            print(f'Redis get error: {e}')
+            logger.error('Redis get error: %s', e)
     data = _cache.get(key)
     if not data:
         return None
@@ -66,8 +69,24 @@ def _set_cached(key, value):
             _redis.setex(key, CACHE_TTL, pickle.dumps(value))
             return
         except Exception as e:  # pragma: no cover - redis failure
-            print(f'Redis set error: {e}')
+            logger.error('Redis set error: %s', e)
     _cache[key] = (value, time.time())
+
+
+def _fetch_json(url, desc):
+    """Fetch JSON data from a URL and log any errors."""
+    try:
+        resp = session.get(url, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:  # pragma: no cover - network failure
+        logger.error("Error fetching %s: %s", desc, e)
+        raise
+
+
+def _cached_or_placeholder(key, size=23):
+    cached = _get_cached(key)
+    return cached if cached else (None,) * size
 
 def get_locale():
     if has_request_context():
@@ -84,7 +103,7 @@ def send_email(to, subject, body):
     smtp_user = current_app.config.get('SMTP_USERNAME')
     smtp_pass = current_app.config.get('SMTP_PASSWORD')
     if not all([smtp_server, smtp_user, smtp_pass]):
-        print('Email configuration incomplete')
+        logger.error('Email configuration incomplete')
         return
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -96,7 +115,7 @@ def send_email(to, subject, body):
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
     except Exception as e:
-        print(f'Email error: {e}')
+        logger.error('Email error: %s', e)
 
 def _get_asx_historical_prices(symbol, days=30):
     """Fetch historical prices from Yahoo Finance for ASX tickers."""
@@ -118,7 +137,7 @@ def _get_asx_historical_prices(symbol, days=30):
         dates = [datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") for ts in timestamps]
         return dates, closes
     except Exception as e:
-        print(f"ASX historical error: {e}")
+        logger.error("ASX historical error: %s", e)
         return [], []
 
 
@@ -149,7 +168,7 @@ def get_historical_prices(symbol, days=30):
             _set_cached(cache_key, result)
         return result
     except Exception as e:
-        print(f"Historical API error: {e}")
+        logger.error("Historical API error: %s", e)
         cached = _get_cached(cache_key)
         return cached if cached else ([], [])
 
@@ -210,7 +229,7 @@ def _get_asx_stock_data(symbol):
             None,
         )
     except Exception as e:
-        print(f"ASX API error: {e}")
+        logger.error("ASX API error: %s", e)
         return (None,) * 23
 
 
@@ -232,18 +251,15 @@ def get_stock_data(symbol):
     rating_url = f'https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}'
     growth_url = f'https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}'
     try:
-        quote_response = session.get(quote_url, timeout=10)
-        quote_data = quote_response.json()
+        quote_data = _fetch_json(quote_url, f'quote for {symbol}')
         if not isinstance(quote_data, list) or len(quote_data) == 0:
             raise ValueError('No quote data')
         quote = quote_data[0]
 
-        profile_response = session.get(profile_url, timeout=10)
-        profile_data = profile_response.json()
+        profile_data = _fetch_json(profile_url, f'profile for {symbol}')
         profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
 
-        ratio_response = session.get(ratios_url, timeout=10)
-        ratio_data = ratio_response.json()
+        ratio_data = _fetch_json(ratios_url, f'ratios for {symbol}')
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
         price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
@@ -265,8 +281,7 @@ def get_stock_data(symbol):
             current_ratio = r.get('currentRatioTTM')
 
         metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
-        metrics_response = session.get(metrics_url, timeout=10)
-        metrics_data = metrics_response.json()
+        metrics_data = _fetch_json(metrics_url, f'key metrics for {symbol}')
         fcf_per_share = None
         if isinstance(metrics_data, list) and len(metrics_data) > 0:
             m = metrics_data[0]
@@ -277,14 +292,12 @@ def get_stock_data(symbol):
             )
             fcf_per_share = m.get('freeCashFlowPerShareTTM') or m.get('freeCashFlowPerShare')
 
-        rating_response = session.get(rating_url, timeout=10)
-        rating_data = rating_response.json()
+        rating_data = _fetch_json(rating_url, f'rating for {symbol}')
         analyst_rating = None
         if isinstance(rating_data, list) and len(rating_data) > 0:
             analyst_rating = rating_data[0].get('ratingRecommendation') or rating_data[0].get('rating')
 
-        growth_response = session.get(growth_url, timeout=10)
-        growth_data = growth_response.json()
+        growth_data = _fetch_json(growth_url, f'growth for {symbol}')
         earnings_growth = None
         if isinstance(growth_data, list) and len(growth_data) > 0:
             earnings_growth = growth_data[0].get('growthEPS') or growth_data[0].get('epsgrowth')
@@ -347,7 +360,6 @@ def get_stock_data(symbol):
         if any(item is not None for item in result):
             _set_cached(cache_key, result)
         return result
-    except Exception as e:
-        print(f'API error: {e}')
-        cached = _get_cached(cache_key)
-        return cached if cached else (None,) * 23
+    except Exception:
+        logger.exception('Failed to fetch stock data for %s', symbol)
+        return _cached_or_placeholder(cache_key)
