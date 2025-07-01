@@ -1,24 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ app_name }} - Favorites</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-</head>
-<body class="bg-light">
-    <div class="bg-primary text-white text-center py-2 mb-3">
-        <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">
-            <h1 class="h3 m-0">{{ app_name }}</h1>
-        </a>
-    </div>
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Favorites{% endblock %}
+
+{% block content %}
     <div class="container py-5">
         <h3 class="mb-4">Favorite Tickers</h3>
         <form method="POST" class="mb-3">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="input-group">
-                <input type="text" name="symbol" class="form-control" placeholder="Ticker symbol" required>
+                <input type="text" name="symbol" class="form-control" placeholder="Symbol" required>
                 <button class="btn btn-primary" type="submit">Add</button>
             </div>
         </form>
@@ -36,12 +26,4 @@
         {% endif %}
     <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
     </div>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-</body>
-</html>
+{% endblock %}

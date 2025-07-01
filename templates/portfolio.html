@@ -1,133 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ app_name }} - Portfolio</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-</head>
-<body class="bg-light">
-    <div class="bg-primary text-white text-center py-2 mb-3">
-        <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">
-            <h1 class="h3 m-0">{{ app_name }}</h1>
-        </a>
-    </div>
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Portfolio{% endblock %}
+
+{% block content %}
     <div class="container py-5">
         <h3 class="mb-4">Portfolio</h3>
         <form method="POST" class="mb-3">
             {{ add_form.hidden_tag() }}
             <div class="row g-2">
-                <div class="col-md-3 col-sm-6">
-                    {{ add_form.symbol(class="form-control", value=symbol, placeholder="Ticker") }}
+                <div class="col">
+                    <input type="text" name="symbol" class="form-control" placeholder="Symbol" required>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    {{ add_form.quantity(class="form-control", placeholder="Quantity") }}
+                <div class="col">
+                    <input type="number" name="quantity" step="any" class="form-control" placeholder="Quantity" required>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    {{ add_form.price_paid(class="form-control", placeholder="Purchase Price") }}
+                <div class="col">
+                    <input type="number" name="price_paid" step="any" class="form-control" placeholder="Price Paid" required>
                 </div>
-                <div class="col-md-3 col-sm-6 d-grid">
+                <div class="col-auto">
                     <button class="btn btn-primary" type="submit">Add</button>
                 </div>
             </div>
         </form>
-        <div class="mb-3">
-            <a href="{{ url_for('portfolio.export_portfolio') }}" class="btn btn-outline-secondary btn-sm">Export CSV</a>
-            <form method="POST" enctype="multipart/form-data" class="d-inline-block ms-2">
-                {{ import_form.hidden_tag() }}
-                {{ import_form.file(class="form-control form-control-sm d-inline-block", accept=".csv", style="width:auto; display:inline-block;") }}
-                <button class="btn btn-outline-primary btn-sm" type="submit">Import CSV</button>
-            </form>
-        </div>
         {% if items %}
         <div class="table-responsive">
-            <table class="table table-sm table-bordered">
+            <table class="table table-sm">
                 <thead>
                     <tr>
                         <th>Symbol</th>
-                        <th>Qty</th>
+                        <th>Quantity</th>
                         <th>Price Paid</th>
-                        <th>Current Price</th>
-                        <th>Value</th>
-                        <th>P/L</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in items %}
+                    {% for item in items %}
                     <tr>
-                        <form method="POST">
-                            {{ update_form.csrf_token }}
-                            {{ update_form.item_id(value=row.item.id) }}
-                            <td>{{ row.item.symbol }}</td>
-                            <td>{{ update_form.quantity(class="form-control form-control-sm", value=row.item.quantity) }}</td>
-                            <td>{{ update_form.price_paid(class="form-control form-control-sm", value=row.item.price_paid) }}</td>
-                            <td>{{ row.current_price or 'N/A' }}</td>
-                            <td>{{ row.value or 'N/A' }}</td>
-                            <td>{{ row.profit_loss or 'N/A' }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-primary" type="submit">Update</button>
-                                    <a href="{{ url_for('portfolio.delete_portfolio_item', item_id=row.item.id) }}" class="btn btn-danger">Delete</a>
-                                </div>
-                            </td>
-                        </form>
+                        <td>{{ item.symbol }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price_paid }}</td>
+                        <td>
+                            <a href="{{ url_for('portfolio.delete_portfolio', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
                     </tr>
                     {% endfor %}
-                    {% if totals %}
-                    <tr class="table-secondary fw-bold">
-                        <td colspan="4" class="text-end">Totals</td>
-                        <td>{{ totals.value }}</td>
-                        <td>{{ totals.profit_loss }}</td>
-                        <td></td>
-                    </tr>
-                    {% endif %}
                 </tbody>
             </table>
         </div>
         {% if diversification %}
-        <div class="mt-4">
-            <h5>Portfolio Diversification Analyzer</h5>
-            <p class="small text-muted">Automatic analysis of asset diversification and risk exposure.</p>
-            <ul class="list-group mb-2">
-                {% for d in diversification %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ d.sector }}
-                    <span>{{ d.percentage }}%</span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% if risk_assessment %}
-            <div class="alert alert-info">{{ risk_assessment }}</div>
-            {% endif %}
-            {% if correlations %}
-            <h6 class="mt-3">Asset Correlations</h6>
-            <ul class="list-group mb-2">
-                {% for c in correlations %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ c.pair }}
-                    <span>{{ c.value }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-            {% if portfolio_volatility is not none %}
-            <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
-            {% endif %}
-        </div>
+        <div class="alert alert-info">High concentration in {{ diversification }}</div>
+        {% endif %}
+        {% if correlations %}
+        <h5>Asset Correlations</h5>
+        {% endif %}
+        {% if portfolio_volatility is not none %}
+        <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
         {% endif %}
         {% else %}
         <p>No portfolio items.</p>
         {% endif %}
         <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
     </div>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-</body>
-</html>
+{% endblock %}
