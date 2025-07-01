@@ -45,11 +45,16 @@ export CELERY_RESULT_BACKEND="redis://localhost:6379/0"
 
 ## Setup
 
-Install dependencies:
+Install dependencies and create a virtual environment by running the helper
+script included in the repository:
 
 ```bash
-pip install -r requirements.txt
+./setup_env.sh
+source venv/bin/activate
 ```
+
+The script creates a `venv/` directory in the project root and installs the
+packages listed in `requirements.txt`.
 
 Run the application:
 
@@ -64,6 +69,14 @@ Start the Celery worker in a separate terminal so that scheduled tasks run:
 
 ```bash
 celery -A stockapp.tasks.celery worker -B --loglevel=info
+```
+
+### Running Tests
+
+Once the virtual environment is active you can run the unit tests with:
+
+```bash
+pytest
 ```
 
 When deploying you can use `/health` to verify that the application is running.
