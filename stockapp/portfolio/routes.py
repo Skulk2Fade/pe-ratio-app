@@ -43,21 +43,21 @@ def portfolio():
                 reader = csv.DictReader(io.StringIO(content))
                 for row in reader:
                     symbol = row.get('Symbol', '').upper()
-                try:
-                    quantity = float(row.get('Quantity', 0))
-                    price_paid = float(row.get('Price Paid', 0))
-                except (TypeError, ValueError):
-                    continue
-                if symbol and quantity and price_paid:
-                    if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
-                        db.session.add(
-                            PortfolioItem(
-                                symbol=symbol,
-                                quantity=quantity,
-                                price_paid=price_paid,
-                                user_id=current_user.id,
+                    try:
+                        quantity = float(row.get('Quantity', 0))
+                        price_paid = float(row.get('Price Paid', 0))
+                    except (TypeError, ValueError):
+                        continue
+                    if symbol and quantity and price_paid:
+                        if not PortfolioItem.query.filter_by(user_id=current_user.id, symbol=symbol).first():
+                            db.session.add(
+                                PortfolioItem(
+                                    symbol=symbol,
+                                    quantity=quantity,
+                                    price_paid=price_paid,
+                                    user_id=current_user.id,
+                                )
                             )
-                        )
                 db.session.commit()
         elif request.form.get('item_id'):
             if update_form.validate_on_submit():
