@@ -8,6 +8,7 @@ from .main import main_bp
 from .watchlists import watch_bp
 from .portfolio import portfolio_bp
 from .alerts import alerts_bp
+from .calculators import calc_bp
 from .tasks import init_celery
 from .config import Config, DevelopmentConfig, ProductionConfig
 
@@ -50,6 +51,7 @@ def create_app(config_class=None):
     app.register_blueprint(watch_bp)
     app.register_blueprint(portfolio_bp)
     app.register_blueprint(alerts_bp)
+    app.register_blueprint(calc_bp)
 
     with app.app_context():
         db.create_all()

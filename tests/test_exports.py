@@ -27,12 +27,11 @@ def test_download_pdf(client, monkeypatch):
 
 def test_loan_calculator(client):
     data = {
-        'calc_type': 'loan',
         'loan_amount': 1000,
         'loan_rate': 5,
         'loan_years': 1
     }
-    resp = client.post('/', data=data)
+    resp = client.post('/calc/loan', data=data)
     assert b'Monthly Payment' in resp.data
     assert b'Total Interest' in resp.data
 
