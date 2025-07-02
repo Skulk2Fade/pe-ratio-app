@@ -5,25 +5,6 @@
 {% endblock %}
 
 {% block content %}
-    <nav class="navbar navbar-light bg-white shadow-sm">
-        <div class="container">
-            {% if current_user.is_authenticated %}
-                <span class="navbar-text me-2">Logged in as {{ current_user.username }}</span>
-                <a href="{{ url_for('watch.watchlist') }}" class="btn btn-sm btn-outline-primary me-2">Watchlist</a>
-                <a href="{{ url_for('watch.favorites') }}" class="btn btn-sm btn-outline-primary me-2">Favorites</a>
-                <a href="{{ url_for('portfolio.portfolio') }}" class="btn btn-sm btn-outline-primary me-2">Portfolio</a>
-                <a href="{{ url_for('alerts.alerts') }}" class="btn btn-sm btn-outline-primary me-2">Alerts</a>
-                <a href="{{ url_for('watch.records') }}" class="btn btn-sm btn-outline-primary me-2">Records</a>
-                <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2">Export History</a>
-                <a href="{{ url_for('calc.interest') }}" class="btn btn-sm btn-outline-primary me-2">Calculators</a>
-                <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2">Settings</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">Logout</a>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2">Login</a>
-                <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary">Sign Up</a>
-            {% endif %}
-        </div>
-    </nav>
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-6 col-sm-12">
