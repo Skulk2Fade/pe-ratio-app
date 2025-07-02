@@ -101,6 +101,13 @@ activate your account. Users must verify their email address before being able
 to log in. If you forget your password you can request a reset link from the
 login page which will allow you to choose a new password.
 
+## Two-Factor Authentication
+
+For additional security the app supports time-based one-time passwords (TOTP)
+with authenticator apps like Google Authenticator. When enabled, users must
+enter the 6-digit code from their authenticator after providing their username
+and password.
+
 ## Custom P/E Thresholds
 
 When adding tickers to your watchlist you can specify a custom P/E ratio

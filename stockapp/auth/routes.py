@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import pyotp
 
 from ..extensions import db, login_manager
 from ..models import User
@@ -67,13 +68,8 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             if not user.is_verified:
                 message = 'Please verify your email before logging in.'
-            elif user.mfa_enabled:
-                code = f"{secrets.randbelow(1000000):06}"
-                user.mfa_code = generate_password_hash(code)
-                user.mfa_expiry = datetime.utcnow() + timedelta(minutes=5)
-                db.session.commit()
+            elif user.mfa_enabled and user.mfa_secret:
                 session['mfa_user_id'] = user.id
-                send_email(user.email, 'Your verification code', f'Your login code is {code}')
                 return redirect(url_for('auth.mfa_verify'))
             else:
                 login_user(user)
@@ -90,16 +86,12 @@ def mfa_verify():
     if not user_id:
         return redirect(url_for('auth.login'))
     user = User.query.get(user_id)
-    if not user or not user.mfa_enabled:
+    if not user or not user.mfa_enabled or not user.mfa_secret:
         return redirect(url_for('auth.login'))
     if request.method == 'POST':
         code = request.form.get('code', '')
-        if user.mfa_expiry and user.mfa_expiry < datetime.utcnow():
-            error = 'Code expired'
-        elif user.mfa_code and check_password_hash(user.mfa_code, code):
-            user.mfa_code = None
-            user.mfa_expiry = None
-            db.session.commit()
+        totp = pyotp.TOTP(user.mfa_secret)
+        if totp.verify(code):
             login_user(user)
             session.pop('mfa_user_id', None)
             return redirect(url_for('main.index'))
