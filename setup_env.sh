@@ -3,6 +3,11 @@
 # and install project dependencies.
 set -e
 
+OFFLINE=0
+if [[ "$1" == "--offline" ]]; then
+    OFFLINE=1
+fi
+
 if [ -d "venv" ]; then
     echo "Virtual environment already exists at ./venv" >&2
 else
@@ -17,6 +22,14 @@ source venv/bin/activate
 pip install --upgrade pip
 
 # Install required packages
-pip install -r requirements.txt
+if [ "$OFFLINE" -eq 1 ]; then
+    if [ ! -d "wheelhouse" ]; then
+        echo "Offline mode selected but wheelhouse directory not found" >&2
+        exit 1
+    fi
+    pip install --no-index --find-links=wheelhouse -r requirements.txt
+else
+    pip install -r requirements.txt
+fi
 
 echo "Environment is ready. Activate it with 'source venv/bin/activate'"
