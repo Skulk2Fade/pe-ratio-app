@@ -206,6 +206,7 @@ def portfolio():
         portfolio_volatility = None
     return render_template(
         'portfolio.html',
+        symbols=[row['item'].symbol for row in data],
         items=data,
         symbol=symbol_prefill,
         totals=totals,
