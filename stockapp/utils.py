@@ -73,14 +73,24 @@ def _set_cached(key, value):
     _cache[key] = (value, time.time())
 
 
-def _fetch_json(url, desc):
+def _fetch_json(url, desc, symbol=None):
     """Fetch JSON data from a URL and log any errors."""
     try:
         resp = session.get(url, timeout=10)
         resp.raise_for_status()
         return resp.json()
-    except Exception as e:  # pragma: no cover - network failure
-        logger.error("Error fetching %s: %s", desc, e)
+    except requests.exceptions.RequestException as e:  # pragma: no cover - network failure
+        status = getattr(e.response, "status_code", "unknown")
+        if symbol:
+            logger.error("Error fetching %s for %s: %s (status %s)", desc, symbol, e, status)
+        else:
+            logger.error("Error fetching %s: %s (status %s)", desc, e, status)
+        raise
+    except Exception as e:  # pragma: no cover - other failure
+        if symbol:
+            logger.error("Error fetching %s for %s: %s", desc, symbol, e)
+        else:
+            logger.error("Error fetching %s: %s", desc, e)
         raise
 
 
@@ -126,6 +136,7 @@ def _get_asx_historical_prices(symbol, days=30):
     )
     try:
         resp = session.get(url, timeout=10)
+        resp.raise_for_status()
         data = resp.json()
         result = data.get("chart", {}).get("result", [])
         if not result:
@@ -136,8 +147,12 @@ def _get_asx_historical_prices(symbol, days=30):
         closes = indicators.get("close", [])
         dates = [datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") for ts in timestamps]
         return dates, closes
+    except requests.exceptions.RequestException as e:
+        status = getattr(e.response, "status_code", "unknown")
+        logger.error("ASX historical error for %s: %s (status %s)", symbol, e, status)
+        return [], []
     except Exception as e:
-        logger.error("ASX historical error: %s", e)
+        logger.error("ASX historical error for %s: %s", symbol, e)
         return [], []
 
 
@@ -159,6 +174,7 @@ def get_historical_prices(symbol, days=30):
     )
     try:
         response = session.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
         historical = data.get("historical", [])
         dates = [item.get("date") for item in historical][::-1]
@@ -167,8 +183,13 @@ def get_historical_prices(symbol, days=30):
         if dates:
             _set_cached(cache_key, result)
         return result
+    except requests.exceptions.RequestException as e:
+        status = getattr(e.response, "status_code", "unknown")
+        logger.error("Historical API error for %s: %s (status %s)", symbol, e, status)
+        cached = _get_cached(cache_key)
+        return cached if cached else ([], [])
     except Exception as e:
-        logger.error("Historical API error: %s", e)
+        logger.error("Historical API error for %s: %s", symbol, e)
         cached = _get_cached(cache_key)
         return cached if cached else ([], [])
 
@@ -193,6 +214,7 @@ def _get_asx_stock_data(symbol):
     try:
         url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
         resp = session.get(url, timeout=10)
+        resp.raise_for_status()
         data = resp.json().get("quoteResponse", {}).get("result", [])
         if not data:
             return (None,) * 22
@@ -228,8 +250,12 @@ def _get_asx_stock_data(symbol):
             None,
             None,
         )
+    except requests.exceptions.RequestException as e:
+        status = getattr(e.response, "status_code", "unknown")
+        logger.error("ASX API error for %s: %s (status %s)", symbol, e, status)
+        return (None,) * 23
     except Exception as e:
-        logger.error("ASX API error: %s", e)
+        logger.error("ASX API error for %s: %s", symbol, e)
         return (None,) * 23
 
 
@@ -251,15 +277,15 @@ def get_stock_data(symbol):
     rating_url = f'https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}'
     growth_url = f'https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}'
     try:
-        quote_data = _fetch_json(quote_url, f'quote for {symbol}')
+        quote_data = _fetch_json(quote_url, 'quote', symbol)
         if not isinstance(quote_data, list) or len(quote_data) == 0:
             raise ValueError('No quote data')
         quote = quote_data[0]
 
-        profile_data = _fetch_json(profile_url, f'profile for {symbol}')
+        profile_data = _fetch_json(profile_url, 'profile', symbol)
         profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
 
-        ratio_data = _fetch_json(ratios_url, f'ratios for {symbol}')
+        ratio_data = _fetch_json(ratios_url, 'ratios', symbol)
         debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
         price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
@@ -281,7 +307,7 @@ def get_stock_data(symbol):
             current_ratio = r.get('currentRatioTTM')
 
         metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
-        metrics_data = _fetch_json(metrics_url, f'key metrics for {symbol}')
+        metrics_data = _fetch_json(metrics_url, 'key metrics', symbol)
         fcf_per_share = None
         if isinstance(metrics_data, list) and len(metrics_data) > 0:
             m = metrics_data[0]
@@ -292,12 +318,12 @@ def get_stock_data(symbol):
             )
             fcf_per_share = m.get('freeCashFlowPerShareTTM') or m.get('freeCashFlowPerShare')
 
-        rating_data = _fetch_json(rating_url, f'rating for {symbol}')
+        rating_data = _fetch_json(rating_url, 'rating', symbol)
         analyst_rating = None
         if isinstance(rating_data, list) and len(rating_data) > 0:
             analyst_rating = rating_data[0].get('ratingRecommendation') or rating_data[0].get('rating')
 
-        growth_data = _fetch_json(growth_url, f'growth for {symbol}')
+        growth_data = _fetch_json(growth_url, 'growth', symbol)
         earnings_growth = None
         if isinstance(growth_data, list) and len(growth_data) > 0:
             earnings_growth = growth_data[0].get('growthEPS') or growth_data[0].get('epsgrowth')
