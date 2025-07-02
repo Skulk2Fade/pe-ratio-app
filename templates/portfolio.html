@@ -2,6 +2,11 @@
 
 {% block title %}{{ app_name }} - Portfolio{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
 {% block content %}
     <div class="container py-5">
         <h3 class="mb-4">Portfolio</h3>
@@ -47,11 +52,13 @@
                 </tbody>
             </table>
         </div>
-        {% if diversification %}
-        <div class="alert alert-info">High concentration in {{ diversification }}</div>
+        {% if risk_assessment %}
+        <div class="alert alert-info">{{ risk_assessment }}</div>
         {% endif %}
+        <div id="diversificationChart" class="my-4"></div>
         {% if correlations %}
         <h5>Asset Correlations</h5>
+        <div id="correlationChart" class="my-4"></div>
         {% endif %}
         {% if portfolio_volatility is not none %}
         <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
@@ -61,4 +68,41 @@
         {% endif %}
         <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const diversification = {{ diversification|tojson }};
+    if (diversification.length > 0) {
+        const labels = diversification.map(d => d.sector);
+        const values = diversification.map(d => d.percentage);
+        Plotly.newPlot('diversificationChart', [{labels, values, type: 'pie'}],
+            {title: 'Sector Allocation'});
+    }
+    const correlations = {{ correlations|tojson }};
+    const symbols = {{ symbols|tojson }};
+    if (correlations.length > 0) {
+        const n = symbols.length;
+        const matrix = Array.from({length: n}, () => Array(n).fill(1));
+        correlations.forEach(c => {
+            const parts = c.pair.split('-');
+            const i = symbols.indexOf(parts[0]);
+            const j = symbols.indexOf(parts[1]);
+            if (i > -1 && j > -1) {
+                matrix[i][j] = c.value;
+                matrix[j][i] = c.value;
+            }
+        });
+        const data = [{
+            z: matrix,
+            x: symbols,
+            y: symbols,
+            type: 'heatmap',
+            zmin: -1,
+            zmax: 1,
+            colorscale: 'RdBu'
+        }];
+        Plotly.newPlot('correlationChart', data, {title: 'Correlation Heatmap'});
+    }
+</script>
 {% endblock %}
