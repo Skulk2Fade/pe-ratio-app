@@ -57,6 +57,23 @@ source venv/bin/activate
 The script creates a `venv/` directory in the project root and installs the
 packages listed in `requirements.txt`.
 
+If your environment does not have internet access you can install dependencies
+from a local **wheelhouse** directory instead. First, on a machine with
+connectivity, download the required packages:
+
+```bash
+pip download -d wheelhouse -r requirements.txt
+```
+
+Copy the generated `wheelhouse/` directory alongside this repository and run:
+
+```bash
+./setup_env.sh --offline
+```
+
+This tells the setup script to install packages using the local cache so tests
+can run without external network access.
+
 Run the application:
 
 The codebase is organized as a Flask package named `stockapp`. The main `app.py` file simply creates the Flask app from this package.
