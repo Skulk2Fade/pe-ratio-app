@@ -15,6 +15,7 @@ class User(db.Model, UserMixin):
     mfa_enabled = db.Column(db.Boolean, default=False)
     mfa_code = db.Column(db.String(20))
     mfa_expiry = db.Column(db.DateTime)
+    mfa_secret = db.Column(db.String(32))
 
 class WatchlistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)

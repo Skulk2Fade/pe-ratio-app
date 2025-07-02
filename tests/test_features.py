@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from werkzeug.security import generate_password_hash
+import pyotp
 
 from stockapp.models import User, WatchlistItem, Alert
 
@@ -103,10 +104,9 @@ def test_check_watchlists(app, monkeypatch):
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert is not None
 
-def test_mfa_login_flow(client, app, monkeypatch):
-    sent = []
-    monkeypatch.setattr('stockapp.utils.send_email', lambda *args: sent.append(args))
+def test_mfa_login_flow(client, app):
     from stockapp.extensions import db
+    secret = pyotp.random_base32()
     with app.app_context():
         user = User(
             username='mfa',
@@ -114,11 +114,13 @@ def test_mfa_login_flow(client, app, monkeypatch):
             password_hash=generate_password_hash('pass'),
             is_verified=True,
             mfa_enabled=True,
+            mfa_secret=secret,
         )
         db.session.add(user)
         db.session.commit()
     resp = client.post('/login', data={'username':'mfa','password':'pass'}, follow_redirects=True)
     assert b'Enter the 6-digit code' in resp.data
-    code = sent[-1][2].split()[-1]
+    totp = pyotp.TOTP(secret)
+    code = totp.now()
     resp = client.post('/mfa_verify', data={'code': code}, follow_redirects=True)
     assert b'MarketMinder' in resp.data
