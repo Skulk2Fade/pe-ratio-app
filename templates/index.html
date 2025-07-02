@@ -62,59 +62,125 @@
                                 {% endif %}
                                                                 <p class="text-muted">({{ symbol }})</p>
                             </div>
-                            <p><strong>Price:</strong> {{ price }}</p>
-                            <p><strong>EPS:</strong> {{ eps }}</p>
-                            <p><strong>P/E Ratio:</strong> {{ pe_ratio }}</p>
-                            {% if alert_message %}
-                                <div class="alert alert-warning mt-2">{{ alert_message }}</div>
-                            {% endif %}
-                            <p><strong>Valuation:</strong> {{ valuation }}</p>
-                            <p><strong>Market Cap:</strong> {{ market_cap }}</p>
-                            {% if debt_to_equity %}
-                                <p><strong>Debt/Equity Ratio:</strong> {{ debt_to_equity }}</p>
-                            {% endif %}
-                            {% if pb_ratio %}
-                                <p><strong>P/B Ratio:</strong> {{ pb_ratio }}</p>
-                            {% endif %}
-                            {% if roe is not none %}
-                                <p><strong>ROE:</strong> {{ roe }}%</p>
-                            {% endif %}
-                            {% if roa is not none %}
-                                <p><strong>ROA:</strong> {{ roa }}%</p>
-                            {% endif %}
-                            {% if profit_margin is not none %}
-                                <p><strong>Profit Margin:</strong> {{ profit_margin }}%</p>
-                            {% endif %}
-                            {% if analyst_rating %}
-                                <p><strong>Analyst Rating:</strong> {{ analyst_rating }}</p>
-                            {% endif %}
-                            {% if dividend_yield is not none %}
-                                <p><strong>Dividend Yield:</strong> {{ dividend_yield }}%</p>
-                            {% endif %}
-                            {% if payout_ratio is not none %}
-                                <p><strong>Dividend Payout Ratio:</strong> {{ payout_ratio }}%</p>
-                            {% endif %}
-                            {% if earnings_growth is not none %}
-                                <p><strong>Earnings Growth:</strong> {{ earnings_growth }}%</p>
-                            {% endif %}
-                            {% if forward_pe is not none %}
-                                <p><strong>Forward P/E:</strong> {{ forward_pe }}</p>
-                            {% endif %}
-                            {% if peg_ratio is not none %}
-                                <p><strong>PEG Ratio:</strong> {{ peg_ratio }}</p>
-                            {% endif %}
-                            {% if price_to_sales is not none %}
-                                <p><strong>P/S Ratio:</strong> {{ price_to_sales }}</p>
-                            {% endif %}
-                            {% if ev_to_ebitda is not none %}
-                                <p><strong>EV/EBITDA:</strong> {{ ev_to_ebitda }}</p>
-                            {% endif %}
-                            {% if price_to_fcf is not none %}
-                                <p><strong>P/FCF Ratio:</strong> {{ price_to_fcf }}</p>
-                            {% endif %}
-                            {% if current_ratio is not none %}
-                                <p><strong>Current Ratio:</strong> {{ current_ratio }}</p>
-                            {% endif %}
+                             <div class="table-responsive mt-3">
+                                 <table class="table table-sm table-striped mb-0">
+                                     <tbody>
+                                         <tr>
+                                             <th scope="row">Price</th>
+                                             <td>{{ price }}</td>
+                                         </tr>
+                                         <tr>
+                                             <th scope="row">EPS</th>
+                                             <td>{{ eps }}</td>
+                                         </tr>
+                                         <tr>
+                                             <th scope="row">P/E Ratio</th>
+                                             <td>{{ pe_ratio }}</td>
+                                         </tr>
+                                         <tr>
+                                             <th scope="row">Valuation</th>
+                                             <td>{{ valuation }}</td>
+                                         </tr>
+                                         <tr>
+                                             <th scope="row">Market Cap</th>
+                                             <td>{{ market_cap }}</td>
+                                         </tr>
+                                         {% if debt_to_equity %}
+                                         <tr>
+                                             <th scope="row">Debt/Equity Ratio</th>
+                                             <td>{{ debt_to_equity }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if pb_ratio %}
+                                         <tr>
+                                             <th scope="row">P/B Ratio</th>
+                                             <td>{{ pb_ratio }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if roe is not none %}
+                                         <tr>
+                                             <th scope="row">ROE</th>
+                                             <td>{{ roe }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if roa is not none %}
+                                         <tr>
+                                             <th scope="row">ROA</th>
+                                             <td>{{ roa }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if profit_margin is not none %}
+                                         <tr>
+                                             <th scope="row">Profit Margin</th>
+                                             <td>{{ profit_margin }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if analyst_rating %}
+                                         <tr>
+                                             <th scope="row">Analyst Rating</th>
+                                             <td>{{ analyst_rating }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if dividend_yield is not none %}
+                                         <tr>
+                                             <th scope="row">Dividend Yield</th>
+                                             <td>{{ dividend_yield }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if payout_ratio is not none %}
+                                         <tr>
+                                             <th scope="row">Dividend Payout Ratio</th>
+                                             <td>{{ payout_ratio }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if earnings_growth is not none %}
+                                         <tr>
+                                             <th scope="row">Earnings Growth</th>
+                                             <td>{{ earnings_growth }}%</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if forward_pe is not none %}
+                                         <tr>
+                                             <th scope="row">Forward P/E</th>
+                                             <td>{{ forward_pe }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if peg_ratio is not none %}
+                                         <tr>
+                                             <th scope="row">PEG Ratio</th>
+                                             <td>{{ peg_ratio }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if price_to_sales is not none %}
+                                         <tr>
+                                             <th scope="row">P/S Ratio</th>
+                                             <td>{{ price_to_sales }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if ev_to_ebitda is not none %}
+                                         <tr>
+                                             <th scope="row">EV/EBITDA</th>
+                                             <td>{{ ev_to_ebitda }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if price_to_fcf is not none %}
+                                         <tr>
+                                             <th scope="row">P/FCF Ratio</th>
+                                             <td>{{ price_to_fcf }}</td>
+                                         </tr>
+                                         {% endif %}
+                                         {% if current_ratio is not none %}
+                                         <tr>
+                                             <th scope="row">Current Ratio</th>
+                                             <td>{{ current_ratio }}</td>
+                                         </tr>
+                                         {% endif %}
+                                     </tbody>
+                                 </table>
+                             </div>
+                             {% if alert_message %}
+                                 <div class="alert alert-warning mt-2">{{ alert_message }}</div>
+                             {% endif %}
                             {% if current_user.is_authenticated and symbol %}
                                 <a href="{{ url_for('watch.add_watchlist', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Watchlist</a>
                                 <a href="{{ url_for('watch.add_favorite', symbol=symbol) }}" class="btn btn-sm btn-outline-primary mb-2">Add to Favorites</a>
