@@ -26,6 +26,14 @@
                                 {{ form.email(class="form-control") }}
                             </div>
                             <div class="mb-3">
+                                {{ form.phone.label(class="form-label") }}
+                                {{ form.phone(class="form-control") }}
+                            </div>
+                            <div class="form-check mb-3">
+                                {{ form.sms_opt_in(class="form-check-input") }}
+                                {{ form.sms_opt_in.label(class="form-check-label") }}
+                            </div>
+                            <div class="mb-3">
                                 {{ form.password.label(class="form-label") }}
                                 {{ form.password(class="form-control") }}
                             </div>

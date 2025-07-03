@@ -25,6 +25,8 @@ def signup():
         username = form.username.data
         email = form.email.data
         password = form.password.data
+        phone = form.phone.data
+        sms_opt_in = form.sms_opt_in.data
         if User.query.filter_by(username=username).first():
             error = 'Username already exists'
         else:
@@ -33,6 +35,8 @@ def signup():
                 username=username,
                 password_hash=generate_password_hash(password),
                 email=email,
+                phone_number=phone,
+                sms_opt_in=sms_opt_in,
                 verification_token=token,
             )
             db.session.add(user)

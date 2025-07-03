@@ -9,7 +9,7 @@ from stockapp.models import User, WatchlistItem, Alert
 def test_signup_login_logout(client, app, monkeypatch):
     sent = []
     monkeypatch.setattr('stockapp.utils.send_email', lambda *args, **kw: sent.append(args))
-    resp = client.post('/signup', data={'username':'new','email':'n@e.com','password':'pass'}, follow_redirects=True)
+    resp = client.post('/signup', data={'username':'new','email':'n@e.com','password':'pass','phone':'123','sms_opt_in':'y'}, follow_redirects=True)
     assert b'Check your email' in resp.data
     with app.app_context():
         user = User.query.filter_by(username='new').first()
@@ -83,8 +83,10 @@ def test_check_watchlists(app, monkeypatch):
             None,None,None,None,None
         )
     emails = []
+    sms = []
     monkeypatch.setattr('stockapp.tasks.get_stock_data', fake_get_stock)
     monkeypatch.setattr('stockapp.tasks.send_email', lambda to, subject, body: emails.append((to, subject, body)))
+    monkeypatch.setattr('stockapp.tasks.send_sms', lambda to, body: sms.append((to, body)))
     from stockapp.extensions import db
     with app.app_context():
         u = User(
@@ -94,7 +96,9 @@ def test_check_watchlists(app, monkeypatch):
             is_verified=True,
             alert_frequency=1,
             last_alert_time=datetime.utcnow()-timedelta(hours=2),
-            mfa_enabled=False
+            mfa_enabled=False,
+            phone_number='123',
+            sms_opt_in=True,
         )
         db.session.add(u)
         db.session.commit()
@@ -103,6 +107,7 @@ def test_check_watchlists(app, monkeypatch):
     from stockapp import tasks
     tasks._check_watchlists()
     assert emails
+    assert sms
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert is not None

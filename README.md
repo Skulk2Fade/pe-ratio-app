@@ -28,6 +28,7 @@ store secrets in the source code:
 * `REDIS_URL` &ndash; Optional Redis connection string for caching API responses.
 * `CELERY_BROKER_URL` &ndash; Message broker for background tasks (defaults to a local Redis instance).
 * `CELERY_RESULT_BACKEND` &ndash; Storage for Celery task results (defaults to the same Redis instance).
+* `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM` &ndash; Optional credentials for sending SMS notifications.
 
 Example:
 
@@ -42,6 +43,9 @@ export FLASK_DEBUG=1
 export REDIS_URL="redis://localhost:6379/0"
 export CELERY_BROKER_URL="redis://localhost:6379/0"
 export CELERY_RESULT_BACKEND="redis://localhost:6379/0"
+export TWILIO_SID="your_twilio_sid"
+export TWILIO_TOKEN="your_twilio_token"
+export TWILIO_FROM="+15551234567"
 ```
 
 ## Setup
@@ -168,6 +172,9 @@ configure how often their watchlist should be checked. Visit the *Settings*
 page after logging in to choose an alert frequency in hours. The default is 24
 hours. The background job runs hourly and only sends alerts when your selected
 interval has elapsed.
+If you provide a phone number and enable SMS alerts in Settings, an additional
+text message will be sent alongside the email whenever a P/E alert is
+triggered.
 
 ## Viewing Alerts
 
