@@ -20,6 +20,9 @@ dist/
 app.db
 *.sqlite3
 
+# Environment files
+.env
+
 # Misc
 .DS_Store
 *.swp

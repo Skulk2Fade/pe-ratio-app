@@ -1,5 +1,10 @@
 import os
 import secrets
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load variables from a .env file if present
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 class Config:
