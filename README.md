@@ -22,6 +22,16 @@ This Flask application calculates P/E ratios and stores user data using SQLAlche
    For scheduled alerts run a Celery worker. See [docs/advanced_features.md](docs/advanced_features.md) for details.
 5. Run the tests with `pytest`.
 
+### Docker Compose
+
+A `docker-compose.yml` file is provided to run the app along with Redis, Celery and PostgreSQL. Build and start the stack with:
+
+```bash
+docker compose up --build
+```
+
+The web interface will be available at http://localhost:5000.
+
 Additional documentation can be found in [docs/advanced_features.md](docs/advanced_features.md) and [docs/contributing.md](docs/contributing.md).
 ## Database Configuration
 
