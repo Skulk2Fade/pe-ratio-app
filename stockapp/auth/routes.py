@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
@@ -38,6 +38,7 @@ def signup():
                 phone_number=phone,
                 sms_opt_in=sms_opt_in,
                 verification_token=token,
+                verification_token_sent=datetime.utcnow(),
             )
             db.session.add(user)
             db.session.commit()
@@ -50,9 +51,10 @@ def signup():
 @auth_bp.route('/verify/<token>')
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
-    if user:
+    if user and user.verification_token_sent and datetime.utcnow() - user.verification_token_sent <= timedelta(hours=24):
         user.is_verified = True
         user.verification_token = None
+        user.verification_token_sent = None
         db.session.commit()
         msg = 'Email verified. You can now log in.'
     else:
@@ -114,6 +116,7 @@ def forgot_password():
         if user:
             token = secrets.token_urlsafe(16)
             user.reset_token = token
+            user.reset_token_sent = datetime.utcnow()
             db.session.commit()
             reset_link = url_for('auth.reset_password', token=token, _external=True)
             send_email(email, 'Password reset', f'Click the link to reset your password: {reset_link}')
@@ -128,7 +131,7 @@ def reset_password(token):
     error = None
     message = None
     user = User.query.filter_by(reset_token=token).first()
-    if not user:
+    if not user or not user.reset_token_sent or datetime.utcnow() - user.reset_token_sent > timedelta(hours=1):
         error = 'Invalid or expired token'
         return render_template('reset_password.html', error=error)
     if request.method == 'POST':
@@ -136,6 +139,7 @@ def reset_password(token):
         if password:
             user.password_hash = generate_password_hash(password)
             user.reset_token = None
+            user.reset_token_sent = None
             db.session.commit()
             message = 'Password updated. You can now log in.'
         else:

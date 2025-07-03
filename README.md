@@ -20,7 +20,7 @@ Several settings are loaded from environment variables so you do not need to
 store secrets in the source code:
 
 * `SECRET_KEY` &ndash; Flask session secret. If omitted, a random key is generated
-  at startup (recommended to set in production).
+  at startup. **In production this variable must be set or the app will not start.**
 * `API_KEY` &ndash; Financial Modeling Prep API key (required).
 * `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` &ndash; SMTP
   credentials for sending alert emails.
@@ -131,8 +131,9 @@ environment variables before running the app.
 
 After signing up the app sends a verification email containing a link to
 activate your account. Users must verify their email address before being able
-to log in. If you forget your password you can request a reset link from the
-login page which will allow you to choose a new password.
+to log in. Verification links expire after 24 hours. If you forget your password
+you can request a reset link from the login page which will allow you to choose
+a new password. Password reset links expire after 1 hour.
 
 ## Two-Factor Authentication
 
