@@ -12,6 +12,7 @@ from ..utils import get_locale
 
 # portfolio management helpers
 
+
 def import_portfolio_items(file_storage, user_id: int) -> None:
     """Import portfolio items from an uploaded CSV file."""
     content = file_storage.read().decode("utf-8")
@@ -24,7 +25,9 @@ def import_portfolio_items(file_storage, user_id: int) -> None:
         except (TypeError, ValueError):
             continue
         if symbol and quantity and price_paid:
-            if not PortfolioItem.query.filter_by(user_id=user_id, symbol=symbol).first():
+            if not PortfolioItem.query.filter_by(
+                user_id=user_id, symbol=symbol
+            ).first():
                 db.session.add(
                     PortfolioItem(
                         symbol=symbol,
@@ -130,7 +133,9 @@ def calculate_portfolio_analysis(
     if items and totals_currency:
         totals = {
             "value": format_currency(total_value, totals_currency, locale=get_locale()),
-            "profit_loss": format_currency(total_pl, totals_currency, locale=get_locale()),
+            "profit_loss": format_currency(
+                total_pl, totals_currency, locale=get_locale()
+            ),
         }
 
     diversification = []
@@ -179,7 +184,9 @@ def calculate_portfolio_analysis(
                     if n > 1:
                         try:
                             c = correlation(r1[-n:], r2[-n:])
-                            correlations.append({"pair": f"{syms[i]}-{syms[j]}", "value": round(c, 2)})
+                            correlations.append(
+                                {"pair": f"{syms[i]}-{syms[j]}", "value": round(c, 2)}
+                            )
                         except Exception:
                             pass
         portfolio_volatility = None
@@ -203,7 +210,10 @@ def calculate_portfolio_analysis(
         correlations = []
         portfolio_volatility = None
 
-    news_data = {row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3) for row in data}
+    news_data = {
+        row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
+        for row in data
+    }
 
     return {
         "data": data,

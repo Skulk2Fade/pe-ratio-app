@@ -18,13 +18,16 @@ try:
     from redis.exceptions import RedisError
 except Exception:  # pragma: no cover - optional dependency
     redis = None
+
     class RedisError(Exception):
         """Fallback Redis error when redis package is unavailable."""
+
         pass
 
-API_KEY = os.environ.get('API_KEY')
+
+API_KEY = os.environ.get("API_KEY")
 if not API_KEY:
-    raise RuntimeError('API_KEY environment variable not set')
+    raise RuntimeError("API_KEY environment variable not set")
 
 ALERT_PE_THRESHOLD = 30
 
@@ -34,12 +37,12 @@ logger = logging.getLogger(__name__)
 session = requests.Session()
 retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
 adapter = HTTPAdapter(max_retries=retries)
-session.mount('http://', adapter)
-session.mount('https://', adapter)
+session.mount("http://", adapter)
+session.mount("https://", adapter)
 
 # Cache configuration. Uses Redis when available with in-memory fallback
-CACHE_TTL = int(os.environ.get('API_CACHE_TTL', 3600))
-REDIS_URL = os.environ.get('REDIS_URL')
+CACHE_TTL = int(os.environ.get("API_CACHE_TTL", 3600))
+REDIS_URL = os.environ.get("REDIS_URL")
 _cache = {}
 _redis = None
 if redis and REDIS_URL:
@@ -47,8 +50,9 @@ if redis and REDIS_URL:
         _redis = redis.Redis.from_url(REDIS_URL)
         _redis.ping()
     except Exception as e:  # pragma: no cover - handle missing Redis
-        logger.error('Redis error: %s; falling back to local cache', e)
+        logger.error("Redis error: %s; falling back to local cache", e)
         _redis = None
+
 
 def _get_cached(key):
     if _redis:
@@ -57,9 +61,9 @@ def _get_cached(key):
             if val is not None:
                 return pickle.loads(val)
         except RedisError as e:  # pragma: no cover - redis failure
-            logger.error('Redis get error for %s: %s', key, e)
+            logger.error("Redis get error for %s: %s", key, e)
         except Exception:
-            logger.exception('Unexpected Redis get error for %s', key)
+            logger.exception("Unexpected Redis get error for %s", key)
     data = _cache.get(key)
     if not data:
         return None
@@ -69,15 +73,16 @@ def _get_cached(key):
     _cache.pop(key, None)
     return None
 
+
 def _set_cached(key, value):
     if _redis:
         try:
             _redis.setex(key, CACHE_TTL, pickle.dumps(value))
             return
         except RedisError as e:  # pragma: no cover - redis failure
-            logger.error('Redis set error for %s: %s', key, e)
+            logger.error("Redis set error for %s: %s", key, e)
         except Exception:
-            logger.exception('Unexpected Redis set error for %s', key)
+            logger.exception("Unexpected Redis set error for %s", key)
     _cache[key] = (value, time.time())
 
 
@@ -87,10 +92,14 @@ def _fetch_json(url, desc, symbol=None):
         resp = session.get(url, timeout=10)
         resp.raise_for_status()
         return resp.json()
-    except requests.exceptions.RequestException as e:  # pragma: no cover - network failure
+    except (
+        requests.exceptions.RequestException
+    ) as e:  # pragma: no cover - network failure
         status = getattr(e.response, "status_code", "unknown")
         if symbol:
-            logger.error("Error fetching %s for %s: %s (status %s)", desc, symbol, e, status)
+            logger.error(
+                "Error fetching %s for %s: %s (status %s)", desc, symbol, e, status
+            )
         else:
             logger.error("Error fetching %s: %s (status %s)", desc, e, status)
         raise
@@ -106,53 +115,57 @@ def _cached_or_placeholder(key, size=23):
     cached = _get_cached(key)
     return cached if cached else (None,) * size
 
+
 def get_locale():
     if has_request_context():
-        loc = request.accept_languages.best or 'en_US'
+        loc = request.accept_languages.best or "en_US"
         try:
             return str(Locale.parse(loc))
         except Exception:
-            return 'en_US'
-    return 'en_US'
+            return "en_US"
+    return "en_US"
+
 
 def send_email(to, subject, body):
-    smtp_server = current_app.config.get('SMTP_SERVER')
-    smtp_port = current_app.config.get('SMTP_PORT', 587)
-    smtp_user = current_app.config.get('SMTP_USERNAME')
-    smtp_pass = current_app.config.get('SMTP_PASSWORD')
+    smtp_server = current_app.config.get("SMTP_SERVER")
+    smtp_port = current_app.config.get("SMTP_PORT", 587)
+    smtp_user = current_app.config.get("SMTP_USERNAME")
+    smtp_pass = current_app.config.get("SMTP_PASSWORD")
     if not all([smtp_server, smtp_user, smtp_pass]):
-        logger.error('Email configuration incomplete')
+        logger.error("Email configuration incomplete")
         return
     msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = smtp_user
-    msg['To'] = to
+    msg["Subject"] = subject
+    msg["From"] = smtp_user
+    msg["To"] = to
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
     except Exception as e:
-        logger.error('Email error: %s', e)
+        logger.error("Email error: %s", e)
+
 
 def send_sms(to, body):
-    sid = current_app.config.get('TWILIO_SID')
-    token = current_app.config.get('TWILIO_TOKEN')
-    from_number = current_app.config.get('TWILIO_FROM')
+    sid = current_app.config.get("TWILIO_SID")
+    token = current_app.config.get("TWILIO_TOKEN")
+    from_number = current_app.config.get("TWILIO_FROM")
     if not all([sid, token, from_number]):
-        logger.error('SMS configuration incomplete')
+        logger.error("SMS configuration incomplete")
         return
-    url = f'https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json'
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
     try:
         resp = session.post(
             url,
-            data={'From': from_number, 'To': to, 'Body': body},
+            data={"From": from_number, "To": to, "Body": body},
             auth=(sid, token),
             timeout=10,
         )
         resp.raise_for_status()
     except Exception as e:
-        logger.error('SMS error: %s', e)
+        logger.error("SMS error: %s", e)
+
 
 def _get_asx_historical_prices(symbol, days=30):
     """Fetch historical prices from Yahoo Finance for ASX tickers."""
@@ -172,7 +185,9 @@ def _get_asx_historical_prices(symbol, days=30):
         timestamps = chart.get("timestamp", [])
         indicators = chart.get("indicators", {}).get("quote", [{}])[0]
         closes = indicators.get("close", [])
-        dates = [datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") for ts in timestamps]
+        dates = [
+            datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") for ts in timestamps
+        ]
         return dates, closes
     except requests.exceptions.RequestException as e:
         status = getattr(e.response, "status_code", "unknown")
@@ -220,21 +235,23 @@ def get_historical_prices(symbol, days=30):
         cached = _get_cached(cache_key)
         return cached if cached else ([], [])
 
+
 def format_market_cap(value, currency):
     if value is None:
-        return 'N/A'
-    suffix = ''
+        return "N/A"
+    suffix = ""
     if value >= 1_000_000_000_000:
         value /= 1_000_000_000_000
-        suffix = 'T'
+        suffix = "T"
     elif value >= 1_000_000_000:
         value /= 1_000_000_000
-        suffix = 'B'
+        suffix = "B"
     elif value >= 1_000_000:
         value /= 1_000_000
-        suffix = 'M'
+        suffix = "M"
     formatted = format_currency(value, currency, locale=get_locale())
-    return f'{formatted}{suffix}'
+    return f"{formatted}{suffix}"
+
 
 def _get_asx_stock_data(symbol):
     """Retrieve stock information for ASX tickers using Yahoo Finance."""
@@ -254,9 +271,9 @@ def _get_asx_stock_data(symbol):
         exchange = info.get("fullExchangeName", "ASX")
         return (
             name,
-            '',
-            info.get('sector', ''),
-            info.get('industry', ''),
+            "",
+            info.get("sector", ""),
+            info.get("industry", ""),
             exchange,
             currency,
             price,
@@ -292,79 +309,99 @@ def get_stock_data(symbol):
     if cached:
         return cached
 
-    if symbol.lower().endswith('.ax'):
+    if symbol.lower().endswith(".ax"):
         data = _get_asx_stock_data(symbol)
         if any(item is not None for item in data):
             _set_cached(cache_key, data)
         return data
 
-    quote_url = f'https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}'
-    profile_url = f'https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}'
-    ratios_url = f'https://financialmodelingprep.com/api/v3/ratios-ttm/{symbol}?apikey={API_KEY}'
-    rating_url = f'https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}'
-    growth_url = f'https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}'
+    quote_url = (
+        f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
+    )
+    profile_url = (
+        f"https://financialmodelingprep.com/api/v3/profile/{symbol}?apikey={API_KEY}"
+    )
+    ratios_url = (
+        f"https://financialmodelingprep.com/api/v3/ratios-ttm/{symbol}?apikey={API_KEY}"
+    )
+    rating_url = (
+        f"https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={API_KEY}"
+    )
+    growth_url = f"https://financialmodelingprep.com/api/v3/financial-growth/{symbol}?limit=1&apikey={API_KEY}"
     try:
-        quote_data = _fetch_json(quote_url, 'quote', symbol)
+        quote_data = _fetch_json(quote_url, "quote", symbol)
         if not isinstance(quote_data, list) or len(quote_data) == 0:
-            raise ValueError('No quote data')
+            raise ValueError("No quote data")
         quote = quote_data[0]
 
-        profile_data = _fetch_json(profile_url, 'profile', symbol)
-        profile = profile_data[0] if isinstance(profile_data, list) and len(profile_data) > 0 else {}
+        profile_data = _fetch_json(profile_url, "profile", symbol)
+        profile = (
+            profile_data[0]
+            if isinstance(profile_data, list) and len(profile_data) > 0
+            else {}
+        )
 
-        ratio_data = _fetch_json(ratios_url, 'ratios', symbol)
-        debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = payout_ratio = None
+        ratio_data = _fetch_json(ratios_url, "ratios", symbol)
+        debt_to_equity = pb_ratio = roe = roa = profit_margin = dividend_yield = (
+            payout_ratio
+        ) = None
         price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
         if isinstance(ratio_data, list) and len(ratio_data) > 0:
             r = ratio_data[0]
-            debt_to_equity = r.get('debtEquityRatioTTM')
-            pb_ratio = r.get('priceToBookRatioTTM')
-            roe = r.get('returnOnEquityTTM')
-            roa = r.get('returnOnAssetsTTM')
-            profit_margin = r.get('netProfitMarginTTM')
-            dividend_yield = r.get('dividendYielTTM') or r.get('dividendYieldTTM')
-            payout_ratio = r.get('payoutRatioTTM') or r.get('payoutRatio')
-            price_to_sales = r.get('priceToSalesRatioTTM')
+            debt_to_equity = r.get("debtEquityRatioTTM")
+            pb_ratio = r.get("priceToBookRatioTTM")
+            roe = r.get("returnOnEquityTTM")
+            roa = r.get("returnOnAssetsTTM")
+            profit_margin = r.get("netProfitMarginTTM")
+            dividend_yield = r.get("dividendYielTTM") or r.get("dividendYieldTTM")
+            payout_ratio = r.get("payoutRatioTTM") or r.get("payoutRatio")
+            price_to_sales = r.get("priceToSalesRatioTTM")
             price_to_fcf = (
-                r.get('priceToFreeCashFlowRatioTTM')
-                or r.get('priceToFreeCashFlowsRatioTTM')
-                or r.get('priceFreeCashFlowRatioTTM')
-                or r.get('priceCashFlowRatioTTM')
+                r.get("priceToFreeCashFlowRatioTTM")
+                or r.get("priceToFreeCashFlowsRatioTTM")
+                or r.get("priceFreeCashFlowRatioTTM")
+                or r.get("priceCashFlowRatioTTM")
             )
-            current_ratio = r.get('currentRatioTTM')
+            current_ratio = r.get("currentRatioTTM")
 
-        metrics_url = f'https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}'
-        metrics_data = _fetch_json(metrics_url, 'key metrics', symbol)
+        metrics_url = f"https://financialmodelingprep.com/api/v3/key-metrics-ttm/{symbol}?apikey={API_KEY}"
+        metrics_data = _fetch_json(metrics_url, "key metrics", symbol)
         fcf_per_share = None
         if isinstance(metrics_data, list) and len(metrics_data) > 0:
             m = metrics_data[0]
             ev_to_ebitda = (
-                m.get('evToEbitdaTTM')
-                or m.get('evToEbitda')
-                or m.get('enterpriseValueOverEBITDA')
+                m.get("evToEbitdaTTM")
+                or m.get("evToEbitda")
+                or m.get("enterpriseValueOverEBITDA")
             )
-            fcf_per_share = m.get('freeCashFlowPerShareTTM') or m.get('freeCashFlowPerShare')
+            fcf_per_share = m.get("freeCashFlowPerShareTTM") or m.get(
+                "freeCashFlowPerShare"
+            )
 
-        rating_data = _fetch_json(rating_url, 'rating', symbol)
+        rating_data = _fetch_json(rating_url, "rating", symbol)
         analyst_rating = None
         if isinstance(rating_data, list) and len(rating_data) > 0:
-            analyst_rating = rating_data[0].get('ratingRecommendation') or rating_data[0].get('rating')
+            analyst_rating = rating_data[0].get("ratingRecommendation") or rating_data[
+                0
+            ].get("rating")
 
-        growth_data = _fetch_json(growth_url, 'growth', symbol)
+        growth_data = _fetch_json(growth_url, "growth", symbol)
         earnings_growth = None
         if isinstance(growth_data, list) and len(growth_data) > 0:
-            earnings_growth = growth_data[0].get('growthEPS') or growth_data[0].get('epsgrowth')
+            earnings_growth = growth_data[0].get("growthEPS") or growth_data[0].get(
+                "epsgrowth"
+            )
 
-        name = profile.get('companyName', '')
-        logo_url = profile.get('image', '')
-        sector = profile.get('sector', '')
-        industry = profile.get('industry', '')
-        exchange = profile.get('exchangeShortName', '')
-        currency = profile.get('currency', 'USD')
+        name = profile.get("companyName", "")
+        logo_url = profile.get("image", "")
+        sector = profile.get("sector", "")
+        industry = profile.get("industry", "")
+        exchange = profile.get("exchangeShortName", "")
+        currency = profile.get("currency", "USD")
 
-        price = quote.get('price')
-        eps = quote.get('eps')
-        market_cap = format_market_cap(quote.get('marketCap'), currency)
+        price = quote.get("price")
+        eps = quote.get("eps")
+        market_cap = format_market_cap(quote.get("marketCap"), currency)
 
         forward_pe = None
         if price is not None and eps is not None:
@@ -415,13 +452,18 @@ def get_stock_data(symbol):
         return result
     except requests.exceptions.RequestException as e:
         status = getattr(e.response, "status_code", "unknown")
-        logger.error('Network error fetching stock data for %s: %s (status %s)', symbol, e, status)
+        logger.error(
+            "Network error fetching stock data for %s: %s (status %s)",
+            symbol,
+            e,
+            status,
+        )
         return _cached_or_placeholder(cache_key)
     except ValueError as e:
-        logger.error('Data error for %s: %s', symbol, e)
+        logger.error("Data error for %s: %s", symbol, e)
         return _cached_or_placeholder(cache_key)
     except Exception:
-        logger.exception('Unexpected error fetching stock data for %s', symbol)
+        logger.exception("Unexpected error fetching stock data for %s", symbol)
         return _cached_or_placeholder(cache_key)
 
 
@@ -452,7 +494,9 @@ def get_stock_news(symbol, limit=3):
         return articles
     except requests.exceptions.RequestException as e:
         status = getattr(e.response, "status_code", "unknown")
-        logger.error("Network error fetching news for %s: %s (status %s)", symbol, e, status)
+        logger.error(
+            "Network error fetching news for %s: %s (status %s)", symbol, e, status
+        )
         cached = _get_cached(cache_key)
         return cached if cached else []
     except Exception:

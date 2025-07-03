@@ -113,6 +113,18 @@ Once the virtual environment is active you can run the unit tests with:
 pytest
 ```
 
+### Formatting and Linting
+
+Before committing changes run the style checks:
+
+```bash
+black --check .
+flake8
+```
+
+Both tools are installed from `requirements.txt` and also run automatically in
+the GitHub Actions workflow.
+
 When deploying you can use `/health` to verify that the application is running.
 The endpoint simply returns `OK`.
 

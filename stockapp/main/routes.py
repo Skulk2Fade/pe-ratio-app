@@ -1,4 +1,13 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, make_response, current_app
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    session,
+    redirect,
+    url_for,
+    make_response,
+    current_app,
+)
 from flask_login import current_user
 import csv
 import io
@@ -15,35 +24,39 @@ from ..utils import (
     calculate_rsi,
 )
 
-main_bp = Blueprint('main', __name__)
+main_bp = Blueprint("main", __name__)
 
 
-@main_bp.route('/service-worker.js')
+@main_bp.route("/service-worker.js")
 def service_worker():
-    return current_app.send_static_file('service-worker.js')
+    return current_app.send_static_file("service-worker.js")
 
 
-@main_bp.route('/health')
+@main_bp.route("/health")
 def health():
     """Simple health check endpoint."""
-    return 'OK', 200
+    return "OK", 200
 
 
-@main_bp.route('/', methods=['GET', 'POST'])
+@main_bp.route("/", methods=["GET", "POST"])
 def index():
-    symbol = ''
+    symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = None
     sector = industry = exchange = currency = debt_to_equity = None
-    pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = payout_ratio = None
-    earnings_growth = forward_pe = price_to_sales = ev_to_ebitda = price_to_fcf = current_ratio = None
+    pb_ratio = roe = roa = profit_margin = analyst_rating = dividend_yield = (
+        payout_ratio
+    ) = None
+    earnings_growth = forward_pe = price_to_sales = ev_to_ebitda = price_to_fcf = (
+        current_ratio
+    ) = None
     peg_ratio = None
     error_message = alert_message = None
     history_dates = history_prices = []
     ma20 = ma50 = rsi_values = []
     # calculators moved to separate blueprint
 
-    if request.method == 'GET':
-        symbol = request.args.get('ticker', '').upper() or symbol
+    if request.method == "GET":
+        symbol = request.args.get("ticker", "").upper() or symbol
 
     if current_user.is_authenticated:
         history_entries = (
@@ -54,10 +67,10 @@ def index():
         )
         history = [h.symbol for h in history_entries]
     else:
-        history = session.get('history', [])
+        history = session.get("history", [])
 
-    if request.method == 'POST':
-        symbol = request.form.get('ticker', '').upper()
+    if request.method == "POST":
+        symbol = request.form.get("ticker", "").upper()
 
     if symbol:
         try:
@@ -109,27 +122,41 @@ def index():
                     except (TypeError, ValueError):
                         peg_ratio_val = None
                 if peg_ratio_val is not None:
-                    peg_ratio = format_decimal(round(peg_ratio_val, 2), locale=get_locale())
+                    peg_ratio = format_decimal(
+                        round(peg_ratio_val, 2), locale=get_locale()
+                    )
                 if pe_ratio_val < 15:
-                    valuation = 'Undervalued?'
+                    valuation = "Undervalued?"
                 elif pe_ratio_val > 25:
-                    valuation = 'Overvalued?'
+                    valuation = "Overvalued?"
                 else:
-                    valuation = 'Fairly Valued'
+                    valuation = "Fairly Valued"
                 threshold = ALERT_PE_THRESHOLD
                 if current_user.is_authenticated:
-                    item = WatchlistItem.query.filter_by(user_id=current_user.id, symbol=symbol).first()
+                    item = WatchlistItem.query.filter_by(
+                        user_id=current_user.id, symbol=symbol
+                    ).first()
                     if item and item.pe_threshold is not None:
                         threshold = item.pe_threshold
                 if pe_ratio_val > threshold:
-                    alert_message = f'P/E ratio {pe_ratio_val} exceeds threshold of {threshold}'
+                    alert_message = (
+                        f"P/E ratio {pe_ratio_val} exceeds threshold of {threshold}"
+                    )
                     if current_user.is_authenticated:
-                        db.session.add(Alert(symbol=symbol, message=alert_message, user_id=current_user.id))
+                        db.session.add(
+                            Alert(
+                                symbol=symbol,
+                                message=alert_message,
+                                user_id=current_user.id,
+                            )
+                        )
                         db.session.commit()
             elif price is None or eps is None:
-                error_message = 'Price or EPS data is missing.'
+                error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:
-                debt_to_equity = format_decimal(round(debt_to_equity, 2), locale=get_locale())
+                debt_to_equity = format_decimal(
+                    round(debt_to_equity, 2), locale=get_locale()
+                )
             if pb_ratio is not None:
                 pb_ratio = format_decimal(round(pb_ratio, 2), locale=get_locale())
             if roe is not None:
@@ -137,23 +164,39 @@ def index():
             if roa is not None:
                 roa = format_decimal(round(roa * 100, 2), locale=get_locale())
             if profit_margin is not None:
-                profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
+                profit_margin = format_decimal(
+                    round(profit_margin * 100, 2), locale=get_locale()
+                )
             if dividend_yield is not None:
-                dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
+                dividend_yield = format_decimal(
+                    round(dividend_yield * 100, 2), locale=get_locale()
+                )
             if payout_ratio is not None:
-                payout_ratio = format_decimal(round(payout_ratio * 100, 2), locale=get_locale())
+                payout_ratio = format_decimal(
+                    round(payout_ratio * 100, 2), locale=get_locale()
+                )
             if earnings_growth is not None:
-                earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
+                earnings_growth = format_decimal(
+                    round(earnings_growth * 100, 2), locale=get_locale()
+                )
             if forward_pe is not None:
                 forward_pe = format_decimal(round(forward_pe, 2), locale=get_locale())
             if price_to_sales is not None:
-                price_to_sales = format_decimal(round(price_to_sales, 2), locale=get_locale())
+                price_to_sales = format_decimal(
+                    round(price_to_sales, 2), locale=get_locale()
+                )
             if ev_to_ebitda is not None:
-                ev_to_ebitda = format_decimal(round(ev_to_ebitda, 2), locale=get_locale())
+                ev_to_ebitda = format_decimal(
+                    round(ev_to_ebitda, 2), locale=get_locale()
+                )
             if price_to_fcf is not None:
-                price_to_fcf = format_decimal(round(price_to_fcf, 2), locale=get_locale())
+                price_to_fcf = format_decimal(
+                    round(price_to_fcf, 2), locale=get_locale()
+                )
             if current_ratio is not None:
-                current_ratio = format_decimal(round(current_ratio, 2), locale=get_locale())
+                current_ratio = format_decimal(
+                    round(current_ratio, 2), locale=get_locale()
+                )
             if price is not None:
                 price = format_currency(price, currency, locale=get_locale())
             if eps is not None:
@@ -179,12 +222,12 @@ def index():
                         history.remove(symbol)
                     history.insert(0, symbol)
                     history = history[:10]
-                    session['history'] = history
+                    session["history"] = history
         except Exception as e:
             error_message = str(e)
 
     return render_template(
-        'index.html',
+        "index.html",
         symbol=symbol,
         price=price,
         eps=eps,
@@ -223,22 +266,22 @@ def index():
     )
 
 
-@main_bp.route('/clear_history')
+@main_bp.route("/clear_history")
 def clear_history():
     if current_user.is_authenticated:
         History.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
     else:
-        session.pop('history', None)
-    return redirect(url_for('main.index'))
+        session.pop("history", None)
+    return redirect(url_for("main.index"))
 
 
-@main_bp.route('/download')
+@main_bp.route("/download")
 def download():
-    symbol = request.args.get('symbol', '').upper()
-    fmt = request.args.get('format', 'csv').lower()
+    symbol = request.args.get("symbol", "").upper()
+    fmt = request.args.get("format", "csv").lower()
     if not symbol:
-        return 'Symbol missing', 400
+        return "Symbol missing", 400
 
     (
         company_name,
@@ -277,19 +320,19 @@ def download():
             except (TypeError, ValueError):
                 peg_ratio_val = None
         if pe_ratio_val < 15:
-            valuation = 'Undervalued?'
+            valuation = "Undervalued?"
         elif pe_ratio_val > 25:
-            valuation = 'Overvalued?'
+            valuation = "Overvalued?"
         else:
-            valuation = 'Fairly Valued'
+            valuation = "Fairly Valued"
         pe_ratio = format_decimal(pe_ratio_val, locale=get_locale())
         peg_ratio = (
             format_decimal(round(peg_ratio_val, 2), locale=get_locale())
             if peg_ratio_val is not None
-            else 'N/A'
+            else "N/A"
         )
     else:
-        pe_ratio = valuation = peg_ratio = 'N/A'
+        pe_ratio = valuation = peg_ratio = "N/A"
 
     if debt_to_equity is not None:
         debt_to_equity = format_decimal(round(debt_to_equity, 2), locale=get_locale())
@@ -300,13 +343,19 @@ def download():
     if roa is not None:
         roa = format_decimal(round(roa * 100, 2), locale=get_locale())
     if profit_margin is not None:
-        profit_margin = format_decimal(round(profit_margin * 100, 2), locale=get_locale())
+        profit_margin = format_decimal(
+            round(profit_margin * 100, 2), locale=get_locale()
+        )
     if dividend_yield is not None:
-        dividend_yield = format_decimal(round(dividend_yield * 100, 2), locale=get_locale())
+        dividend_yield = format_decimal(
+            round(dividend_yield * 100, 2), locale=get_locale()
+        )
     if payout_ratio is not None:
         payout_ratio = format_decimal(round(payout_ratio * 100, 2), locale=get_locale())
     if earnings_growth is not None:
-        earnings_growth = format_decimal(round(earnings_growth * 100, 2), locale=get_locale())
+        earnings_growth = format_decimal(
+            round(earnings_growth * 100, 2), locale=get_locale()
+        )
     if forward_pe is not None:
         forward_pe = format_decimal(round(forward_pe, 2), locale=get_locale())
     if price_to_sales is not None:
@@ -323,107 +372,115 @@ def download():
     if eps is not None:
         eps = format_currency(eps, currency, locale=get_locale())
 
-    if fmt == 'csv':
+    if fmt == "csv":
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            'Company Name',
-            'Symbol',
-            'Price',
-            'EPS',
-            'P/E Ratio',
-            'PEG Ratio',
-            'Valuation',
-            'Market Cap',
-            'Debt/Equity',
-            'P/B',
-            'ROE %',
-            'ROA %',
-            'Profit Margin %',
-            'Analyst Rating',
-            'Dividend Yield %',
-            'Dividend Payout Ratio %',
-            'Earnings Growth %',
-            'Forward P/E',
-            'P/S Ratio',
-            'EV/EBITDA',
-            'P/FCF Ratio',
-            'Current Ratio',
-            'Sector',
-            'Industry',
-            'Exchange',
-            'Currency',
-        ])
-        writer.writerow([
-            company_name,
-            symbol,
-            price,
-            eps,
-            pe_ratio,
-            peg_ratio,
-            valuation,
-            market_cap,
-            debt_to_equity,
-            pb_ratio,
-            roe,
-            roa,
-            profit_margin,
-            analyst_rating,
-            dividend_yield,
-            payout_ratio,
-            earnings_growth,
-            forward_pe,
-            price_to_sales,
-            ev_to_ebitda,
-            price_to_fcf,
-            current_ratio,
-            sector,
-            industry,
-            exchange,
-            currency,
-        ])
+        writer.writerow(
+            [
+                "Company Name",
+                "Symbol",
+                "Price",
+                "EPS",
+                "P/E Ratio",
+                "PEG Ratio",
+                "Valuation",
+                "Market Cap",
+                "Debt/Equity",
+                "P/B",
+                "ROE %",
+                "ROA %",
+                "Profit Margin %",
+                "Analyst Rating",
+                "Dividend Yield %",
+                "Dividend Payout Ratio %",
+                "Earnings Growth %",
+                "Forward P/E",
+                "P/S Ratio",
+                "EV/EBITDA",
+                "P/FCF Ratio",
+                "Current Ratio",
+                "Sector",
+                "Industry",
+                "Exchange",
+                "Currency",
+            ]
+        )
+        writer.writerow(
+            [
+                company_name,
+                symbol,
+                price,
+                eps,
+                pe_ratio,
+                peg_ratio,
+                valuation,
+                market_cap,
+                debt_to_equity,
+                pb_ratio,
+                roe,
+                roa,
+                profit_margin,
+                analyst_rating,
+                dividend_yield,
+                payout_ratio,
+                earnings_growth,
+                forward_pe,
+                price_to_sales,
+                ev_to_ebitda,
+                price_to_fcf,
+                current_ratio,
+                sector,
+                industry,
+                exchange,
+                currency,
+            ]
+        )
         response = make_response(output.getvalue())
-        response.headers['Content-Disposition'] = f'attachment; filename={symbol}_data.csv'
-        response.headers['Content-Type'] = 'text/csv'
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={symbol}_data.csv"
+        )
+        response.headers["Content-Type"] = "text/csv"
         return response
-    elif fmt == 'pdf':
+    elif fmt == "pdf":
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font('Arial', size=12)
-        pdf.cell(0, 10, txt=f'Stock Data for {symbol}', ln=1)
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, txt=f"Stock Data for {symbol}", ln=1)
         fields = [
-            ('Company Name', company_name),
-            ('Price', price),
-            ('EPS', eps),
-            ('P/E Ratio', pe_ratio),
-            ('PEG Ratio', peg_ratio),
-            ('Valuation', valuation),
-            ('Market Cap', market_cap),
-            ('Debt/Equity', debt_to_equity),
-            ('P/B', pb_ratio),
-            ('ROE %', roe),
-            ('ROA %', roa),
-            ('Profit Margin %', profit_margin),
-            ('Analyst Rating', analyst_rating),
-            ('Dividend Yield %', dividend_yield),
-            ('Dividend Payout Ratio %', payout_ratio),
-            ('Earnings Growth %', earnings_growth),
-            ('Forward P/E', forward_pe),
-            ('P/S Ratio', price_to_sales),
-            ('EV/EBITDA', ev_to_ebitda),
-            ('P/FCF Ratio', price_to_fcf),
-            ('Current Ratio', current_ratio),
-            ('Sector', sector),
-            ('Industry', industry),
-            ('Exchange', exchange),
-            ('Currency', currency),
+            ("Company Name", company_name),
+            ("Price", price),
+            ("EPS", eps),
+            ("P/E Ratio", pe_ratio),
+            ("PEG Ratio", peg_ratio),
+            ("Valuation", valuation),
+            ("Market Cap", market_cap),
+            ("Debt/Equity", debt_to_equity),
+            ("P/B", pb_ratio),
+            ("ROE %", roe),
+            ("ROA %", roa),
+            ("Profit Margin %", profit_margin),
+            ("Analyst Rating", analyst_rating),
+            ("Dividend Yield %", dividend_yield),
+            ("Dividend Payout Ratio %", payout_ratio),
+            ("Earnings Growth %", earnings_growth),
+            ("Forward P/E", forward_pe),
+            ("P/S Ratio", price_to_sales),
+            ("EV/EBITDA", ev_to_ebitda),
+            ("P/FCF Ratio", price_to_fcf),
+            ("Current Ratio", current_ratio),
+            ("Sector", sector),
+            ("Industry", industry),
+            ("Exchange", exchange),
+            ("Currency", currency),
         ]
         for label, value in fields:
-            pdf.cell(0, 10, txt=f'{label}: {value}', ln=1)
-        pdf_output = pdf.output(dest='S').encode('latin-1')
+            pdf.cell(0, 10, txt=f"{label}: {value}", ln=1)
+        pdf_output = pdf.output(dest="S").encode("latin-1")
         response = make_response(pdf_output)
-        response.headers['Content-Disposition'] = f'attachment; filename={symbol}_data.pdf'
-        response.headers['Content-Type'] = 'application/pdf'
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={symbol}_data.pdf"
+        )
+        response.headers["Content-Type"] = "application/pdf"
         return response
     else:
-        return 'Invalid format', 400
+        return "Invalid format", 400
