@@ -51,3 +51,8 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+
+    def __init__(self):
+        super().__init__()
+        if not os.environ.get('SECRET_KEY'):
+            raise RuntimeError('SECRET_KEY must be set in production')
