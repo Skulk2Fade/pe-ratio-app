@@ -11,6 +11,8 @@ from ..utils import (
     get_historical_prices,
     get_locale,
     ALERT_PE_THRESHOLD,
+    moving_average,
+    calculate_rsi,
 )
 
 main_bp = Blueprint('main', __name__)
@@ -37,6 +39,7 @@ def index():
     peg_ratio = None
     error_message = alert_message = None
     history_dates = history_prices = []
+    ma20 = ma50 = rsi_values = []
     # calculators moved to separate blueprint
 
     if request.method == 'GET':
@@ -85,6 +88,9 @@ def index():
             ) = get_stock_data(symbol)
 
             history_dates, history_prices = get_historical_prices(symbol, days=90)
+            ma20 = moving_average(history_prices, 20)
+            ma50 = moving_average(history_prices, 50)
+            rsi_values = calculate_rsi(history_prices, 14)
 
             raw_price = price
             raw_eps = eps
@@ -210,6 +216,9 @@ def index():
         alert_message=alert_message,
         history_dates=history_dates,
         history_prices=history_prices,
+        ma20=ma20,
+        ma50=ma50,
+        rsi_values=rsi_values,
         history=history,
     )
 

@@ -17,6 +17,15 @@ def test_format_market_cap():
     assert 'B' in result
 
 
+def test_indicators():
+    from stockapp.utils import moving_average, calculate_rsi
+    prices = [1, 2, 3, 4, 5]
+    ma = moving_average(prices, 3)
+    assert ma[-1] == 4
+    rsi = calculate_rsi(prices, 3)
+    assert rsi[-1] == 100
+
+
 def test_api_endpoints(auth_client, app):
     from stockapp.models import WatchlistItem, PortfolioItem, Alert, User
     from stockapp.extensions import db
