@@ -29,6 +29,16 @@
                         <a href="{{ url_for('watch.delete_watchlist', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
                     </div>
                 </form>
+                {% if news[item.symbol] %}
+                <ul class="mt-2">
+                    {% for n in news[item.symbol] %}
+                    <li>
+                        <a href="{{ n.url }}" target="_blank">{{ n.headline }}</a>
+                        <small class="text-muted">{{ n.published }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>

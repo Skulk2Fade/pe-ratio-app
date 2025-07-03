@@ -12,7 +12,12 @@ from ..models import (
     History,
     StockRecord,
 )
-from ..utils import get_locale, ALERT_PE_THRESHOLD, get_stock_data
+from ..utils import (
+    get_locale,
+    ALERT_PE_THRESHOLD,
+    get_stock_data,
+    get_stock_news,
+)
 from ..forms import WatchlistAddForm, WatchlistUpdateForm
 
 watch_bp = Blueprint('watch', __name__)
@@ -40,7 +45,15 @@ def watchlist():
                     db.session.add(WatchlistItem(symbol=symbol, user_id=current_user.id, pe_threshold=threshold))
                     db.session.commit()
     items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
-    return render_template('watchlist.html', items=items, add_form=add_form, update_form=update_form, default_threshold=ALERT_PE_THRESHOLD)
+    news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
+    return render_template(
+        'watchlist.html',
+        items=items,
+        add_form=add_form,
+        update_form=update_form,
+        default_threshold=ALERT_PE_THRESHOLD,
+        news=news,
+    )
 
 
 @watch_bp.route('/watchlist/delete/<int:item_id>')
