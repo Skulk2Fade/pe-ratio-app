@@ -36,16 +36,14 @@ def create_app(config_class=None):
 
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = "auth.login"
     csrf.init_app(app)
 
     @app.context_processor
     def inject_globals():
         from flask_wtf.csrf import generate_csrf
-        return {
-            'csrf_token': generate_csrf,
-            'app_name': 'MarketMinder'
-        }
+
+        return {"csrf_token": generate_csrf, "app_name": "MarketMinder"}
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -59,8 +57,8 @@ def create_app(config_class=None):
         db.create_all()
 
         # Create a default user for testing if credentials provided
-        default_user = os.environ.get('DEFAULT_USERNAME', 'testuser')
-        default_pass = os.environ.get('DEFAULT_PASSWORD', 'testpass')
+        default_user = os.environ.get("DEFAULT_USERNAME", "testuser")
+        default_pass = os.environ.get("DEFAULT_PASSWORD", "testpass")
         if default_user and default_pass:
             if not User.query.filter_by(username=default_user).first():
                 user = User(

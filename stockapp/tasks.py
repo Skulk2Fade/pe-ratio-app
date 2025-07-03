@@ -69,7 +69,9 @@ def _check_watchlists():
                     send_email(user.email, "P/E Ratio Alert", msg)
                     if user.sms_opt_in and user.phone_number:
                         send_sms(user.phone_number, msg)
-                    db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
+                    db.session.add(
+                        Alert(symbol=item.symbol, message=msg, user_id=user.id)
+                    )
         user.last_alert_time = now
     db.session.commit()
 
@@ -78,4 +80,3 @@ def _check_watchlists():
 def check_watchlists_task():
     """Celery task wrapper for ``_check_watchlists``."""
     _check_watchlists()
-
