@@ -1,0 +1,50 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    command: gunicorn -b 0.0.0.0:5000 app:app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/marketminder
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=changeme
+      - API_KEY=dummy
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    command: celery -A stockapp.tasks.celery worker -B --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/marketminder
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=changeme
+      - API_KEY=dummy
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: marketminder
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
