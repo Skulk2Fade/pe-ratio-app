@@ -10,6 +10,9 @@ def app(monkeypatch):
     os.environ['DEFAULT_PASSWORD'] = 'password'
     app = create_app()
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
+    from stockapp import tasks
+    tasks.celery.conf.update(task_always_eager=True)
     yield app
 
 @pytest.fixture
