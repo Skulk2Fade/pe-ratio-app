@@ -15,3 +15,26 @@ def test_format_market_cap():
     from stockapp.utils import format_market_cap
     result = format_market_cap(1_500_000_000, 'USD')
     assert 'B' in result
+
+
+def test_api_endpoints(auth_client, app):
+    from stockapp.models import WatchlistItem, PortfolioItem, Alert, User
+    from stockapp.extensions import db
+    with app.app_context():
+        user = User.query.filter_by(username='tester').first()
+        db.session.add(WatchlistItem(symbol='API', user_id=user.id))
+        db.session.add(PortfolioItem(symbol='API', quantity=1, price_paid=10, user_id=user.id))
+        db.session.add(Alert(symbol='API', message='msg', user_id=user.id))
+        db.session.commit()
+
+    resp = auth_client.get('/api/watchlist')
+    assert resp.status_code == 200
+    assert any(item['symbol'] == 'API' for item in resp.get_json())
+
+    resp = auth_client.get('/api/portfolio')
+    assert resp.status_code == 200
+    assert any(item['symbol'] == 'API' for item in resp.get_json())
+
+    resp = auth_client.get('/api/alerts')
+    assert resp.status_code == 200
+    assert any(alert['message'] == 'msg' for alert in resp.get_json())
