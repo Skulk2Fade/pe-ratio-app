@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, FloatField, IntegerField, FileField
+from wtforms import StringField, PasswordField, FloatField, IntegerField, FileField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, Optional
 
 
@@ -7,6 +7,8 @@ class SignupForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(max=64)])
     email = StringField("Email", validators=[DataRequired(), Email(), Length(max=120)])
     password = PasswordField("Password", validators=[DataRequired(), Length(min=4)])
+    phone = StringField("Phone", validators=[Optional(), Length(max=20)])
+    sms_opt_in = BooleanField("SMS Alerts")
 
 
 class LoginForm(FlaskForm):

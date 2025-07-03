@@ -17,6 +17,10 @@ class Config:
     CELERY_BROKER_URL = 'redis://localhost:6379/0'
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
+    TWILIO_SID = ''
+    TWILIO_TOKEN = ''
+    TWILIO_FROM = ''
+
     DEBUG = False
 
     def __init__(self):
@@ -31,6 +35,9 @@ class Config:
         self.SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', self.SMTP_PASSWORD)
         self.CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', self.CELERY_BROKER_URL)
         self.CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', self.CELERY_RESULT_BACKEND)
+        self.TWILIO_SID = os.environ.get('TWILIO_SID', self.TWILIO_SID)
+        self.TWILIO_TOKEN = os.environ.get('TWILIO_TOKEN', self.TWILIO_TOKEN)
+        self.TWILIO_FROM = os.environ.get('TWILIO_FROM', self.TWILIO_FROM)
 
 
 class DevelopmentConfig(Config):

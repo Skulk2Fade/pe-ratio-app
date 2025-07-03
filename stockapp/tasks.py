@@ -5,7 +5,7 @@ from celery.schedules import crontab
 
 from .extensions import db
 from .models import User, WatchlistItem, Alert
-from .utils import get_stock_data, send_email, ALERT_PE_THRESHOLD
+from .utils import get_stock_data, send_email, send_sms, ALERT_PE_THRESHOLD
 
 # Celery application instance configured in ``init_celery``.
 celery = Celery(__name__)
@@ -67,6 +67,8 @@ def _check_watchlists():
                 if pe_ratio > threshold:
                     msg = f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
                     send_email(user.email, "P/E Ratio Alert", msg)
+                    if user.sms_opt_in and user.phone_number:
+                        send_sms(user.phone_number, msg)
                     db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
         user.last_alert_time = now
     db.session.commit()

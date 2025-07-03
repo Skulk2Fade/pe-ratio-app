@@ -141,8 +141,16 @@ def settings():
         freq = request.form.get("frequency", type=int)
         if freq and freq > 0:
             current_user.alert_frequency = freq
-            db.session.commit()
-    return render_template("settings.html", frequency=current_user.alert_frequency)
+        phone = request.form.get("phone")
+        current_user.phone_number = phone
+        current_user.sms_opt_in = bool(request.form.get("sms_opt_in"))
+        db.session.commit()
+    return render_template(
+        "settings.html",
+        frequency=current_user.alert_frequency,
+        phone=current_user.phone_number or "",
+        sms_opt_in=current_user.sms_opt_in,
+    )
 
 
 @watch_bp.route("/export_history")

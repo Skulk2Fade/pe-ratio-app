@@ -127,6 +127,25 @@ def send_email(to, subject, body):
     except Exception as e:
         logger.error('Email error: %s', e)
 
+def send_sms(to, body):
+    sid = current_app.config.get('TWILIO_SID')
+    token = current_app.config.get('TWILIO_TOKEN')
+    from_number = current_app.config.get('TWILIO_FROM')
+    if not all([sid, token, from_number]):
+        logger.error('SMS configuration incomplete')
+        return
+    url = f'https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json'
+    try:
+        resp = session.post(
+            url,
+            data={'From': from_number, 'To': to, 'Body': body},
+            auth=(sid, token),
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        logger.error('SMS error: %s', e)
+
 def _get_asx_historical_prices(symbol, days=30):
     """Fetch historical prices from Yahoo Finance for ASX tickers."""
     range_str = f"{days}d"
