@@ -2,6 +2,27 @@
 
 This Flask application calculates P/E ratios and stores user data using SQLAlchemy. Authentication is handled via **Flask-Login**.
 
+## Quickstart
+
+1. Copy `.env.example` to `.env` and edit the values.
+2. Create the virtual environment and install dependencies:
+   ```bash
+   ./setup_env.sh
+   source venv/bin/activate
+   ```
+3. Build the frontend assets:
+   ```bash
+   npm install
+   npm run build
+   ```
+4. Start the application:
+   ```bash
+   python app.py
+   ```
+   For scheduled alerts run a Celery worker. See [docs/advanced_features.md](docs/advanced_features.md) for details.
+5. Run the tests with `pytest`.
+
+Additional documentation can be found in [docs/advanced_features.md](docs/advanced_features.md) and [docs/contributing.md](docs/contributing.md).
 ## Database Configuration
 
 The app uses SQLite by default for local development. To deploy to platforms like Render with PostgreSQL, set a `DATABASE_URL` environment variable. When `DATABASE_URL` starts with `postgres://` it will automatically be converted to the `postgresql://` format expected by SQLAlchemy.
@@ -92,11 +113,6 @@ The codebase is organized as a Flask package named `stockapp`. The main `app.py`
 python app.py
 ```
 
-Start the Celery worker in a separate terminal so that scheduled tasks run:
-
-```bash
-celery -A stockapp.tasks.celery worker -B --loglevel=info
-```
 
 ### Production Configuration
 
@@ -105,28 +121,6 @@ configure Celery to use it. Set `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND`
 to the Redis connection string (e.g. `redis://hostname:6379/0`). The same Redis
 URL can be assigned to `REDIS_URL` if you want API caching enabled.
 
-### Running Tests
-
-Once the virtual environment is active you can run the unit tests with:
-
-```bash
-pytest
-```
-
-### Formatting and Linting
-
-Before committing changes run the style checks:
-
-```bash
-black --check .
-flake8
-```
-
-Both tools are installed from `requirements.txt` and also run automatically in
-the GitHub Actions workflow.
-
-When deploying you can use `/health` to verify that the application is running.
-The endpoint simply returns `OK`.
 
 ### Default Login
 
@@ -147,12 +141,6 @@ to log in. Verification links expire after 24 hours. If you forget your password
 you can request a reset link from the login page which will allow you to choose
 a new password. Password reset links expire after 1 hour.
 
-## Two-Factor Authentication
-
-For additional security the app supports time-based one-time passwords (TOTP)
-with authenticator apps like Google Authenticator. When enabled, users must
-enter the 6-digit code from their authenticator after providing their username
-and password.
 
 ## Custom P/E Thresholds
 
@@ -190,18 +178,8 @@ Several quick calculators are available at their own routes:
 * `/calc/compound` – compound interest
 * `/calc/loan` – **Loan/Mortgage payment** – computes monthly payment, total interest and shows a full amortization schedule.
 
-## Scheduled Alerts
-
-Alert emails are sent on a schedule using **Celery**. Each user can
-configure how often their watchlist should be checked. Visit the *Settings*
-page after logging in to choose an alert frequency in hours. The default is 24
-hours. The background job runs hourly and only sends alerts when your selected
-interval has elapsed.
-If you provide a phone number and enable SMS alerts in Settings, an additional
-text message will be sent alongside the email whenever a P/E alert is
-triggered.
-
 ## Viewing Alerts
+
 
 Triggered alerts are saved in the database. After logging in click the *Alerts* link to review them. The page also lets you clear old alerts.
 
