@@ -11,7 +11,14 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 def get_watchlist():
     items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
     data = [
-        {"id": i.id, "symbol": i.symbol, "pe_threshold": i.pe_threshold} for i in items
+        {
+            "id": i.id,
+            "symbol": i.symbol,
+            "pe_threshold": i.pe_threshold,
+            "notes": i.notes,
+            "tags": i.tags,
+        }
+        for i in items
     ]
     return jsonify(data)
 
@@ -26,6 +33,8 @@ def get_portfolio():
             "symbol": i.symbol,
             "quantity": i.quantity,
             "price_paid": i.price_paid,
+            "notes": i.notes,
+            "tags": i.tags,
         }
         for i in items
     ]

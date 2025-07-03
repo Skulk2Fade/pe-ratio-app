@@ -22,6 +22,12 @@
                 <div class="col">
                     <input type="number" name="price_paid" step="any" class="form-control" placeholder="Price Paid" required>
                 </div>
+                <div class="col">
+                    {{ add_form.notes(class="form-control", placeholder="Notes") }}
+                </div>
+                <div class="col">
+                    {{ add_form.tags(class="form-control", placeholder="Tags") }}
+                </div>
                 <div class="col-auto">
                     <button class="btn btn-primary" type="submit">Add</button>
                 </div>
@@ -35,6 +41,8 @@
                         <th>Symbol</th>
                         <th>Quantity</th>
                         <th>Price Paid</th>
+                        <th>Notes</th>
+                        <th>Tags</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -44,6 +52,8 @@
                         <td>{{ item.symbol }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.price_paid }}</td>
+                        <td>{{ item.notes }}</td>
+                        <td>{{ item.tags }}</td>
                         <td>
                             <a href="{{ url_for('portfolio.delete_portfolio', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
                         </td>
