@@ -3,8 +3,9 @@ const urlsToCache = [
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-  'https://cdn.plot.ly/plotly-latest.min.js'
+  '/static/vendor/bootstrap.min.css',
+  '/static/vendor/bootstrap.bundle.min.js',
+  '/static/vendor/plotly.min.js'
 ];
 
 self.addEventListener('install', event => {
