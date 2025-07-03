@@ -8,7 +8,12 @@ from ..extensions import db
 from ..models import PortfolioItem
 from statistics import correlation, stdev
 
-from ..utils import get_locale, get_stock_data, get_historical_prices
+from ..utils import (
+    get_locale,
+    get_stock_data,
+    get_historical_prices,
+    get_stock_news,
+)
 from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
 
 portfolio_bp = Blueprint('portfolio', __name__)
@@ -204,6 +209,7 @@ def portfolio():
     else:
         correlations = []
         portfolio_volatility = None
+    news_data = {row['item'].symbol: get_stock_news(row['item'].symbol, limit=3) for row in data}
     return render_template(
         'portfolio.html',
         symbols=[row['item'].symbol for row in data],
@@ -214,6 +220,7 @@ def portfolio():
         risk_assessment=risk_assessment,
         correlations=correlations,
         portfolio_volatility=portfolio_volatility,
+        news=news_data,
         add_form=add_form,
         import_form=import_form,
         update_form=update_form,

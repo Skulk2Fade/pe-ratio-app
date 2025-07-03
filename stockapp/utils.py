@@ -389,3 +389,34 @@ def get_stock_data(symbol):
     except Exception:
         logger.exception('Failed to fetch stock data for %s', symbol)
         return _cached_or_placeholder(cache_key)
+
+
+def get_stock_news(symbol, limit=3):
+    """Fetch recent news articles for a stock ticker."""
+    cache_key = ("news", symbol, limit)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    url = (
+        f"https://financialmodelingprep.com/api/v3/stock_news?"
+        f"tickers={symbol}&limit={limit}&apikey={API_KEY}"
+    )
+    try:
+        data = _fetch_json(url, "news", symbol)
+        articles = []
+        if isinstance(data, list):
+            for item in data:
+                articles.append(
+                    {
+                        "headline": item.get("title"),
+                        "url": item.get("url"),
+                        "published": item.get("publishedDate"),
+                    }
+                )
+        if articles:
+            _set_cached(cache_key, articles)
+        return articles
+    except Exception:
+        logger.exception("Failed to fetch news for %s", symbol)
+        cached = _get_cached(cache_key)
+        return cached if cached else []

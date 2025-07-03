@@ -22,7 +22,8 @@ def test_signup_login_logout(client, app, monkeypatch):
     assert b'Login' in resp.data
 
 
-def test_watchlist_modifications(auth_client, app):
+def test_watchlist_modifications(auth_client, app, monkeypatch):
+    monkeypatch.setattr('stockapp.watchlists.routes.get_stock_news', lambda *a, **k: [])
     resp = auth_client.post('/watchlist', data={'symbol':'TEST','threshold':15}, follow_redirects=True)
     assert b'TEST' in resp.data
     with app.app_context():
@@ -37,6 +38,7 @@ def test_watchlist_modifications(auth_client, app):
 
 
 def test_portfolio_calculations(auth_client, app, monkeypatch):
+    monkeypatch.setattr('stockapp.portfolio.routes.get_stock_news', lambda *a, **k: [])
     def fake_get_stock_data(symbol):
         return (
             'Test Corp','', 'Tech','Software','NASDAQ','USD',
@@ -51,6 +53,7 @@ def test_portfolio_calculations(auth_client, app, monkeypatch):
 
 
 def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
+    monkeypatch.setattr('stockapp.portfolio.routes.get_stock_news', lambda *a, **k: [])
     def fake_get_stock_data(symbol):
         return (
             'Test Corp','', 'Tech','Software','NASDAQ','USD',

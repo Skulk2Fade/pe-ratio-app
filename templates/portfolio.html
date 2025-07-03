@@ -63,6 +63,17 @@
         {% if portfolio_volatility is not none %}
         <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
         {% endif %}
+        {% if news %}
+        <h5 class="mt-4">Latest News</h5>
+        {% for sym, articles in news.items() %}
+        <h6>{{ sym }}</h6>
+        <ul class="list-unstyled">
+            {% for n in articles %}
+            <li><a href="{{ n.url }}" target="_blank">{{ n.headline }}</a> <small class="text-muted">{{ n.published }}</small></li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+        {% endif %}
         {% else %}
         <p>No portfolio items.</p>
         {% endif %}
