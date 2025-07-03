@@ -420,3 +420,40 @@ def get_stock_news(symbol, limit=3):
         logger.exception("Failed to fetch news for %s", symbol)
         cached = _get_cached(cache_key)
         return cached if cached else []
+
+
+def moving_average(prices, period):
+    """Simple moving average for a list of prices."""
+    ma = []
+    for i in range(len(prices)):
+        if i + 1 < period:
+            ma.append(None)
+        else:
+            window = prices[i + 1 - period : i + 1]
+            ma.append(round(sum(window) / period, 2))
+    return ma
+
+
+def calculate_rsi(prices, period=14):
+    """Calculate the Relative Strength Index (RSI)."""
+    rsi = []
+    for i in range(len(prices)):
+        if i < period:
+            rsi.append(None)
+            continue
+        gains = []
+        losses = []
+        for j in range(i - period + 1, i + 1):
+            change = prices[j] - prices[j - 1]
+            if change > 0:
+                gains.append(change)
+            else:
+                losses.append(abs(change))
+        avg_gain = sum(gains) / period if gains else 0
+        avg_loss = sum(losses) / period if losses else 0
+        if avg_loss == 0:
+            rsi.append(100)
+        else:
+            rs = avg_gain / avg_loss
+            rsi.append(round(100 - (100 / (1 + rs)), 2))
+    return rsi
