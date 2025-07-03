@@ -30,6 +30,11 @@ store secrets in the source code:
 * `CELERY_RESULT_BACKEND` &ndash; Storage for Celery task results (defaults to the same Redis instance).
 * `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM` &ndash; Optional credentials for sending SMS notifications.
 
+You can place these settings in a `.env` file in the project root. They will be
+loaded automatically when the app starts thanks to **python-dotenv**. An
+`/.env.example` file is provided with common options. Copy it to `.env` and
+adjust the values for your environment.
+
 Example:
 
 ```bash
@@ -92,6 +97,13 @@ Start the Celery worker in a separate terminal so that scheduled tasks run:
 ```bash
 celery -A stockapp.tasks.celery worker -B --loglevel=info
 ```
+
+### Production Configuration
+
+For production deployments you should provide your own Redis instance and
+configure Celery to use it. Set `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND`
+to the Redis connection string (e.g. `redis://hostname:6379/0`). The same Redis
+URL can be assigned to `REDIS_URL` if you want API caching enabled.
 
 ### Running Tests
 
