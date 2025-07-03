@@ -15,8 +15,12 @@ from urllib3.util import Retry
 
 try:
     import redis
+    from redis.exceptions import RedisError
 except Exception:  # pragma: no cover - optional dependency
     redis = None
+    class RedisError(Exception):
+        """Fallback Redis error when redis package is unavailable."""
+        pass
 
 API_KEY = os.environ.get('API_KEY')
 if not API_KEY:
@@ -52,8 +56,10 @@ def _get_cached(key):
             val = _redis.get(key)
             if val is not None:
                 return pickle.loads(val)
-        except Exception as e:  # pragma: no cover - redis failure
-            logger.error('Redis get error: %s', e)
+        except RedisError as e:  # pragma: no cover - redis failure
+            logger.error('Redis get error for %s: %s', key, e)
+        except Exception:
+            logger.exception('Unexpected Redis get error for %s', key)
     data = _cache.get(key)
     if not data:
         return None
@@ -68,8 +74,10 @@ def _set_cached(key, value):
         try:
             _redis.setex(key, CACHE_TTL, pickle.dumps(value))
             return
-        except Exception as e:  # pragma: no cover - redis failure
-            logger.error('Redis set error: %s', e)
+        except RedisError as e:  # pragma: no cover - redis failure
+            logger.error('Redis set error for %s: %s', key, e)
+        except Exception:
+            logger.exception('Unexpected Redis set error for %s', key)
     _cache[key] = (value, time.time())
 
 
@@ -405,8 +413,15 @@ def get_stock_data(symbol):
         if any(item is not None for item in result):
             _set_cached(cache_key, result)
         return result
+    except requests.exceptions.RequestException as e:
+        status = getattr(e.response, "status_code", "unknown")
+        logger.error('Network error fetching stock data for %s: %s (status %s)', symbol, e, status)
+        return _cached_or_placeholder(cache_key)
+    except ValueError as e:
+        logger.error('Data error for %s: %s', symbol, e)
+        return _cached_or_placeholder(cache_key)
     except Exception:
-        logger.exception('Failed to fetch stock data for %s', symbol)
+        logger.exception('Unexpected error fetching stock data for %s', symbol)
         return _cached_or_placeholder(cache_key)
 
 
@@ -435,8 +450,13 @@ def get_stock_news(symbol, limit=3):
         if articles:
             _set_cached(cache_key, articles)
         return articles
+    except requests.exceptions.RequestException as e:
+        status = getattr(e.response, "status_code", "unknown")
+        logger.error("Network error fetching news for %s: %s (status %s)", symbol, e, status)
+        cached = _get_cached(cache_key)
+        return cached if cached else []
     except Exception:
-        logger.exception("Failed to fetch news for %s", symbol)
+        logger.exception("Unexpected error fetching news for %s", symbol)
         cached = _get_cached(cache_key)
         return cached if cached else []
 
