@@ -199,3 +199,17 @@ The app registers a small service worker so it can behave like a Progressive
 Web App. Only static assets are cached. The main pages are always fetched from
 the server so that dynamic CSRF tokens stay valid.
 
+### Frontend Assets
+
+Bootstrap and Plotly are now managed locally instead of pulled from a CDN. A
+small build script copies the files from `node_modules` into `static/vendor`.
+Run the following once after cloning:
+
+```bash
+npm install
+npm run build
+```
+
+This populates the `static/vendor/` directory so the service worker can cache
+the assets even when offline.
+
