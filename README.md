@@ -193,6 +193,10 @@ Several quick calculators are available at their own routes:
 
 Triggered alerts are saved in the database. After logging in click the *Alerts* link to review them. The page also lets you clear old alerts.
 
+## Historical Trend Notifications
+
+MarketMinder can email you a brief summary of how your portfolio and watchlist changed over the last week. Opt in from the Settings page by checking **Email Weekly Summary**. The Celery scheduler sends the summary each morning at 8 AM by default.
+
 ## Progressive Web App Notes
 
 The app registers a small service worker so it can behave like a Progressive

@@ -10,6 +10,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=True)
     phone_number = db.Column(db.String(20))
     sms_opt_in = db.Column(db.Boolean, default=False)
+    trend_opt_in = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String(100), unique=True)
     verification_token_sent = db.Column(db.DateTime)
@@ -24,7 +25,6 @@ class User(db.Model, UserMixin):
     default_currency = db.Column(db.String(3), default="USD")
     language = db.Column(db.String(5), default="en")
     theme = db.Column(db.String(10), default="light")
-
 
 
 class WatchlistItem(db.Model):
