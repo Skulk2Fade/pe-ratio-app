@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - ROI Calculator{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h3 class="mb-4">Return on Investment</h3>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="initial" class="form-label">Initial Investment</label>
+            <input type="number" step="any" id="initial" name="initial" value="{{ initial }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="final" class="form-label">Final Value</label>
+            <input type="number" step="any" id="final" name="final" value="{{ final }}" class="form-control" required>
+        </div>
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </div>
+    </form>
+    {% if error_message %}
+        <div class="alert alert-danger mt-3">{{ error_message }}</div>
+    {% endif %}
+    {% if roi_result is not none %}
+        <p class="mt-3"><strong>ROI:</strong> {{ roi_result }}%</p>
+    {% endif %}
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}

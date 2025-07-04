@@ -190,3 +190,34 @@ def test_export_portfolio_json(auth_client, app):
     resp = auth_client.get("/export_portfolio?format=json")
     assert resp.status_code == 200
     assert resp.headers["Content-Type"] == "application/json"
+
+
+def test_roi_calculator(client):
+    data = {"initial": 100, "final": 120}
+    resp = client.post("/calc/roi", data=data)
+    assert resp.status_code == 200
+    assert b"ROI:" in resp.data
+
+
+def test_dcf_calculator(client):
+    data = {
+        "cash_flow": 100,
+        "discount_rate": 10,
+        "years": 2,
+        "terminal_value": 50,
+    }
+    resp = client.post("/calc/dcf", data=data)
+    assert resp.status_code == 200
+    assert b"Present Value" in resp.data
+
+
+def test_tax_calculator(client):
+    data = {
+        "purchase_price": 10,
+        "sale_price": 15,
+        "quantity": 2,
+        "tax_rate": 20,
+    }
+    resp = client.post("/calc/tax", data=data)
+    assert resp.status_code == 200
+    assert b"Tax Due" in resp.data
