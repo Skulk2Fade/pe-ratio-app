@@ -162,12 +162,15 @@ def settings():
         currency = request.form.get("currency")
         language = request.form.get("language")
         theme = request.form.get("theme")
+        brokerage = request.form.get("brokerage_token")
         if currency:
             current_user.default_currency = currency
         if language:
             current_user.language = language
         if theme in ("light", "dark"):
             current_user.theme = theme
+        if brokerage is not None:
+            current_user.brokerage_token = brokerage.strip() or None
         db.session.commit()
     return render_template(
         "settings.html",
@@ -178,6 +181,7 @@ def settings():
         currency=current_user.default_currency,
         language=current_user.language,
         theme=current_user.theme,
+        brokerage_token=current_user.brokerage_token or "",
     )
 
 

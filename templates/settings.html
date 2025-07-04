@@ -36,6 +36,8 @@
                 <option value="light" {% if theme=='light' %}selected{% endif %}>Light</option>
                 <option value="dark" {% if theme=='dark' %}selected{% endif %}>Dark</option>
             </select>
+            <label class="form-label mt-3">Brokerage API Token</label>
+            <input type="text" name="brokerage_token" class="form-control" value="{{ brokerage_token }}">
             <button class="btn btn-primary mt-3" type="submit">Save</button>
         </form>
         <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back</a>
