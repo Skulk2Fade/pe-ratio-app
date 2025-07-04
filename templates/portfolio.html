@@ -73,6 +73,15 @@
         {% if portfolio_volatility is not none %}
         <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
         {% endif %}
+        {% if beta is not none %}
+        <div class="alert alert-secondary">Portfolio Beta: {{ beta }}</div>
+        {% endif %}
+        {% if sharpe_ratio is not none %}
+        <div class="alert alert-secondary">Sharpe Ratio: {{ sharpe_ratio }}</div>
+        {% endif %}
+        {% if value_at_risk is not none %}
+        <div class="alert alert-danger">Value at Risk (95%): {{ value_at_risk }}</div>
+        {% endif %}
         {% if news %}
         <h5 class="mt-4">Latest News</h5>
         {% for sym, articles in news.items() %}

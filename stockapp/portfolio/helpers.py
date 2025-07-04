@@ -190,6 +190,9 @@ def calculate_portfolio_analysis(
                         except Exception:
                             pass
         portfolio_volatility = None
+        beta = None
+        sharpe_ratio = None
+        value_at_risk = None
         if returns and len(returns) > 0:
             n = min(len(r) for r in returns.values())
             if n > 1:
@@ -202,13 +205,46 @@ def calculate_portfolio_analysis(
                     portfolio_returns.append(day_ret)
                 if len(portfolio_returns) > 1:
                     try:
-                        vol = stdev(portfolio_returns) * (252**0.5)
+                        vol_daily = stdev(portfolio_returns)
+                        vol = vol_daily * (252**0.5)
                         portfolio_volatility = round(vol * 100, 2)
                     except Exception:
                         portfolio_volatility = None
+                    try:
+                        avg_return = sum(portfolio_returns) / len(portfolio_returns)
+                        sharpe_ratio = round((avg_return / vol_daily) * (252**0.5), 2) if vol_daily else None
+                    except Exception:
+                        sharpe_ratio = None
+                    try:
+                        sorted_returns = sorted(portfolio_returns)
+                        idx_var = max(int(len(sorted_returns) * 0.05) - 1, 0)
+                        var_pct = sorted_returns[idx_var]
+                        value_at_risk = format_currency(
+                            -var_pct * total_value,
+                            totals_currency,
+                            locale=get_locale(),
+                        )
+                    except Exception:
+                        value_at_risk = None
+                    try:
+                        _m_dates, m_prices = get_historical_prices_func("SPY", days=30)
+                        market_returns: List[float] = []
+                        for i in range(1, len(m_prices)):
+                            if m_prices[i - 1]:
+                                market_returns.append((m_prices[i] - m_prices[i - 1]) / m_prices[i - 1])
+                        if len(market_returns) >= len(portfolio_returns) and stdev(market_returns[-n:]) != 0:
+                            b = correlation(portfolio_returns[-n:], market_returns[-n:]) * (
+                                stdev(portfolio_returns[-n:]) / stdev(market_returns[-n:])
+                            )
+                            beta = round(b, 2)
+                    except Exception:
+                        beta = None
     else:
         correlations = []
         portfolio_volatility = None
+        beta = None
+        sharpe_ratio = None
+        value_at_risk = None
 
     news_data = {
         row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
@@ -222,5 +258,8 @@ def calculate_portfolio_analysis(
         "risk_assessment": risk_assessment,
         "correlations": correlations,
         "portfolio_volatility": portfolio_volatility,
+        "beta": beta,
+        "sharpe_ratio": sharpe_ratio,
+        "value_at_risk": value_at_risk,
         "news": news_data,
     }
