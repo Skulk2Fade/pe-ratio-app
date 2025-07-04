@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from werkzeug.security import generate_password_hash
-from .extensions import db, login_manager, csrf
+from .extensions import db, login_manager, csrf, sock
 from .models import User
 from .auth import auth_bp
 from .main import main_bp
@@ -38,6 +38,7 @@ def create_app(config_class=None):
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     csrf.init_app(app)
+    sock.init_app(app)
 
     @app.context_processor
     def inject_globals():

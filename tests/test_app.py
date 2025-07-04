@@ -76,3 +76,9 @@ def test_stream_price(client, monkeypatch):
     assert resp.headers["Content-Type"].startswith("text/event-stream")
     chunk = next(resp.response).decode()
     assert "price" in chunk
+
+
+def test_ws_price_route(app):
+    with app.test_request_context():
+        url = url_for("main.ws_price")
+    assert url == "/ws/price"

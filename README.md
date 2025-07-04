@@ -203,6 +203,13 @@ The app registers a small service worker so it can behave like a Progressive
 Web App. Only static assets are cached. The main pages are always fetched from
 the server so that dynamic CSRF tokens stay valid.
 
+### WebSocket Price Streaming
+
+Price updates are now pushed over a WebSocket connection. When viewing a
+ticker, the browser opens `ws://host/ws/price`, sends the symbol and receives
+periodic JSON messages containing the latest price and EPS. This enables future
+bidirectional features like push alerts.
+
 ### Frontend Assets
 
 Bootstrap and Plotly are now managed locally instead of pulled from a CDN. A

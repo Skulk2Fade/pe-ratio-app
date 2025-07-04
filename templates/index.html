@@ -259,8 +259,11 @@
 {% block scripts %}
     {% if symbol %}
     <script>
-        const evtSource = new EventSource("{{ url_for('main.stream_price') }}?symbol={{ symbol }}");
-        evtSource.onmessage = function(event) {
+        const ws = new WebSocket("{{ url_for('main.ws_price') }}");
+        ws.onopen = function() {
+            ws.send("{{ symbol }}");
+        };
+        ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.price !== undefined) {
                 const pEl = document.getElementById('price_value');
