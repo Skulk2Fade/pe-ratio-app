@@ -4,6 +4,7 @@ import io
 from typing import Callable, Dict, List, Tuple
 from statistics import correlation, stdev
 from babel.numbers import format_currency
+from flask_login import current_user
 
 from ..extensions import db
 from ..models import PortfolioItem
@@ -103,6 +104,8 @@ def calculate_portfolio_analysis(
             price,
             *_rest,
         ) = get_stock_data_func(item.symbol)
+        if current_user.is_authenticated and current_user.default_currency:
+            currency = current_user.default_currency
         if price is not None:
             current_price = format_currency(price, currency, locale=get_locale())
             value_num = price * item.quantity

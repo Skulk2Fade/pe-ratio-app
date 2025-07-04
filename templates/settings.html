@@ -15,6 +15,23 @@
                 <input class="form-check-input" type="checkbox" name="sms_opt_in" id="sms_opt_in" {% if sms_opt_in %}checked{% endif %}>
                 <label class="form-check-label" for="sms_opt_in">Enable SMS Alerts</label>
             </div>
+            <label class="form-label mt-3">Default Currency</label>
+            <select name="currency" class="form-select">
+                {% for cur in ['USD','EUR','GBP','AUD','JPY'] %}
+                    <option value="{{ cur }}" {% if currency==cur %}selected{% endif %}>{{ cur }}</option>
+                {% endfor %}
+            </select>
+            <label class="form-label mt-3">Language</label>
+            <select name="language" class="form-select">
+                {% for lang in ['en','es','fr','de'] %}
+                    <option value="{{ lang }}" {% if language==lang %}selected{% endif %}>{{ lang }}</option>
+                {% endfor %}
+            </select>
+            <label class="form-label mt-3">Theme</label>
+            <select name="theme" class="form-select">
+                <option value="light" {% if theme=='light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if theme=='dark' %}selected{% endif %}>Dark</option>
+            </select>
             <button class="btn btn-primary mt-3" type="submit">Save</button>
         </form>
         <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back</a>

@@ -21,6 +21,10 @@ class User(db.Model, UserMixin):
     mfa_code = db.Column(db.String(20))
     mfa_expiry = db.Column(db.DateTime)
     mfa_secret = db.Column(db.String(32))
+    default_currency = db.Column(db.String(3), default="USD")
+    language = db.Column(db.String(5), default="en")
+    theme = db.Column(db.String(10), default="light")
+
 
 
 class WatchlistItem(db.Model):
