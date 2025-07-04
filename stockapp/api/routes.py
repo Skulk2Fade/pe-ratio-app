@@ -15,6 +15,9 @@ def get_watchlist():
             "id": i.id,
             "symbol": i.symbol,
             "pe_threshold": i.pe_threshold,
+            "de_threshold": i.de_threshold,
+            "rsi_threshold": i.rsi_threshold,
+            "ma_threshold": i.ma_threshold,
             "notes": i.notes,
             "tags": i.tags,
         }

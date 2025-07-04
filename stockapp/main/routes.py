@@ -205,12 +205,17 @@ def index():
                 else:
                     valuation = "Fairly Valued"
                 threshold = ALERT_PE_THRESHOLD
+                de_thr = rsi_thr = ma_thr = None
                 if current_user.is_authenticated:
                     item = WatchlistItem.query.filter_by(
                         user_id=current_user.id, symbol=symbol
                     ).first()
-                    if item and item.pe_threshold is not None:
-                        threshold = item.pe_threshold
+                    if item:
+                        if item.pe_threshold is not None:
+                            threshold = item.pe_threshold
+                        de_thr = item.de_threshold
+                        rsi_thr = item.rsi_threshold
+                        ma_thr = item.ma_threshold
                 if pe_ratio_val > threshold:
                     alert_message = (
                         f"P/E ratio {pe_ratio_val} exceeds threshold of {threshold}"
@@ -224,6 +229,52 @@ def index():
                             )
                         )
                         db.session.commit()
+                elif (
+                    de_thr is not None
+                    and debt_to_equity is not None
+                    and debt_to_equity > de_thr
+                ):
+                    alert_message = f"Debt/Equity {round(debt_to_equity,2)} exceeds threshold of {de_thr}"
+                    if current_user.is_authenticated:
+                        db.session.add(
+                            Alert(
+                                symbol=symbol,
+                                message=alert_message,
+                                user_id=current_user.id,
+                            )
+                        )
+                        db.session.commit()
+                elif rsi_thr is not None or ma_thr is not None:
+                    if history_prices:
+                        if rsi_thr is not None:
+                            rsi_val = calculate_rsi(history_prices, 14)
+                            if (
+                                rsi_val
+                                and rsi_val[-1] is not None
+                                and rsi_val[-1] > rsi_thr
+                            ):
+                                alert_message = (
+                                    f"RSI {rsi_val[-1]} exceeds threshold of {rsi_thr}"
+                                )
+                        if (
+                            alert_message is None
+                            and ma_thr is not None
+                            and price is not None
+                        ):
+                            ma_val = moving_average(history_prices, 50)
+                            if ma_val and ma_val[-1] is not None:
+                                diff = abs(price - ma_val[-1]) / ma_val[-1] * 100
+                                if diff > ma_thr:
+                                    alert_message = f"Price deviation {round(diff,2)}% exceeds {ma_thr}% from 50d MA"
+                        if alert_message and current_user.is_authenticated:
+                            db.session.add(
+                                Alert(
+                                    symbol=symbol,
+                                    message=alert_message,
+                                    user_id=current_user.id,
+                                )
+                            )
+                            db.session.commit()
             elif price is None or eps is None:
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:

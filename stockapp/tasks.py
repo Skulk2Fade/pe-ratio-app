@@ -8,6 +8,8 @@ from .models import User, WatchlistItem, Alert, PortfolioItem
 from .utils import (
     get_stock_data,
     get_historical_prices,
+    moving_average,
+    calculate_rsi,
     send_email,
     send_sms,
     ALERT_PE_THRESHOLD,
@@ -73,20 +75,47 @@ def _check_watchlists():
                 price,
                 eps,
                 _market_cap,
-                _debt_to_equity,
+                debt_to_equity,
                 *_rest,
             ) = get_stock_data(item.symbol)
+            alerts = []
             if price is not None and eps:
                 pe_ratio = round(price / eps, 2)
                 threshold = item.pe_threshold or ALERT_PE_THRESHOLD
                 if pe_ratio > threshold:
-                    msg = f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
-                    send_email(user.email, "P/E Ratio Alert", msg)
-                    if user.sms_opt_in and user.phone_number:
-                        send_sms(user.phone_number, msg)
-                    db.session.add(
-                        Alert(symbol=item.symbol, message=msg, user_id=user.id)
+                    alerts.append(
+                        f"{item.symbol} P/E ratio {pe_ratio} exceeds threshold {threshold}"
                     )
+            if (
+                debt_to_equity is not None
+                and item.de_threshold is not None
+                and debt_to_equity > item.de_threshold
+            ):
+                alerts.append(
+                    f"{item.symbol} Debt/Equity {round(debt_to_equity,2)} exceeds threshold {item.de_threshold}"
+                )
+            if item.rsi_threshold is not None or item.ma_threshold is not None:
+                _d, prices = get_historical_prices(item.symbol, days=60)
+                if prices:
+                    if item.rsi_threshold is not None:
+                        rsi = calculate_rsi(prices, 14)
+                        if rsi and rsi[-1] is not None and rsi[-1] > item.rsi_threshold:
+                            alerts.append(
+                                f"{item.symbol} RSI {rsi[-1]} exceeds threshold {item.rsi_threshold}"
+                            )
+                    if item.ma_threshold is not None and price is not None:
+                        ma = moving_average(prices, 50)
+                        if ma and ma[-1] is not None:
+                            diff = abs(price - ma[-1]) / ma[-1] * 100
+                            if diff > item.ma_threshold:
+                                alerts.append(
+                                    f"{item.symbol} price deviation {round(diff,2)}% exceeds {item.ma_threshold}% from 50d MA"
+                                )
+            for msg in alerts:
+                send_email(user.email, "Watchlist Alert", msg)
+                if user.sms_opt_in and user.phone_number:
+                    send_sms(user.phone_number, msg)
+                db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
         user.last_alert_time = now
     db.session.commit()
 

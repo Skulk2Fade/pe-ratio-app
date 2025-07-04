@@ -35,12 +35,18 @@ def watchlist():
             if update_form.validate_on_submit():
                 item_id = update_form.item_id.data
                 threshold = update_form.threshold.data
+                de_threshold = update_form.de_threshold.data
+                rsi_threshold = update_form.rsi_threshold.data
+                ma_threshold = update_form.ma_threshold.data
                 notes = update_form.notes.data
                 tags = update_form.tags.data
                 public = update_form.public.data
                 item = WatchlistItem.query.get_or_404(item_id)
                 if item.user_id == current_user.id:
                     item.pe_threshold = threshold or ALERT_PE_THRESHOLD
+                    item.de_threshold = de_threshold
+                    item.rsi_threshold = rsi_threshold
+                    item.ma_threshold = ma_threshold
                     item.notes = notes
                     item.tags = tags
                     item.is_public = public
@@ -49,6 +55,9 @@ def watchlist():
             if add_form.validate_on_submit():
                 symbol = add_form.symbol.data.upper()
                 threshold = add_form.threshold.data or ALERT_PE_THRESHOLD
+                de_threshold = add_form.de_threshold.data
+                rsi_threshold = add_form.rsi_threshold.data
+                ma_threshold = add_form.ma_threshold.data
                 notes = add_form.notes.data
                 tags = add_form.tags.data
                 public = add_form.public.data
@@ -60,6 +69,9 @@ def watchlist():
                             symbol=symbol,
                             user_id=current_user.id,
                             pe_threshold=threshold,
+                            de_threshold=de_threshold,
+                            rsi_threshold=rsi_threshold,
+                            ma_threshold=ma_threshold,
                             notes=notes,
                             tags=tags,
                             is_public=public,

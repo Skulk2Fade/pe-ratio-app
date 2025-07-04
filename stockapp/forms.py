@@ -26,6 +26,9 @@ class LoginForm(FlaskForm):
 class WatchlistAddForm(FlaskForm):
     symbol = StringField("Symbol", validators=[DataRequired(), Length(max=10)])
     threshold = FloatField("Threshold", validators=[Optional()])
+    de_threshold = FloatField("D/E Threshold", validators=[Optional()])
+    rsi_threshold = FloatField("RSI Threshold", validators=[Optional()])
+    ma_threshold = FloatField("MA% Threshold", validators=[Optional()])
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
     public = BooleanField("Public")
@@ -34,6 +37,9 @@ class WatchlistAddForm(FlaskForm):
 class WatchlistUpdateForm(FlaskForm):
     item_id = IntegerField("Item ID", validators=[DataRequired()])
     threshold = FloatField("Threshold", validators=[DataRequired()])
+    de_threshold = FloatField("D/E Threshold", validators=[Optional()])
+    rsi_threshold = FloatField("RSI Threshold", validators=[Optional()])
+    ma_threshold = FloatField("MA% Threshold", validators=[Optional()])
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
     public = BooleanField("Public")
