@@ -133,12 +133,13 @@ def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
     historical = {
         "AAA": (["d1", "d2", "d3"], [100, 102, 101]),
         "BBB": (["d1", "d2", "d3"], [50, 49, 51]),
+        "SPY": (["d1", "d2", "d3"], [300, 303, 306]),
     }
 
     monkeypatch.setattr("stockapp.portfolio.routes.get_stock_data", fake_get_stock_data)
     monkeypatch.setattr(
         "stockapp.portfolio.routes.get_historical_prices",
-        lambda s, days=30: historical[s],
+        lambda s, days=30: historical.get(s, historical["SPY"]),
     )
     auth_client.post(
         "/portfolio",
@@ -153,6 +154,9 @@ def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
     resp = auth_client.get("/portfolio", follow_redirects=True)
     assert b"Asset Correlations" in resp.data
     assert b"Portfolio Volatility" in resp.data
+    assert b"Portfolio Beta" in resp.data
+    assert b"Sharpe Ratio" in resp.data
+    assert b"Value at Risk" in resp.data
 
 
 def test_check_watchlists(app, monkeypatch):

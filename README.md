@@ -178,7 +178,7 @@ Within the Portfolio page you can now export all holdings to a CSV file or
 import a file to quickly populate your portfolio. The CSV format uses the
 columns `Symbol`, `Quantity` and `Price Paid`.
 
-* **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk.
+* **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk. Enhanced metrics like Beta, Sharpe ratio and Value at Risk provide deeper risk insights.
 
 ## Finance Calculators
 
