@@ -82,6 +82,16 @@ class PortfolioItem(db.Model):
     tags = db.Column(db.String(100))
 
 
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    txn_type = db.Column(db.String(4), nullable=False)  # BUY or SELL
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
 class PortfolioFollow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

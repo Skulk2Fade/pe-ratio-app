@@ -6,8 +6,10 @@ from statistics import correlation, stdev
 from babel.numbers import format_currency
 from flask_login import current_user
 
+from datetime import datetime
+
 from ..extensions import db
-from ..models import PortfolioItem
+from ..models import PortfolioItem, Transaction
 from ..utils import get_locale
 from .. import brokerage
 
@@ -63,6 +65,52 @@ def sync_portfolio_from_brokerage(user_id: int, token: str) -> None:
                     user_id=user_id,
                 )
             )
+    db.session.commit()
+
+
+def sync_transactions_from_brokerage(user_id: int, token: str) -> None:
+    """Import transaction history and update portfolio positions."""
+    transactions = brokerage.get_transactions(token)
+    for t in transactions:
+        symbol = t.get("symbol", "").upper()
+        qty = t.get("quantity")
+        price = t.get("price")
+        txn_type = t.get("type", "").upper()
+        ts = t.get("timestamp")
+        try:
+            ts_dt = datetime.fromisoformat(ts) if isinstance(ts, str) else datetime.utcnow()
+        except Exception:
+            ts_dt = datetime.utcnow()
+        if not symbol or qty is None or price is None or not txn_type:
+            continue
+        db.session.add(
+            Transaction(
+                symbol=symbol,
+                quantity=qty,
+                price=price,
+                txn_type=txn_type,
+                timestamp=ts_dt,
+                user_id=user_id,
+            )
+        )
+        item = PortfolioItem.query.filter_by(user_id=user_id, symbol=symbol).first()
+        if txn_type == "BUY":
+            if item:
+                new_qty = item.quantity + qty
+                total_cost = item.price_paid * item.quantity + price * qty
+                item.quantity = new_qty
+                item.price_paid = total_cost / new_qty
+            else:
+                db.session.add(
+                    PortfolioItem(
+                        symbol=symbol,
+                        quantity=qty,
+                        price_paid=price,
+                        user_id=user_id,
+                    )
+                )
+        elif txn_type == "SELL" and item:
+            item.quantity = max(item.quantity - qty, 0)
     db.session.commit()
 
 
