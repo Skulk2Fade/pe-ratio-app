@@ -170,11 +170,11 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **Dividend Payout Ratio** – shows what percentage of earnings are distributed as dividends.
 * **Current Ratio** – current assets divided by current liabilities, indicating short-term liquidity.
 
-These extra metrics appear on the main page and in exported CSV/PDF files.
+These extra metrics appear on the main page and in exported CSV/PDF/XLSX/JSON files.
 
-## Portfolio CSV Import/Export
+## Portfolio CSV/XLSX/JSON Import/Export
 
-Within the Portfolio page you can now export all holdings to a CSV file or
+Within the Portfolio page you can now export all holdings to CSV, XLSX or JSON files or
 import a file to quickly populate your portfolio. The CSV format uses the
 columns `Symbol`, `Quantity` and `Price Paid`.
 

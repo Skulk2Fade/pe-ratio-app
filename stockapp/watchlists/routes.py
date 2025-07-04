@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, make_r
 from flask_login import login_required, current_user
 import csv
 import io
+import json
 from babel.dates import format_datetime
 
 from ..extensions import db
@@ -17,6 +18,7 @@ from ..utils import (
     ALERT_PE_THRESHOLD,
     get_stock_data,
     get_stock_news,
+    generate_xlsx,
 )
 from ..forms import WatchlistAddForm, WatchlistUpdateForm
 
@@ -188,21 +190,51 @@ def settings():
 @watch_bp.route("/export_history")
 @login_required
 def export_history():
+    fmt = request.args.get("format", "csv").lower()
     entries = (
         History.query.filter_by(user_id=current_user.id)
         .order_by(History.timestamp.desc())
         .all()
     )
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Symbol", "Timestamp"])
-    for e in entries:
-        timestamp = format_datetime(e.timestamp, locale=get_locale())
-        writer.writerow([e.symbol, timestamp])
-    response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = "attachment; filename=history.csv"
-    response.headers["Content-Type"] = "text/csv"
-    return response
+    if fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Symbol", "Timestamp"])
+        for e in entries:
+            timestamp = format_datetime(e.timestamp, locale=get_locale())
+            writer.writerow([e.symbol, timestamp])
+        response = make_response(output.getvalue())
+        response.headers["Content-Disposition"] = "attachment; filename=history.csv"
+        response.headers["Content-Type"] = "text/csv"
+        return response
+    elif fmt == "xlsx":
+        output = generate_xlsx(
+            ["Symbol", "Timestamp"],
+            [
+                [e.symbol, format_datetime(e.timestamp, locale=get_locale())]
+                for e in entries
+            ],
+        )
+        response = make_response(output)
+        response.headers["Content-Disposition"] = "attachment; filename=history.xlsx"
+        response.headers["Content-Type"] = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        return response
+    elif fmt == "json":
+        data = [
+            {
+                "symbol": e.symbol,
+                "timestamp": format_datetime(e.timestamp, locale=get_locale()),
+            }
+            for e in entries
+        ]
+        response = make_response(json.dumps(data))
+        response.headers["Content-Disposition"] = "attachment; filename=history.json"
+        response.headers["Content-Type"] = "application/json"
+        return response
+    else:
+        return "Invalid format", 400
 
 
 @watch_bp.route("/records")

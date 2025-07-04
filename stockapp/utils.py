@@ -543,3 +543,65 @@ def calculate_rsi(prices, period=14):
             rs = avg_gain / avg_loss
             rsi.append(round(100 - (100 / (1 + rs)), 2))
     return rsi
+
+
+def generate_xlsx(headers, rows):
+    """Return XLSX binary for the provided table data."""
+    import zipfile
+    from io import BytesIO
+
+    content_types = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Override PartName="/xl/worksheets/sheet1.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        '<Override PartName="/xl/workbook.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/_rels/workbook.xml.rels" '
+        'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Override PartName="/_rels/.rels" '
+        'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        "</Types>"
+    )
+    rels = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        "</Relationships>"
+    )
+    workbook_rels = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        "</Relationships>"
+    )
+    workbook = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>'
+        "</workbook>"
+    )
+    rows_xml = [
+        '<row r="1">'
+        + "".join(f'<c t="inlineStr"><is><t>{h}</t></is></c>' for h in headers)
+        + "</row>"
+    ]
+    r = 1
+    for row in rows:
+        r += 1
+        cells = "".join(f'<c t="inlineStr"><is><t>{v}</t></is></c>' for v in row)
+        rows_xml.append(f'<row r="{r}">{cells}</row>')
+    sheet = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        "<sheetData>" + "".join(rows_xml) + "</sheetData></worksheet>"
+    )
+
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", content_types)
+        zf.writestr("_rels/.rels", rels)
+        zf.writestr("xl/workbook.xml", workbook)
+        zf.writestr("xl/_rels/workbook.xml.rels", workbook_rels)
+        zf.writestr("xl/worksheets/sheet1.xml", sheet)
+    return buf.getvalue()

@@ -2,11 +2,17 @@ from flask import Blueprint, render_template, request, redirect, url_for, make_r
 from flask_login import login_required, current_user
 import csv
 import io
+import json
 
 from ..extensions import db
 from ..models import PortfolioItem, PortfolioFollow, User
 
-from ..utils import get_stock_data, get_historical_prices, get_stock_news
+from ..utils import (
+    get_stock_data,
+    get_historical_prices,
+    get_stock_news,
+    generate_xlsx,
+)
 from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
 from .helpers import (
     import_portfolio_items,
@@ -22,16 +28,44 @@ portfolio_bp = Blueprint("portfolio", __name__)
 @portfolio_bp.route("/export_portfolio")
 @login_required
 def export_portfolio():
+    fmt = request.args.get("format", "csv").lower()
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Symbol", "Quantity", "Price Paid"])
-    for item in items:
-        writer.writerow([item.symbol, item.quantity, item.price_paid])
-    response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = "attachment; filename=portfolio.csv"
-    response.headers["Content-Type"] = "text/csv"
-    return response
+    if fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Symbol", "Quantity", "Price Paid"])
+        for item in items:
+            writer.writerow([item.symbol, item.quantity, item.price_paid])
+        response = make_response(output.getvalue())
+        response.headers["Content-Disposition"] = "attachment; filename=portfolio.csv"
+        response.headers["Content-Type"] = "text/csv"
+        return response
+    elif fmt == "xlsx":
+        output = generate_xlsx(
+            ["Symbol", "Quantity", "Price Paid"],
+            [[item.symbol, item.quantity, item.price_paid] for item in items],
+        )
+        response = make_response(output)
+        response.headers["Content-Disposition"] = "attachment; filename=portfolio.xlsx"
+        response.headers["Content-Type"] = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        return response
+    elif fmt == "json":
+        data = [
+            {
+                "symbol": item.symbol,
+                "quantity": item.quantity,
+                "price_paid": item.price_paid,
+            }
+            for item in items
+        ]
+        response = make_response(json.dumps(data))
+        response.headers["Content-Disposition"] = "attachment; filename=portfolio.json"
+        response.headers["Content-Type"] = "application/json"
+        return response
+    else:
+        return "Invalid format", 400
 
 
 @portfolio_bp.route("/portfolio/sync")
