@@ -15,6 +15,10 @@
                 <input class="form-check-input" type="checkbox" name="sms_opt_in" id="sms_opt_in" {% if sms_opt_in %}checked{% endif %}>
                 <label class="form-check-label" for="sms_opt_in">Enable SMS Alerts</label>
             </div>
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" name="trend_opt_in" id="trend_opt_in" {% if trend_opt_in %}checked{% endif %}>
+                <label class="form-check-label" for="trend_opt_in">Email Weekly Summary</label>
+            </div>
             <label class="form-label mt-3">Default Currency</label>
             <select name="currency" class="form-select">
                 {% for cur in ['USD','EUR','GBP','AUD','JPY'] %}

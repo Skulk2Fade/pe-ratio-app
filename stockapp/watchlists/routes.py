@@ -144,6 +144,7 @@ def settings():
         phone = request.form.get("phone")
         current_user.phone_number = phone
         current_user.sms_opt_in = bool(request.form.get("sms_opt_in"))
+        current_user.trend_opt_in = bool(request.form.get("trend_opt_in"))
         currency = request.form.get("currency")
         language = request.form.get("language")
         theme = request.form.get("theme")
@@ -159,6 +160,7 @@ def settings():
         frequency=current_user.alert_frequency,
         phone=current_user.phone_number or "",
         sms_opt_in=current_user.sms_opt_in,
+        trend_opt_in=current_user.trend_opt_in,
         currency=current_user.default_currency,
         language=current_user.language,
         theme=current_user.theme,

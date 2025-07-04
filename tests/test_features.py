@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 import pyotp
 
-from stockapp.models import User, WatchlistItem, Alert
+from stockapp.models import User, WatchlistItem, Alert, PortfolioItem
 
 
 def test_signup_login_logout(client, app, monkeypatch):
@@ -223,6 +223,40 @@ def test_check_watchlists(app, monkeypatch):
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert is not None
+
+
+def test_trend_summary_notifications(app, monkeypatch):
+    monkeypatch.setattr(
+        "stockapp.tasks.get_historical_prices",
+        lambda s, days=7: (["d1", "d2"], [100, 110]),
+    )
+    emails = []
+    monkeypatch.setattr(
+        "stockapp.tasks.send_email",
+        lambda to, subject, body: emails.append((to, subject, body)),
+    )
+    from stockapp.extensions import db
+
+    with app.app_context():
+        u = User(
+            username="summary",
+            email="s@example.com",
+            password_hash=generate_password_hash("x"),
+            is_verified=True,
+            trend_opt_in=True,
+        )
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(
+            PortfolioItem(symbol="AAA", quantity=1, price_paid=10, user_id=u.id)
+        )
+        db.session.add(WatchlistItem(symbol="BBB", user_id=u.id))
+        db.session.commit()
+    from stockapp import tasks
+
+    tasks._send_trend_summaries()
+    assert emails
+    assert "AAA" in emails[0][2] and "BBB" in emails[0][2]
 
 
 def test_mfa_login_flow(client, app):
