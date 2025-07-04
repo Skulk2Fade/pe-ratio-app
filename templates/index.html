@@ -199,6 +199,7 @@
                                     </div>
                                     <div id="priceChart"></div>
                                     <div id="rsiChart" class="mt-3"></div>
+                                    <div id="macdChart" class="mt-3"></div>
                                 </div>
                                 <script>
                                     const fullDates = {{ history_dates|tojson }};
@@ -206,6 +207,10 @@
                                     const ma20 = {{ ma20|tojson }};
                                     const ma50 = {{ ma50|tojson }};
                                     const rsiValues = {{ rsi_values|tojson }};
+                                    const macdVals = {{ macd_values|tojson }};
+                                    const macdSignal = {{ macd_signal|tojson }};
+                                    const bbUpper = {{ bb_upper|tojson }};
+                                    const bbLower = {{ bb_lower|tojson }};
                                     const priceLayout = {
                                         title: 'Historical Prices',
                                         xaxis: {
@@ -220,10 +225,16 @@
                                         const ma20Data = ma20.slice(-days);
                                         const ma50Data = ma50.slice(-days);
                                         const rsi = rsiValues.slice(-days);
+                                        const upper = bbUpper.slice(-days);
+                                        const lower = bbLower.slice(-days);
+                                        const macd = macdVals.slice(-days);
+                                        const signal = macdSignal.slice(-days);
                                         const priceData = [
                                             { x: dates, y: prices, mode: 'lines', name: 'Price' },
                                             { x: dates, y: ma20Data, mode: 'lines', name: 'MA20' },
-                                            { x: dates, y: ma50Data, mode: 'lines', name: 'MA50' }
+                                            { x: dates, y: ma50Data, mode: 'lines', name: 'MA50' },
+                                            { x: dates, y: upper, mode: 'lines', name: 'BB Upper', line: {dash: 'dot'} },
+                                            { x: dates, y: lower, mode: 'lines', name: 'BB Lower', line: {dash: 'dot'} }
                                         ];
                                         Plotly.react('priceChart', priceData, priceLayout, {responsive: true});
                                         const rsiLayout = {
@@ -237,6 +248,11 @@
                                         };
                                         const rsiData = [{ x: dates, y: rsi, mode: 'lines', name: 'RSI' }];
                                         Plotly.react('rsiChart', rsiData, rsiLayout, {responsive: true});
+                                        const macdData = [
+                                            { x: dates, y: macd, mode: 'lines', name: 'MACD' },
+                                            { x: dates, y: signal, mode: 'lines', name: 'Signal' }
+                                        ];
+                                        Plotly.react('macdChart', macdData, {title: 'MACD'}, {responsive: true});
                                     }
                                     document.getElementById('timeRange').addEventListener('change', (e) => {
                                         updateChart(parseInt(e.target.value));

@@ -3,6 +3,7 @@ import csv
 import io
 from typing import Callable, Dict, List, Tuple
 from statistics import correlation, stdev
+import random
 from babel.numbers import format_currency
 from flask_login import current_user
 
@@ -78,7 +79,9 @@ def sync_transactions_from_brokerage(user_id: int, token: str) -> None:
         txn_type = t.get("type", "").upper()
         ts = t.get("timestamp")
         try:
-            ts_dt = datetime.fromisoformat(ts) if isinstance(ts, str) else datetime.utcnow()
+            ts_dt = (
+                datetime.fromisoformat(ts) if isinstance(ts, str) else datetime.utcnow()
+            )
         except Exception:
             ts_dt = datetime.utcnow()
         if not symbol or qty is None or price is None or not txn_type:
@@ -270,6 +273,7 @@ def calculate_portfolio_analysis(
         beta = None
         sharpe_ratio = None
         value_at_risk = None
+        monte_carlo_var = None
         if returns and len(returns) > 0:
             n = min(len(r) for r in returns.values())
             if n > 1:
@@ -328,12 +332,30 @@ def calculate_portfolio_analysis(
                             beta = round(b, 2)
                     except Exception:
                         beta = None
+                try:
+                    sims = []
+                    for _ in range(500):
+                        val = total_value
+                        for _ in range(n):
+                            r = random.choice(portfolio_returns)
+                            val *= 1 + r
+                        sims.append(val)
+                    sims.sort()
+                    mc_var_val = total_value - sims[int(len(sims) * 0.05)]
+                    monte_carlo_var = format_currency(
+                        mc_var_val,
+                        totals_currency,
+                        locale=get_locale(),
+                    )
+                except Exception:
+                    monte_carlo_var = None
     else:
         correlations = []
         portfolio_volatility = None
         beta = None
         sharpe_ratio = None
         value_at_risk = None
+        monte_carlo_var = None
 
     news_data = {
         row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
@@ -350,5 +372,6 @@ def calculate_portfolio_analysis(
         "beta": beta,
         "sharpe_ratio": sharpe_ratio,
         "value_at_risk": value_at_risk,
+        "monte_carlo_var": monte_carlo_var,
         "news": news_data,
     }

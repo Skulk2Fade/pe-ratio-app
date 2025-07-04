@@ -21,13 +21,22 @@ def test_format_market_cap():
 
 
 def test_indicators():
-    from stockapp.utils import moving_average, calculate_rsi
+    from stockapp.utils import (
+        moving_average,
+        calculate_rsi,
+        calculate_macd,
+        bollinger_bands,
+    )
 
     prices = [1, 2, 3, 4, 5]
     ma = moving_average(prices, 3)
     assert ma[-1] == 4
     rsi = calculate_rsi(prices, 3)
     assert rsi[-1] == 100
+    macd, signal = calculate_macd(prices)
+    assert len(macd) == len(prices)
+    upper, lower = bollinger_bands(prices, period=3, num_std=1)
+    assert upper[-1] is not None and lower[-1] is not None
 
 
 def test_api_endpoints(auth_client, app):

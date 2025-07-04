@@ -114,6 +114,7 @@ def portfolio():
         beta=analysis["beta"],
         sharpe_ratio=analysis["sharpe_ratio"],
         value_at_risk=analysis["value_at_risk"],
+        monte_carlo_var=analysis["monte_carlo_var"],
         news=analysis["news"],
         add_form=add_form,
         import_form=import_form,
@@ -179,4 +180,3 @@ def leaderboard():
         .all()
     )
     return render_template("leaderboard.html", leaders=results)
-

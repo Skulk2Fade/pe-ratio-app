@@ -83,6 +83,9 @@
         {% if value_at_risk is not none %}
         <div class="alert alert-danger">Value at Risk (95%): {{ value_at_risk }}</div>
         {% endif %}
+        {% if monte_carlo_var is not none %}
+        <div class="alert alert-danger">Monte Carlo VaR (95%): {{ monte_carlo_var }}</div>
+        {% endif %}
         {% if news %}
         <h5 class="mt-4">Latest News</h5>
         {% for sym, articles in news.items() %}

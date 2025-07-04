@@ -22,6 +22,8 @@ from ..utils import (
     ALERT_PE_THRESHOLD,
     moving_average,
     calculate_rsi,
+    calculate_macd,
+    bollinger_bands,
     generate_xlsx,
 )
 import time
@@ -123,6 +125,8 @@ def index():
     error_message = alert_message = None
     history_dates = history_prices = []
     ma20 = ma50 = rsi_values = []
+    macd_vals = macd_signal = []
+    bb_upper = bb_lower = []
     # calculators moved to separate blueprint
 
     if request.method == "GET":
@@ -177,6 +181,8 @@ def index():
             ma20 = moving_average(history_prices, 20)
             ma50 = moving_average(history_prices, 50)
             rsi_values = calculate_rsi(history_prices, 14)
+            macd_vals, macd_signal = calculate_macd(history_prices)
+            bb_upper, bb_lower = bollinger_bands(history_prices, 20, 2)
 
             raw_price = price
             raw_eps = eps
@@ -386,6 +392,10 @@ def index():
         ma20=ma20,
         ma50=ma50,
         rsi_values=rsi_values,
+        macd_values=macd_vals,
+        macd_signal=macd_signal,
+        bb_upper=bb_upper,
+        bb_lower=bb_lower,
         history=history,
     )
 
