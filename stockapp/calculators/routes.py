@@ -103,3 +103,87 @@ def loan():
         loan_result=loan_result,
         error_message=error_message,
     )
+
+
+@calc_bp.route("/roi", methods=["GET", "POST"])
+def roi():
+    initial = final = None
+    roi_result = None
+    error_message = None
+    if request.method == "POST":
+        try:
+            initial = float(request.form.get("initial", 0))
+            final = float(request.form.get("final", 0))
+            if initial != 0:
+                roi_result = round(((final - initial) / initial) * 100, 2)
+            else:
+                error_message = "Initial investment cannot be zero."
+        except ValueError:
+            error_message = "Invalid input for ROI calculator."
+    return render_template(
+        "roi.html",
+        initial=initial,
+        final=final,
+        roi_result=roi_result,
+        error_message=error_message,
+    )
+
+
+@calc_bp.route("/dcf", methods=["GET", "POST"])
+def dcf():
+    cash_flow = rate = years = terminal_value = None
+    dcf_result = None
+    error_message = None
+    if request.method == "POST":
+        try:
+            cash_flow = float(request.form.get("cash_flow", 0))
+            rate = float(request.form.get("discount_rate", 0))
+            years = int(request.form.get("years", 0))
+            terminal_value = float(request.form.get("terminal_value", 0))
+            discount = rate / 100
+            total = 0
+            for i in range(1, years + 1):
+                total += cash_flow / (1 + discount) ** i
+            total += terminal_value / (1 + discount) ** years
+            dcf_result = round(total, 2)
+        except ValueError:
+            error_message = "Invalid input for DCF calculator."
+    return render_template(
+        "dcf.html",
+        cash_flow=cash_flow,
+        discount_rate=rate,
+        years=years,
+        terminal_value=terminal_value,
+        dcf_result=dcf_result,
+        error_message=error_message,
+    )
+
+
+@calc_bp.route("/tax", methods=["GET", "POST"])
+def tax():
+    purchase_price = sale_price = quantity = tax_rate = None
+    tax_result = None
+    error_message = None
+    if request.method == "POST":
+        try:
+            purchase_price = float(request.form.get("purchase_price", 0))
+            sale_price = float(request.form.get("sale_price", 0))
+            quantity = float(request.form.get("quantity", 0))
+            tax_rate = float(request.form.get("tax_rate", 0))
+            gain = (sale_price - purchase_price) * quantity
+            tax_due = gain * (tax_rate / 100)
+            tax_result = {
+                "gain": round(gain, 2),
+                "tax_due": round(tax_due, 2),
+            }
+        except ValueError:
+            error_message = "Invalid input for tax calculator."
+    return render_template(
+        "tax.html",
+        purchase_price=purchase_price,
+        sale_price=sale_price,
+        quantity=quantity,
+        tax_rate=tax_rate,
+        tax_result=tax_result,
+        error_message=error_message,
+    )

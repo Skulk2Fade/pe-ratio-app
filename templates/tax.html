@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Tax Calculator{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h3 class="mb-4">Capital Gains Tax</h3>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="purchase_price" class="form-label">Purchase Price</label>
+            <input type="number" step="any" id="purchase_price" name="purchase_price" value="{{ purchase_price }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="sale_price" class="form-label">Sale Price</label>
+            <input type="number" step="any" id="sale_price" name="sale_price" value="{{ sale_price }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" step="any" id="quantity" name="quantity" value="{{ quantity }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+            <input type="number" step="any" id="tax_rate" name="tax_rate" value="{{ tax_rate }}" class="form-control" required>
+        </div>
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Calculate</button>
+        </div>
+    </form>
+    {% if error_message %}
+        <div class="alert alert-danger mt-3">{{ error_message }}</div>
+    {% endif %}
+    {% if tax_result %}
+        <p class="mt-3"><strong>Capital Gain:</strong> {{ tax_result.gain }}</p>
+        <p><strong>Tax Due:</strong> {{ tax_result.tax_due }}</p>
+    {% endif %}
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}
