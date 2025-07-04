@@ -20,6 +20,10 @@
                 <div class="col">
                     {{ add_form.tags(class="form-control", placeholder="Tags") }}
                 </div>
+                <div class="col-auto form-check">
+                    {{ add_form.public(class="form-check-input") }}
+                    <label class="form-check-label">Public</label>
+                </div>
                 <div class="col-auto">
                     <button class="btn btn-primary" type="submit">Add</button>
                 </div>
@@ -37,9 +41,13 @@
                         <input type="number" name="threshold" value="{{ item.pe_threshold }}" class="form-control d-inline-block w-auto" />
                         <input type="text" name="notes" value="{{ item.notes or '' }}" class="form-control" placeholder="Notes" />
                         <input type="text" name="tags" value="{{ item.tags or '' }}" class="form-control" placeholder="Tags" />
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="public" {% if item.is_public %}checked{% endif %}>
+                            <label class="form-check-label">Public</label>
+                        </div>
                         <button class="btn btn-sm btn-primary" type="submit">Update</button>
-                        <a href="{{ url_for('watch.delete_watchlist', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
-                    </div>
+                        <a href="{{ url_for('watch.delete_watchlist_item', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                        </div>
                 </form>
                 {% if news[item.symbol] %}
                 <ul class="mt-2">

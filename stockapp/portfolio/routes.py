@@ -4,7 +4,7 @@ import csv
 import io
 
 from ..extensions import db
-from ..models import PortfolioItem
+from ..models import PortfolioItem, PortfolioFollow, User
 
 from ..utils import get_stock_data, get_historical_prices, get_stock_news
 from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
@@ -85,3 +85,38 @@ def delete_portfolio_item(item_id):
         db.session.delete(item)
         db.session.commit()
     return redirect(url_for("portfolio.portfolio"))
+
+
+@portfolio_bp.route("/portfolio/<username>")
+@login_required
+def view_portfolio(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    items = PortfolioItem.query.filter_by(user_id=user.id).all()
+    following = PortfolioFollow.query.filter_by(
+        follower_id=current_user.id, followed_id=user.id
+    ).first()
+    return render_template(
+        "public_portfolio.html",
+        items=items,
+        user=user,
+        following=bool(following),
+    )
+
+
+@portfolio_bp.route("/portfolio/follow/<username>")
+@login_required
+def follow_portfolio(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if user.id == current_user.id:
+        return redirect(url_for("portfolio.view_portfolio", username=username))
+    existing = PortfolioFollow.query.filter_by(
+        follower_id=current_user.id, followed_id=user.id
+    ).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        db.session.add(
+            PortfolioFollow(follower_id=current_user.id, followed_id=user.id)
+        )
+    db.session.commit()
+    return redirect(url_for("portfolio.view_portfolio", username=username))

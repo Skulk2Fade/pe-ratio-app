@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Public Watchlist{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h3 class="mb-4">{{ user.username }}'s Public Watchlist</h3>
+  {% if items %}
+  <ul class="list-group">
+    {% for item in items %}
+    <li class="list-group-item">
+      <strong>{{ item.symbol }}</strong>
+      {% if news[item.symbol] %}
+      <ul class="mt-2">
+        {% for n in news[item.symbol] %}
+        <li>
+          <a href="{{ n.url }}" target="_blank">{{ n.headline }}</a>
+          <small class="text-muted">{{ n.published }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No public items.</p>
+  {% endif %}
+  <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}

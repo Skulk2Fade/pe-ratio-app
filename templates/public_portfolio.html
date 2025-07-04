@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Portfolio{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h3 class="mb-4">{{ user.username }}'s Portfolio</h3>
+  {% if following %}
+  <a href="{{ url_for('portfolio.follow_portfolio', username=user.username) }}" class="btn btn-secondary mb-3">Unfollow</a>
+  {% else %}
+  <a href="{{ url_for('portfolio.follow_portfolio', username=user.username) }}" class="btn btn-primary mb-3">Follow</a>
+  {% endif %}
+  {% if items %}
+  <ul class="list-group">
+    {% for item in items %}
+    <li class="list-group-item">
+      <strong>{{ item.symbol }}</strong> - {{ item.quantity }} @ {{ item.price_paid }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No holdings.</p>
+  {% endif %}
+  <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}

@@ -34,6 +34,7 @@ class WatchlistItem(db.Model):
     pe_threshold = db.Column(db.Float, default=30)
     notes = db.Column(db.Text)
     tags = db.Column(db.String(100))
+    is_public = db.Column(db.Boolean, default=False)
 
 
 class FavoriteTicker(db.Model):
@@ -75,3 +76,9 @@ class PortfolioItem(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     notes = db.Column(db.Text)
     tags = db.Column(db.String(100))
+
+
+class PortfolioFollow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    followed_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

@@ -35,11 +35,13 @@ def watchlist():
                 threshold = update_form.threshold.data
                 notes = update_form.notes.data
                 tags = update_form.tags.data
+                public = update_form.public.data
                 item = WatchlistItem.query.get_or_404(item_id)
                 if item.user_id == current_user.id:
                     item.pe_threshold = threshold or ALERT_PE_THRESHOLD
                     item.notes = notes
                     item.tags = tags
+                    item.is_public = public
                     db.session.commit()
         else:
             if add_form.validate_on_submit():
@@ -47,6 +49,7 @@ def watchlist():
                 threshold = add_form.threshold.data or ALERT_PE_THRESHOLD
                 notes = add_form.notes.data
                 tags = add_form.tags.data
+                public = add_form.public.data
                 if not WatchlistItem.query.filter_by(
                     user_id=current_user.id, symbol=symbol
                 ).first():
@@ -57,6 +60,7 @@ def watchlist():
                             pe_threshold=threshold,
                             notes=notes,
                             tags=tags,
+                            is_public=public,
                         )
                     )
                     db.session.commit()
@@ -78,6 +82,16 @@ def delete_watchlist_item(item_id):
     item = WatchlistItem.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for("watch.watchlist"))
+
+
+@watch_bp.route("/watchlist/toggle_public/<int:item_id>")
+@login_required
+def toggle_public(item_id):
+    item = WatchlistItem.query.get_or_404(item_id)
+    if item.user_id == current_user.id:
+        item.is_public = not item.is_public
         db.session.commit()
     return redirect(url_for("watch.watchlist"))
 
@@ -204,3 +218,18 @@ def clear_records():
     StockRecord.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     return redirect(url_for("watch.records"))
+
+
+@watch_bp.route("/watchlist/public/<username>")
+def public_watchlist(username):
+    from ..models import User
+
+    user = User.query.filter_by(username=username).first_or_404()
+    items = WatchlistItem.query.filter_by(user_id=user.id, is_public=True).all()
+    news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
+    return render_template(
+        "public_watchlist.html",
+        items=items,
+        user=user,
+        news=news,
+    )
