@@ -13,6 +13,7 @@ psycopg2-binary
 pytest
 redis
 python-dotenv
+flask-sock
 
 black
 flake8

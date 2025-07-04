@@ -27,3 +27,9 @@ caching.
 If the `TWILIO_SID`, `TWILIO_TOKEN` and `TWILIO_FROM` variables are provided,
 the app can send SMS copies of alert emails.  Enable SMS alerts from the
 Settings page after adding a phone number.
+
+## WebSocket Streaming
+
+The price feed supports a WebSocket endpoint at `/ws/price`. Clients send the
+desired ticker symbol after connecting and receive periodic JSON updates. This
+opens the door for real-time push notifications in the future.

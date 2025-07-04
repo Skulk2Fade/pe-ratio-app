@@ -25,7 +25,7 @@ from ..utils import (
     generate_xlsx,
 )
 import time
-from ..extensions import db
+from ..extensions import db, sock
 from ..models import History, Alert, WatchlistItem, StockRecord
 
 main_bp = Blueprint("main", __name__)
@@ -74,6 +74,38 @@ def stream_price():
             time.sleep(5)
 
     return Response(generate(), mimetype="text/event-stream")
+
+
+@sock.route("/ws/price")
+def ws_price(ws):
+    """WebSocket endpoint streaming price and EPS."""
+    symbol = (ws.receive() or "").upper()
+    if not symbol:
+        ws.send(json.dumps({"error": "symbol required"}))
+        return
+
+    loops = 0
+    while True:
+        try:
+            (
+                _name,
+                _logo_url,
+                _sector,
+                _industry,
+                _exchange,
+                _currency,
+                price,
+                eps,
+                *_rest,
+            ) = get_stock_data(symbol)
+            data = json.dumps({"price": price, "eps": eps})
+        except Exception:
+            data = json.dumps({"error": "fetch"})
+        ws.send(data)
+        loops += 1
+        if current_app.config.get("TESTING") and loops >= 2:
+            break
+        time.sleep(5)
 
 
 @main_bp.route("/", methods=["GET", "POST"])
