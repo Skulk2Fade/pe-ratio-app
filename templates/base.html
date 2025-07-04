@@ -26,6 +26,7 @@
                         <a href="{{ url_for('watch.watchlist') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Watchlist') }}</a>
                         <a href="{{ url_for('watch.favorites') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Favorites') }}</a>
                         <a href="{{ url_for('portfolio.portfolio') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Portfolio') }}</a>
+                        <a href="{{ url_for('portfolio.leaderboard') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Leaderboard') }}</a>
                         <a href="{{ url_for('alerts.alerts') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Alerts') }}</a>
                         <a href="{{ url_for('watch.records') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Records') }}</a>
                         <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Export History') }}</a>
@@ -35,6 +36,7 @@
                     </div>
                 {% else %}
                     <div class="ms-auto d-lg-flex align-items-center">
+                        <a href="{{ url_for('portfolio.leaderboard') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Leaderboard') }}</a>
                         <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Login') }}</a>
                         <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary mb-2 mb-lg-0">{{ _('Sign Up') }}</a>
                     </div>
