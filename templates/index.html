@@ -67,15 +67,15 @@
                                      <tbody>
                                          <tr>
                                              <th scope="row">Price</th>
-                                             <td>{{ price }}</td>
+                                             <td id="price_value">{{ price }}</td>
                                          </tr>
                                          <tr>
                                              <th scope="row">EPS</th>
-                                             <td>{{ eps }}</td>
+                                             <td id="eps_value">{{ eps }}</td>
                                          </tr>
                                          <tr>
                                              <th scope="row">P/E Ratio</th>
-                                             <td>{{ pe_ratio }}</td>
+                                             <td id="pe_value">{{ pe_ratio }}</td>
                                          </tr>
                                          <tr>
                                              <th scope="row">Valuation</th>
@@ -253,5 +253,24 @@
                 </div>
             </div>
         </div>
-    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {% if symbol %}
+    <script>
+        const evtSource = new EventSource("{{ url_for('main.stream_price') }}?symbol={{ symbol }}");
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.price !== undefined) {
+                const pEl = document.getElementById('price_value');
+                if (pEl) pEl.textContent = data.price;
+            }
+            if (data.price !== undefined && data.eps !== undefined) {
+                const peEl = document.getElementById('pe_value');
+                if (peEl && data.eps) peEl.textContent = (data.price / data.eps).toFixed(2);
+            }
+        };
+    </script>
+    {% endif %}
 {% endblock %}

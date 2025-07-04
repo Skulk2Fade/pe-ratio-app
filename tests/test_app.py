@@ -54,3 +54,25 @@ def test_api_endpoints(auth_client, app):
     resp = auth_client.get("/api/alerts")
     assert resp.status_code == 200
     assert any(alert["message"] == "msg" for alert in resp.get_json())
+
+
+def test_stream_price(client, monkeypatch):
+    monkeypatch.setattr(
+        "stockapp.main.routes.get_stock_data",
+        lambda s: (
+            "Name",
+            "",
+            "",
+            "",
+            "",
+            "",
+            100,
+            5,
+            *([None] * 15),
+        ),
+    )
+    resp = client.get("/stream_price?symbol=AAA")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"].startswith("text/event-stream")
+    chunk = next(resp.response).decode()
+    assert "price" in chunk
