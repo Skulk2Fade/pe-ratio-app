@@ -181,6 +181,10 @@ columns `Symbol`, `Quantity` and `Price Paid`.
 * **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk. Enhanced metrics like Beta, Sharpe ratio and Value at Risk provide deeper risk insights.
 * **Brokerage Transaction Sync** – portfolio holdings and recent transactions can now be synchronized from connected brokerage accounts using the new stub API.
 
+## Social Features
+
+Public watchlists let you share ideas with other traders. Visit `/watchlist/public/<username>` to see another user's list. You can also follow portfolios you find interesting. Check out the **Leaderboard** link in the navigation bar to see which users have the most followers.
+
 ## Finance Calculators
 
 Several quick calculators are available at their own routes:

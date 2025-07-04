@@ -360,3 +360,28 @@ def test_public_watchlist_and_follow_portfolio(app, client, auth_client):
     auth_client.get("/portfolio/follow/other", follow_redirects=True)
     resp = auth_client.get("/portfolio/other", follow_redirects=True)
     assert b"SOC" in resp.data
+
+
+def test_leaderboard(app, client):
+    from stockapp.extensions import db
+    from stockapp.models import User, PortfolioFollow
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        u1 = User(username="l1", email="l1@e.com", password_hash=generate_password_hash("x"), is_verified=True)
+        u2 = User(username="l2", email="l2@e.com", password_hash=generate_password_hash("x"), is_verified=True)
+        u3 = User(username="l3", email="l3@e.com", password_hash=generate_password_hash("x"), is_verified=True)
+        db.session.add_all([u1, u2, u3])
+        db.session.commit()
+        db.session.add_all([
+            PortfolioFollow(follower_id=u2.id, followed_id=u1.id),
+            PortfolioFollow(follower_id=u3.id, followed_id=u1.id),
+            PortfolioFollow(follower_id=u3.id, followed_id=u2.id),
+        ])
+        db.session.commit()
+
+    resp = client.get("/leaderboard")
+    assert resp.status_code == 200
+    data = resp.data.decode()
+    assert "l1" in data and "l2" in data
+

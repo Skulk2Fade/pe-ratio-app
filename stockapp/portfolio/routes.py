@@ -164,3 +164,19 @@ def follow_portfolio(username):
         )
     db.session.commit()
     return redirect(url_for("portfolio.view_portfolio", username=username))
+
+
+@portfolio_bp.route("/leaderboard")
+def leaderboard():
+    from sqlalchemy import func
+
+    results = (
+        db.session.query(User.username, func.count(PortfolioFollow.id).label("count"))
+        .outerjoin(PortfolioFollow, User.id == PortfolioFollow.followed_id)
+        .group_by(User.id)
+        .order_by(func.count(PortfolioFollow.id).desc())
+        .limit(10)
+        .all()
+    )
+    return render_template("leaderboard.html", leaders=results)
+
