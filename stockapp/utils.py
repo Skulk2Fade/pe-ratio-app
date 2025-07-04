@@ -545,6 +545,55 @@ def calculate_rsi(prices, period=14):
     return rsi
 
 
+def calculate_macd(prices, slow=26, fast=12, signal=9):
+    """Compute MACD and signal line using exponential moving averages."""
+    ema_fast = []
+    ema_slow = []
+    macd = []
+    signal_line = []
+    for i, price in enumerate(prices):
+        if i == 0:
+            ema_fast.append(price)
+            ema_slow.append(price)
+            macd.append(0)
+            signal_line.append(0)
+            continue
+        ema_fast.append(ema_fast[-1] + (2 / (fast + 1)) * (price - ema_fast[-1]))
+        ema_slow.append(ema_slow[-1] + (2 / (slow + 1)) * (price - ema_slow[-1]))
+        macd_val = ema_fast[-1] - ema_slow[-1]
+        macd.append(macd_val)
+        signal_line.append(
+            signal_line[-1] + (2 / (signal + 1)) * (macd_val - signal_line[-1])
+        )
+    macd = [round(x, 2) for x in macd]
+    signal_line = [round(x, 2) for x in signal_line]
+    return macd, signal_line
+
+
+def bollinger_bands(prices, period=20, num_std=2):
+    """Return upper and lower Bollinger Bands."""
+    ma = moving_average(prices, period)
+    stds = []
+    for i in range(len(prices)):
+        if i + 1 < period:
+            stds.append(None)
+        else:
+            window = prices[i + 1 - period : i + 1]
+            mean = sum(window) / period
+            variance = sum((p - mean) ** 2 for p in window) / period
+            stds.append(variance**0.5)
+    upper = []
+    lower = []
+    for m, s in zip(ma, stds):
+        if m is None or s is None:
+            upper.append(None)
+            lower.append(None)
+        else:
+            upper.append(round(m + num_std * s, 2))
+            lower.append(round(m - num_std * s, 2))
+    return upper, lower
+
+
 def generate_xlsx(headers, rows):
     """Return XLSX binary for the provided table data."""
     import zipfile

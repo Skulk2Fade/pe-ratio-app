@@ -11,6 +11,8 @@ def test_sync_transactions(app):
         sync_transactions_from_brokerage(user.id, "demo-token")
         txns = Transaction.query.filter_by(user_id=user.id).all()
         assert len(txns) == 2
-        items = {i.symbol: i for i in PortfolioItem.query.filter_by(user_id=user.id).all()}
+        items = {
+            i.symbol: i for i in PortfolioItem.query.filter_by(user_id=user.id).all()
+        }
         assert "AAA" in items
         assert items["AAA"].quantity >= 1

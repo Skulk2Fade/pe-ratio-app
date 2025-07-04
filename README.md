@@ -169,6 +169,7 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **Price-to-Free-Cash-Flow (P/FCF) ratio** – calculates valuation using free cash flow per share.
 * **Dividend Payout Ratio** – shows what percentage of earnings are distributed as dividends.
 * **Current Ratio** – current assets divided by current liabilities, indicating short-term liquidity.
+* **MACD and Bollinger Bands** – additional technical indicators for chart analysis.
 
 These extra metrics appear on the main page and in exported CSV/PDF/XLSX/JSON files.
 
@@ -178,7 +179,7 @@ Within the Portfolio page you can now export all holdings to CSV, XLSX or JSON f
 import a file to quickly populate your portfolio. The CSV format uses the
 columns `Symbol`, `Quantity` and `Price Paid`.
 
-* **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk. Enhanced metrics like Beta, Sharpe ratio and Value at Risk provide deeper risk insights.
+* **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk. Enhanced metrics like Beta, Sharpe ratio, Value at Risk and Monte Carlo simulations provide deeper risk insights.
 * **Brokerage Transaction Sync** – portfolio holdings and recent transactions can now be synchronized from connected brokerage accounts using the new stub API.
 
 ## Social Features
