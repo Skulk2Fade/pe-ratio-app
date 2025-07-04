@@ -14,7 +14,10 @@ from .utils import (
     send_sms,
     ALERT_PE_THRESHOLD,
 )
-from .portfolio.helpers import sync_portfolio_from_brokerage
+from .portfolio.helpers import (
+    sync_portfolio_from_brokerage,
+    sync_transactions_from_brokerage,
+)
 
 # Celery application instance configured in ``init_celery``.
 celery = Celery(__name__)
@@ -167,6 +170,7 @@ def _sync_brokerage():
     users = User.query.filter(User.brokerage_token.isnot(None)).all()
     for user in users:
         sync_portfolio_from_brokerage(user.id, user.brokerage_token)
+        sync_transactions_from_brokerage(user.id, user.brokerage_token)
 
 
 @celery.task(name="stockapp.tasks.sync_brokerage_task")

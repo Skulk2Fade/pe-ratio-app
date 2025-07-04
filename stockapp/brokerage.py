@@ -28,3 +28,33 @@ def get_holdings(api_token: str) -> List[Dict[str, float]]:
             {"symbol": "BBB", "quantity": 1, "price_paid": 110},
         ]
     return []
+
+
+def get_transactions(api_token: str) -> List[Dict[str, object]]:
+    """Return a list of recent transactions for the given API token.
+
+    In production this would contact the brokerage REST API. For the test
+    environment we simply return a fixed set of transactions when the special
+    ``demo-token`` is used.
+
+    Each transaction dictionary contains ``symbol``, ``quantity``, ``price``,
+    ``type`` and ``timestamp`` keys.
+    """
+    if api_token == "demo-token":
+        return [
+            {
+                "symbol": "AAA",
+                "quantity": 1,
+                "price": 95,
+                "type": "BUY",
+                "timestamp": "2023-01-01",
+            },
+            {
+                "symbol": "BBB",
+                "quantity": 1,
+                "price": 120,
+                "type": "BUY",
+                "timestamp": "2023-01-02",
+            },
+        ]
+    return []
