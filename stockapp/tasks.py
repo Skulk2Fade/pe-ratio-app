@@ -12,6 +12,7 @@ from .utils import (
     send_sms,
     ALERT_PE_THRESHOLD,
 )
+from .portfolio.helpers import sync_portfolio_from_brokerage
 
 # Celery application instance configured in ``init_celery``.
 celery = Celery(__name__)
@@ -41,6 +42,10 @@ def init_celery(app):
         "send-trend-summaries-daily": {
             "task": "stockapp.tasks.send_trend_summaries_task",
             "schedule": crontab(minute=0, hour=8),
+        },
+        "sync-brokerage-daily": {
+            "task": "stockapp.tasks.sync_brokerage_task",
+            "schedule": crontab(minute=0, hour=6),
         },
     }
 
@@ -126,3 +131,16 @@ def _send_trend_summaries():
 def send_trend_summaries_task():
     """Celery task wrapper for ``_send_trend_summaries``."""
     _send_trend_summaries()
+
+
+def _sync_brokerage():
+    """Synchronize portfolios with brokerage holdings."""
+    users = User.query.filter(User.brokerage_token.isnot(None)).all()
+    for user in users:
+        sync_portfolio_from_brokerage(user.id, user.brokerage_token)
+
+
+@celery.task(name="stockapp.tasks.sync_brokerage_task")
+def sync_brokerage_task():
+    """Celery task wrapper for ``_sync_brokerage``."""
+    _sync_brokerage()

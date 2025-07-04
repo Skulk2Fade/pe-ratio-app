@@ -9,6 +9,7 @@ from flask_login import current_user
 from ..extensions import db
 from ..models import PortfolioItem
 from ..utils import get_locale
+from .. import brokerage
 
 
 # portfolio management helpers
@@ -37,6 +38,31 @@ def import_portfolio_items(file_storage, user_id: int) -> None:
                         user_id=user_id,
                     )
                 )
+    db.session.commit()
+
+
+def sync_portfolio_from_brokerage(user_id: int, token: str) -> None:
+    """Synchronize holdings from a brokerage account."""
+    holdings = brokerage.get_holdings(token)
+    for h in holdings:
+        symbol = h.get("symbol", "").upper()
+        qty = h.get("quantity")
+        price = h.get("price_paid")
+        if not symbol or qty is None or price is None:
+            continue
+        item = PortfolioItem.query.filter_by(user_id=user_id, symbol=symbol).first()
+        if item:
+            item.quantity = qty
+            item.price_paid = price
+        else:
+            db.session.add(
+                PortfolioItem(
+                    symbol=symbol,
+                    quantity=qty,
+                    price_paid=price,
+                    user_id=user_id,
+                )
+            )
     db.session.commit()
 
 
@@ -215,7 +241,11 @@ def calculate_portfolio_analysis(
                         portfolio_volatility = None
                     try:
                         avg_return = sum(portfolio_returns) / len(portfolio_returns)
-                        sharpe_ratio = round((avg_return / vol_daily) * (252**0.5), 2) if vol_daily else None
+                        sharpe_ratio = (
+                            round((avg_return / vol_daily) * (252**0.5), 2)
+                            if vol_daily
+                            else None
+                        )
                     except Exception:
                         sharpe_ratio = None
                     try:
@@ -234,10 +264,18 @@ def calculate_portfolio_analysis(
                         market_returns: List[float] = []
                         for i in range(1, len(m_prices)):
                             if m_prices[i - 1]:
-                                market_returns.append((m_prices[i] - m_prices[i - 1]) / m_prices[i - 1])
-                        if len(market_returns) >= len(portfolio_returns) and stdev(market_returns[-n:]) != 0:
-                            b = correlation(portfolio_returns[-n:], market_returns[-n:]) * (
-                                stdev(portfolio_returns[-n:]) / stdev(market_returns[-n:])
+                                market_returns.append(
+                                    (m_prices[i] - m_prices[i - 1]) / m_prices[i - 1]
+                                )
+                        if (
+                            len(market_returns) >= len(portfolio_returns)
+                            and stdev(market_returns[-n:]) != 0
+                        ):
+                            b = correlation(
+                                portfolio_returns[-n:], market_returns[-n:]
+                            ) * (
+                                stdev(portfolio_returns[-n:])
+                                / stdev(market_returns[-n:])
                             )
                             beta = round(b, 2)
                     except Exception:

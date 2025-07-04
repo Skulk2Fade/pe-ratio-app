@@ -13,6 +13,7 @@ from .helpers import (
     update_portfolio_item,
     add_portfolio_item,
     calculate_portfolio_analysis,
+    sync_portfolio_from_brokerage,
 )
 
 portfolio_bp = Blueprint("portfolio", __name__)
@@ -31,6 +32,15 @@ def export_portfolio():
     response.headers["Content-Disposition"] = "attachment; filename=portfolio.csv"
     response.headers["Content-Type"] = "text/csv"
     return response
+
+
+@portfolio_bp.route("/portfolio/sync")
+@login_required
+def sync_brokerage():
+    if not current_user.brokerage_token:
+        return redirect(url_for("portfolio.portfolio"))
+    sync_portfolio_from_brokerage(current_user.id, current_user.brokerage_token)
+    return redirect(url_for("portfolio.portfolio"))
 
 
 @portfolio_bp.route("/portfolio", methods=["GET", "POST"])

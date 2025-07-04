@@ -25,6 +25,7 @@ class User(db.Model, UserMixin):
     default_currency = db.Column(db.String(3), default="USD")
     language = db.Column(db.String(5), default="en")
     theme = db.Column(db.String(10), default="light")
+    brokerage_token = db.Column(db.String(100))
 
 
 class WatchlistItem(db.Model):
