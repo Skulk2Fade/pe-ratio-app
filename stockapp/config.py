@@ -26,6 +26,9 @@ class Config:
     TWILIO_TOKEN = ""
     TWILIO_FROM = ""
 
+    BABEL_DEFAULT_LOCALE = "en"
+    BABEL_TRANSLATION_DIRECTORIES = "translations"
+
     DEBUG = False
 
     def __init__(self):

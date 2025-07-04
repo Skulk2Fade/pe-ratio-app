@@ -21,22 +21,22 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if current_user.is_authenticated %}
-                    <span class="navbar-text me-2">Logged in as {{ current_user.username }}</span>
+                    <span class="navbar-text me-2">{{ _('Logged in as') }} {{ current_user.username }}</span>
                     <div class="ms-auto d-lg-flex align-items-center">
-                        <a href="{{ url_for('watch.watchlist') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Watchlist</a>
-                        <a href="{{ url_for('watch.favorites') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Favorites</a>
-                        <a href="{{ url_for('portfolio.portfolio') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Portfolio</a>
-                        <a href="{{ url_for('alerts.alerts') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Alerts</a>
-                        <a href="{{ url_for('watch.records') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Records</a>
-                        <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">Export History</a>
-                        <a href="{{ url_for('calc.interest') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Calculators</a>
-                        <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">Settings</a>
-                        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">Logout</a>
+                        <a href="{{ url_for('watch.watchlist') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Watchlist') }}</a>
+                        <a href="{{ url_for('watch.favorites') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Favorites') }}</a>
+                        <a href="{{ url_for('portfolio.portfolio') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Portfolio') }}</a>
+                        <a href="{{ url_for('alerts.alerts') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Alerts') }}</a>
+                        <a href="{{ url_for('watch.records') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Records') }}</a>
+                        <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Export History') }}</a>
+                        <a href="{{ url_for('calc.interest') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Calculators') }}</a>
+                        <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Settings') }}</a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">{{ _('Logout') }}</a>
                     </div>
                 {% else %}
                     <div class="ms-auto d-lg-flex align-items-center">
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">Login</a>
-                        <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary mb-2 mb-lg-0">Sign Up</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Login') }}</a>
+                        <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary mb-2 mb-lg-0">{{ _('Sign Up') }}</a>
                     </div>
                 {% endif %}
             </div>

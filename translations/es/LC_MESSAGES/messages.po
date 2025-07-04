@@ -1,0 +1,76 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"Language: es\n"
+
+msgid "Login"
+msgstr "Iniciar sesión"
+
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+msgid "Sign Up"
+msgstr "Registrarse"
+
+msgid "Settings"
+msgstr "Configuración"
+
+msgid "Watchlist"
+msgstr "Lista de seguimiento"
+
+msgid "Favorites"
+msgstr "Favoritos"
+
+msgid "Portfolio"
+msgstr "Portafolio"
+
+msgid "Alerts"
+msgstr "Alertas"
+
+msgid "Records"
+msgstr "Registros"
+
+msgid "Export History"
+msgstr "Exportar historial"
+
+msgid "Calculators"
+msgstr "Calculadoras"
+
+msgid "Alert Settings"
+msgstr "Configuración de alertas"
+
+msgid "Alert Frequency (hours)"
+msgstr "Frecuencia de alertas (horas)"
+
+msgid "Phone Number"
+msgstr "Número de teléfono"
+
+msgid "Enable SMS Alerts"
+msgstr "Habilitar alertas SMS"
+
+msgid "Email Weekly Summary"
+msgstr "Resumen semanal por correo"
+
+msgid "Default Currency"
+msgstr "Moneda predeterminada"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Theme"
+msgstr "Tema"
+
+msgid "Brokerage API Token"
+msgstr "Token de API de broker"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Back"
+msgstr "Volver"
+
+msgid "Logged in as"
+msgstr "Conectado como"
+
+msgid "Forgot Password?"
+msgstr "¿Olvidaste tu contraseña?"

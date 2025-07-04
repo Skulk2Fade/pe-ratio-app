@@ -224,3 +224,10 @@ npm run build
 This populates the `static/vendor/` directory so the service worker can cache
 the assets even when offline.
 
+## Localization
+
+User language preferences are now respected using **Flask-Babel**. Set the
+desired language from the Settings page. Translations live in the `translations/`
+folder. Only the `.po` files are tracked in git. After editing them run
+`pybabel compile -d translations` to generate the binary `.mo` files locally.
+
