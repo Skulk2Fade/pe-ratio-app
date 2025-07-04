@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h3 class="mb-4">Top Followed Portfolios</h3>
+  {% if leaders %}
+  <ul class="list-group">
+    {% for username, count in leaders %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <a href="{{ url_for('portfolio.view_portfolio', username=username) }}">{{ username }}</a>
+      <span class="badge bg-primary rounded-pill">{{ count }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No data.</p>
+  {% endif %}
+  <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}
+
