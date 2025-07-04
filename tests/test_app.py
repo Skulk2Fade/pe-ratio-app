@@ -45,7 +45,9 @@ def test_api_endpoints(auth_client, app):
 
     resp = auth_client.get("/api/watchlist")
     assert resp.status_code == 200
-    assert any(item["symbol"] == "API" for item in resp.get_json())
+    data = resp.get_json()
+    assert any(item["symbol"] == "API" for item in data)
+    assert all("de_threshold" in item for item in data)
 
     resp = auth_client.get("/api/portfolio")
     assert resp.status_code == 200

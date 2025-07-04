@@ -15,6 +15,15 @@
                     {{ add_form.threshold(class="form-control", placeholder="P/E Threshold") }}
                 </div>
                 <div class="col">
+                    {{ add_form.de_threshold(class="form-control", placeholder="D/E Threshold") }}
+                </div>
+                <div class="col">
+                    {{ add_form.rsi_threshold(class="form-control", placeholder="RSI Threshold") }}
+                </div>
+                <div class="col">
+                    {{ add_form.ma_threshold(class="form-control", placeholder="MA% Threshold") }}
+                </div>
+                <div class="col">
                     {{ add_form.notes(class="form-control", placeholder="Notes") }}
                 </div>
                 <div class="col">
@@ -39,6 +48,9 @@
                     <div class="d-flex align-items-center gap-2">
                         <strong>{{ item.symbol }}</strong>
                         <input type="number" name="threshold" value="{{ item.pe_threshold }}" class="form-control d-inline-block w-auto" />
+                        <input type="number" name="de_threshold" value="{{ item.de_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="D/E" />
+                        <input type="number" name="rsi_threshold" value="{{ item.rsi_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="RSI" />
+                        <input type="number" name="ma_threshold" value="{{ item.ma_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="MA%" />
                         <input type="text" name="notes" value="{{ item.notes or '' }}" class="form-control" placeholder="Notes" />
                         <input type="text" name="tags" value="{{ item.tags or '' }}" class="form-control" placeholder="Tags" />
                         <div class="form-check">

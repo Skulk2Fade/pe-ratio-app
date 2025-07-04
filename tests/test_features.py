@@ -39,17 +39,37 @@ def test_signup_login_logout(client, app, monkeypatch):
 def test_watchlist_modifications(auth_client, app, monkeypatch):
     monkeypatch.setattr("stockapp.watchlists.routes.get_stock_news", lambda *a, **k: [])
     resp = auth_client.post(
-        "/watchlist", data={"symbol": "TEST", "threshold": 15}, follow_redirects=True
+        "/watchlist",
+        data={
+            "symbol": "TEST",
+            "threshold": 15,
+            "de_threshold": 1,
+            "rsi_threshold": 70,
+            "ma_threshold": 10,
+        },
+        follow_redirects=True,
     )
     assert b"TEST" in resp.data
     with app.app_context():
         item = WatchlistItem.query.filter_by(symbol="TEST").first()
         item_id = item.id
     auth_client.post(
-        "/watchlist", data={"item_id": item_id, "threshold": 20}, follow_redirects=True
+        "/watchlist",
+        data={
+            "item_id": item_id,
+            "threshold": 20,
+            "de_threshold": 0.5,
+            "rsi_threshold": 60,
+            "ma_threshold": 5,
+        },
+        follow_redirects=True,
     )
     with app.app_context():
-        assert WatchlistItem.query.get(item_id).pe_threshold == 20
+        item = WatchlistItem.query.get(item_id)
+        assert item.pe_threshold == 20
+        assert item.de_threshold == 0.5
+        assert item.rsi_threshold == 60
+        assert item.ma_threshold == 5
     auth_client.get(f"/watchlist/delete/{item_id}", follow_redirects=True)
     with app.app_context():
         assert WatchlistItem.query.get(item_id) is None
@@ -191,6 +211,12 @@ def test_check_watchlists(app, monkeypatch):
     sms = []
     monkeypatch.setattr("stockapp.tasks.get_stock_data", fake_get_stock)
     monkeypatch.setattr(
+        "stockapp.tasks.get_historical_prices",
+        lambda s, days=60: (["d"] * 60, [100] * 60),
+    )
+    monkeypatch.setattr("stockapp.tasks.moving_average", lambda prices, p: [80])
+    monkeypatch.setattr("stockapp.tasks.calculate_rsi", lambda prices, p=14: [80])
+    monkeypatch.setattr(
         "stockapp.tasks.send_email",
         lambda to, subject, body: emails.append((to, subject, body)),
     )
@@ -213,13 +239,22 @@ def test_check_watchlists(app, monkeypatch):
         )
         db.session.add(u)
         db.session.commit()
-        db.session.add(WatchlistItem(symbol="AAA", user_id=u.id, pe_threshold=10))
+        db.session.add(
+            WatchlistItem(
+                symbol="AAA",
+                user_id=u.id,
+                pe_threshold=10,
+                de_threshold=0.2,
+                rsi_threshold=70,
+                ma_threshold=10,
+            )
+        )
         db.session.commit()
     from stockapp import tasks
 
     tasks._check_watchlists()
-    assert emails
-    assert sms
+    assert len(emails) >= 4
+    assert len(sms) >= 4
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert is not None
