@@ -7,12 +7,15 @@ from flask import (
     url_for,
     make_response,
     current_app,
+    Response,
 )
 from flask_login import current_user
 import csv
 import io
 from fpdf import FPDF
 from babel.numbers import format_currency, format_decimal
+import json
+import time
 from ..extensions import db
 from ..models import History, Alert, WatchlistItem, StockRecord
 from ..utils import (
@@ -36,6 +39,40 @@ def service_worker():
 def health():
     """Simple health check endpoint."""
     return "OK", 200
+
+
+@main_bp.route("/stream_price")
+def stream_price():
+    """Server-Sent Events endpoint streaming price and EPS."""
+    symbol = request.args.get("symbol", "").upper()
+    if not symbol:
+        return "Symbol required", 400
+
+    def generate():
+        loops = 0
+        while True:
+            try:
+                (
+                    _name,
+                    _logo_url,
+                    _sector,
+                    _industry,
+                    _exchange,
+                    _currency,
+                    price,
+                    eps,
+                    *_rest,
+                ) = get_stock_data(symbol)
+                data = json.dumps({"price": price, "eps": eps})
+            except Exception:
+                data = json.dumps({"error": "fetch"})
+            yield f"data: {data}\n\n"
+            loops += 1
+            if current_app.config.get("TESTING") and loops >= 2:
+                break
+            time.sleep(5)
+
+    return Response(generate(), mimetype="text/event-stream")
 
 
 @main_bp.route("/", methods=["GET", "POST"])
