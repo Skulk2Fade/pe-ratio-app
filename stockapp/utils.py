@@ -6,6 +6,7 @@ import requests
 import smtplib
 from email.mime.text import MIMEText
 from flask import current_app, has_request_context, request
+from flask_login import current_user
 from babel import Locale
 from babel.numbers import format_currency, format_decimal
 from babel.dates import format_datetime
@@ -118,6 +119,8 @@ def _cached_or_placeholder(key, size=23):
 
 def get_locale():
     if has_request_context():
+        if current_user.is_authenticated and current_user.language:
+            return current_user.language
         loc = request.accept_languages.best or "en_US"
         try:
             return str(Locale.parse(loc))

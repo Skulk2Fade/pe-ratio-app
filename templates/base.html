@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_user.language if current_user.is_authenticated else 'en' }}" data-bs-theme="{{ current_user.theme if current_user.is_authenticated else 'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,13 +8,13 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     {% block head %}{% endblock %}
 </head>
-<body class="bg-light">
+<body class="{% if current_user.is_authenticated and current_user.theme=='dark' %}bg-dark text-white{% else %}bg-light{% endif %}">
     <div class="bg-primary text-white text-center py-2 mb-3">
         <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">
             <h1 class="h3 m-0">{{ app_name }}</h1>
         </a>
     </div>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <nav class="navbar navbar-expand-lg {% if current_user.is_authenticated and current_user.theme=='dark' %}navbar-dark bg-dark{% else %}navbar-light bg-white{% endif %} shadow-sm">
         <div class="container">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

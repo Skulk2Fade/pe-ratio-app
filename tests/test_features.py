@@ -248,3 +248,18 @@ def test_mfa_login_flow(client, app):
     code = totp.now()
     resp = client.post("/mfa_verify", data={"code": code}, follow_redirects=True)
     assert b"MarketMinder" in resp.data
+
+
+def test_user_preferences_update(auth_client):
+    resp = auth_client.post(
+        "/settings",
+        data={
+            "frequency": 12,
+            "phone": "111",
+            "currency": "EUR",
+            "language": "fr",
+            "theme": "dark",
+        },
+        follow_redirects=True,
+    )
+    assert b"EUR" in resp.data

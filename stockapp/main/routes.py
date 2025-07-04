@@ -137,6 +137,9 @@ def index():
                 current_ratio,
             ) = get_stock_data(symbol)
 
+            if current_user.is_authenticated and current_user.default_currency:
+                currency = current_user.default_currency
+
             history_dates, history_prices = get_historical_prices(symbol, days=90)
             ma20 = moving_average(history_prices, 20)
             ma50 = moving_average(history_prices, 50)
@@ -345,6 +348,9 @@ def download():
         price_to_fcf,
         current_ratio,
     ) = get_stock_data(symbol)
+
+    if current_user.is_authenticated and current_user.default_currency:
+        currency = current_user.default_currency
 
     if price is not None and eps:
         pe_ratio_val = round(price / eps, 2)

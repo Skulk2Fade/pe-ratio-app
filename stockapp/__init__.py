@@ -65,6 +65,9 @@ def create_app(config_class=None):
                     username=default_user,
                     password_hash=generate_password_hash(default_pass),
                     is_verified=True,
+                    default_currency="USD",
+                    language="en",
+                    theme="light",
                 )
                 db.session.add(user)
                 db.session.commit()
