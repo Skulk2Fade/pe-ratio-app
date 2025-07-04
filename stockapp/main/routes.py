@@ -15,9 +15,6 @@ import io
 from fpdf import FPDF
 from babel.numbers import format_currency, format_decimal
 import json
-import time
-from ..extensions import db
-from ..models import History, Alert, WatchlistItem, StockRecord
 from ..utils import (
     get_stock_data,
     get_historical_prices,
@@ -25,7 +22,11 @@ from ..utils import (
     ALERT_PE_THRESHOLD,
     moving_average,
     calculate_rsi,
+    generate_xlsx,
 )
+import time
+from ..extensions import db
+from ..models import History, Alert, WatchlistItem, StockRecord
 
 main_bp = Blueprint("main", __name__)
 
@@ -483,6 +484,108 @@ def download():
             f"attachment; filename={symbol}_data.csv"
         )
         response.headers["Content-Type"] = "text/csv"
+        return response
+    elif fmt == "xlsx":
+        output = generate_xlsx(
+            [
+                "Company Name",
+                "Symbol",
+                "Price",
+                "EPS",
+                "P/E Ratio",
+                "PEG Ratio",
+                "Valuation",
+                "Market Cap",
+                "Debt/Equity",
+                "P/B",
+                "ROE %",
+                "ROA %",
+                "Profit Margin %",
+                "Analyst Rating",
+                "Dividend Yield %",
+                "Dividend Payout Ratio %",
+                "Earnings Growth %",
+                "Forward P/E",
+                "P/S Ratio",
+                "EV/EBITDA",
+                "P/FCF Ratio",
+                "Current Ratio",
+                "Sector",
+                "Industry",
+                "Exchange",
+                "Currency",
+            ],
+            [
+                company_name,
+                symbol,
+                price,
+                eps,
+                pe_ratio,
+                peg_ratio,
+                valuation,
+                market_cap,
+                debt_to_equity,
+                pb_ratio,
+                roe,
+                roa,
+                profit_margin,
+                analyst_rating,
+                dividend_yield,
+                payout_ratio,
+                earnings_growth,
+                forward_pe,
+                price_to_sales,
+                ev_to_ebitda,
+                price_to_fcf,
+                current_ratio,
+                sector,
+                industry,
+                exchange,
+                currency,
+            ],
+        )
+        response = make_response(output)
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={symbol}_data.xlsx"
+        )
+        response.headers["Content-Type"] = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        return response
+    elif fmt == "json":
+        data = {
+            "company_name": company_name,
+            "symbol": symbol,
+            "price": price,
+            "eps": eps,
+            "pe_ratio": pe_ratio,
+            "peg_ratio": peg_ratio,
+            "valuation": valuation,
+            "market_cap": market_cap,
+            "debt_to_equity": debt_to_equity,
+            "pb_ratio": pb_ratio,
+            "roe": roe,
+            "roa": roa,
+            "profit_margin": profit_margin,
+            "analyst_rating": analyst_rating,
+            "dividend_yield": dividend_yield,
+            "payout_ratio": payout_ratio,
+            "earnings_growth": earnings_growth,
+            "forward_pe": forward_pe,
+            "price_to_sales": price_to_sales,
+            "ev_to_ebitda": ev_to_ebitda,
+            "price_to_fcf": price_to_fcf,
+            "current_ratio": current_ratio,
+            "sector": sector,
+            "industry": industry,
+            "exchange": exchange,
+            "currency": currency,
+        }
+        response = make_response(json.dumps(data))
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={symbol}_data.json"
+        )
+        response.headers["Content-Type"] = "application/json"
         return response
     elif fmt == "pdf":
         pdf = FPDF()
