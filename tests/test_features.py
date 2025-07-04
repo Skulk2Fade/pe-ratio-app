@@ -297,3 +297,31 @@ def test_user_preferences_update(auth_client):
         follow_redirects=True,
     )
     assert b"EUR" in resp.data
+
+
+def test_public_watchlist_and_follow_portfolio(app, client, auth_client):
+    from stockapp.extensions import db
+    from stockapp.models import User, WatchlistItem, PortfolioItem, PortfolioFollow
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        u = User(
+            username="other",
+            email="o@example.com",
+            password_hash=generate_password_hash("pass"),
+            is_verified=True,
+        )
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(WatchlistItem(symbol="SOC", user_id=u.id, is_public=True))
+        db.session.add(
+            PortfolioItem(symbol="SOC", quantity=1, price_paid=1, user_id=u.id)
+        )
+        db.session.commit()
+
+    resp = client.get("/watchlist/public/other")
+    assert b"SOC" in resp.data
+
+    auth_client.get("/portfolio/follow/other", follow_redirects=True)
+    resp = auth_client.get("/portfolio/other", follow_redirects=True)
+    assert b"SOC" in resp.data

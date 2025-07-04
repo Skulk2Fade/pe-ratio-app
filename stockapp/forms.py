@@ -28,6 +28,7 @@ class WatchlistAddForm(FlaskForm):
     threshold = FloatField("Threshold", validators=[Optional()])
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
+    public = BooleanField("Public")
 
 
 class WatchlistUpdateForm(FlaskForm):
@@ -35,6 +36,7 @@ class WatchlistUpdateForm(FlaskForm):
     threshold = FloatField("Threshold", validators=[DataRequired()])
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
+    public = BooleanField("Public")
 
 
 class PortfolioAddForm(FlaskForm):
