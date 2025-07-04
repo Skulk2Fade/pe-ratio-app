@@ -84,3 +84,16 @@ def test_ws_price_route(app):
     with app.test_request_context():
         url = url_for("main.ws_price")
     assert url == "/ws/price"
+
+
+def test_localization_es(auth_client, app):
+    from stockapp.extensions import db
+    from stockapp.models import User
+
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        user.language = "es"
+        db.session.commit()
+
+    resp = auth_client.get("/settings")
+    assert b"Configuraci\xc3\xb3n de alertas" in resp.data

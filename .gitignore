@@ -27,3 +27,6 @@ app.db
 .DS_Store
 *.swp
 node_modules/
+
+# Translations
+translations/**/LC_MESSAGES/*.mo

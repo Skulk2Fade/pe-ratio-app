@@ -121,12 +121,12 @@ def get_locale():
     if has_request_context():
         if current_user.is_authenticated and current_user.language:
             return current_user.language
-        loc = request.accept_languages.best or "en_US"
+        loc = request.accept_languages.best or "en"
         try:
-            return str(Locale.parse(loc))
-        except Exception:
-            return "en_US"
-    return "en_US"
+            return Locale.parse(loc).language
+        except Exception:  # pragma: no cover - fallback
+            return "en"
+    return "en"
 
 
 def send_email(to, subject, body):

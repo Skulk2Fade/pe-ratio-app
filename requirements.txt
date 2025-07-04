@@ -6,6 +6,7 @@ fpdf
 Flask-Login
 Flask-SQLAlchemy
 Flask-WTF
+Flask-Babel
 celery
 pyotp
 plotly

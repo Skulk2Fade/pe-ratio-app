@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from werkzeug.security import generate_password_hash
-from .extensions import db, login_manager, csrf, sock
+from .extensions import db, login_manager, csrf, sock, babel
 from .models import User
 from .auth import auth_bp
 from .main import main_bp
@@ -39,6 +39,13 @@ def create_app(config_class=None):
     login_manager.login_view = "auth.login"
     csrf.init_app(app)
     sock.init_app(app)
+    babel.init_app(app)
+
+    from .utils import get_locale
+
+    @babel.localeselector
+    def locale_selector():
+        return get_locale()
 
     @app.context_processor
     def inject_globals():
