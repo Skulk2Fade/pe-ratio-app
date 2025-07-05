@@ -1,6 +1,10 @@
 import os
 from flask import Flask
 from werkzeug.security import generate_password_hash
+
+# Load environment variables before importing modules that depend on them
+from .config import Config, DevelopmentConfig, ProductionConfig
+
 from .extensions import db, login_manager, csrf, sock, babel
 from .models import User
 from .auth import auth_bp
@@ -11,7 +15,6 @@ from .alerts import alerts_bp
 from .calculators import calc_bp
 from .api import api_bp
 from .tasks import init_celery
-from .config import Config, DevelopmentConfig, ProductionConfig
 
 
 def create_app(config_class=None):
