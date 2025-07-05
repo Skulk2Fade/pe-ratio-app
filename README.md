@@ -193,6 +193,7 @@ Several quick calculators are available at their own routes:
 * `/calc/interest` – simple interest
 * `/calc/compound` – compound interest
 * `/calc/loan` – **Loan/Mortgage payment** – computes monthly payment, total interest and shows a full amortization schedule.
+* `/calc/wacc` – Weighted Average Cost of Capital
 
 ## Viewing Alerts
 

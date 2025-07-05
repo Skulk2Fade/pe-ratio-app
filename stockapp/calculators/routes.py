@@ -187,3 +187,39 @@ def tax():
         tax_result=tax_result,
         error_message=error_message,
     )
+
+
+@calc_bp.route("/wacc", methods=["GET", "POST"])
+def wacc():
+    """Weighted Average Cost of Capital calculator."""
+    equity = debt = cost_equity = cost_debt = tax_rate = None
+    wacc_result = None
+    error_message = None
+    if request.method == "POST":
+        try:
+            equity = float(request.form.get("equity", 0))
+            debt = float(request.form.get("debt", 0))
+            cost_equity = float(request.form.get("cost_equity", 0))
+            cost_debt = float(request.form.get("cost_debt", 0))
+            tax_rate = float(request.form.get("tax_rate", 0))
+            total = equity + debt
+            if total > 0:
+                wacc_result = round(
+                    (equity / total) * cost_equity
+                    + (debt / total) * cost_debt * (1 - tax_rate / 100),
+                    2,
+                )
+            else:
+                error_message = "Equity and debt cannot both be zero."
+        except ValueError:
+            error_message = "Invalid input for WACC calculator."
+    return render_template(
+        "wacc.html",
+        equity=equity,
+        debt=debt,
+        cost_equity=cost_equity,
+        cost_debt=cost_debt,
+        tax_rate=tax_rate,
+        wacc_result=wacc_result,
+        error_message=error_message,
+    )
