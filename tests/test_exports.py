@@ -221,3 +221,16 @@ def test_tax_calculator(client):
     resp = client.post("/calc/tax", data=data)
     assert resp.status_code == 200
     assert b"Tax Due" in resp.data
+
+
+def test_wacc_calculator(client):
+    data = {
+        "equity": 1000,
+        "debt": 500,
+        "cost_equity": 10,
+        "cost_debt": 5,
+        "tax_rate": 20,
+    }
+    resp = client.post("/calc/wacc", data=data)
+    assert resp.status_code == 200
+    assert b"WACC:" in resp.data
