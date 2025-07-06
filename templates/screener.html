@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Stock Screener') }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ _('Stock Screener') }}</h2>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Min P/E') }}</label>
+            <input type="number" step="0.1" name="pe_min" class="form-control" value="{{ request.args.get('pe_min', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Max P/E') }}</label>
+            <input type="number" step="0.1" name="pe_max" class="form-control" value="{{ request.args.get('pe_max', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Min PEG') }}</label>
+            <input type="number" step="0.1" name="peg_min" class="form-control" value="{{ request.args.get('peg_min', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Max PEG') }}</label>
+            <input type="number" step="0.1" name="peg_max" class="form-control" value="{{ request.args.get('peg_max', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Min Dividend Yield %') }}</label>
+            <input type="number" step="0.1" name="yield_min" class="form-control" value="{{ request.args.get('yield_min', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Sector') }}</label>
+            <input type="text" name="sector" class="form-control" value="{{ request.args.get('sector', '') }}">
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">{{ _('Filter') }}</button>
+        </div>
+    </form>
+    {% if results %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ _('Symbol') }}</th>
+                    <th>{{ _('Company') }}</th>
+                    <th>{{ _('Sector') }}</th>
+                    <th>{{ _('P/E') }}</th>
+                    <th>{{ _('PEG') }}</th>
+                    <th>{{ _('Dividend Yield %') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td>{{ r.symbol }}</td>
+                    <td>{{ r.company }}</td>
+                    <td>{{ r.sector }}</td>
+                    <td>{{ r.pe }}</td>
+                    <td>{{ r.peg }}</td>
+                    <td>{{ r.dividend_yield }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
