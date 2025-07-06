@@ -431,3 +431,79 @@ def test_currency_conversion_in_index(auth_client, app, monkeypatch):
 
     resp = auth_client.get("/?ticker=AAA")
     assert b"\xe2\x82\xac50.00" in resp.data
+
+
+def test_dividends_route(auth_client, app, monkeypatch):
+    monkeypatch.setattr(
+        "stockapp.portfolio.routes.get_dividend_history",
+        lambda s, limit=5: [{"date": "2023-01-01", "dividend": 0.5}],
+    )
+    monkeypatch.setattr(
+        "stockapp.portfolio.routes.get_upcoming_dividends",
+        lambda s, days=30: [{"date": "2030-01-01", "dividend": 0.5}],
+    )
+
+    def fake_get_stock(symbol):
+        return (
+            "Name",
+            "",
+            "",
+            "",
+            "",
+            "USD",
+            100,
+            5,
+            "1B",
+            *([None] * 6),
+            0.02,
+            *([None] * 7),
+        )
+
+    monkeypatch.setattr("stockapp.portfolio.routes.get_stock_data", fake_get_stock)
+    auth_client.post(
+        "/portfolio",
+        data={"symbol": "DVD", "quantity": 1, "price_paid": 10},
+        follow_redirects=True,
+    )
+    resp = auth_client.get("/dividends")
+    assert b"DVD" in resp.data
+
+
+def test_dividend_notifications(app, monkeypatch):
+    future = (datetime.utcnow() + timedelta(days=3)).date().isoformat()
+    monkeypatch.setattr(
+        "stockapp.tasks.get_upcoming_dividends",
+        lambda s, days=7: [{"date": future, "dividend": 0.5}],
+    )
+    emails = []
+    sms = []
+    monkeypatch.setattr(
+        "stockapp.tasks.send_email", lambda to, subject, body: emails.append((to, subject, body))
+    )
+    monkeypatch.setattr(
+        "stockapp.tasks.send_sms", lambda to, body: sms.append((to, body))
+    )
+    from stockapp.extensions import db
+    from stockapp.models import User, PortfolioItem, Alert
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        u = User(
+            username="div",
+            email="d@example.com",
+            password_hash=generate_password_hash("x"),
+            is_verified=True,
+            phone_number="123",
+            sms_opt_in=True,
+        )
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(PortfolioItem(symbol="DVD", quantity=1, price_paid=10, user_id=u.id))
+        db.session.commit()
+    from stockapp import tasks
+
+    tasks._check_dividends()
+    assert emails
+    with app.app_context():
+        alert = Alert.query.filter_by(user_id=u.id).first()
+        assert alert and "DVD" in alert.message

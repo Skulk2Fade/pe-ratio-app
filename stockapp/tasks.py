@@ -14,6 +14,7 @@ from .utils import (
     send_sms,
     notify_user_push,
     ALERT_PE_THRESHOLD,
+    get_upcoming_dividends,
 )
 from .portfolio.helpers import (
     sync_portfolio_from_brokerage,
@@ -52,6 +53,10 @@ def init_celery(app):
         "sync-brokerage-daily": {
             "task": "stockapp.tasks.sync_brokerage_task",
             "schedule": crontab(minute=0, hour=6),
+        },
+        "check-dividends-daily": {
+            "task": "stockapp.tasks.check_dividends_task",
+            "schedule": crontab(minute=0, hour=9),
         },
     }
 
@@ -179,3 +184,38 @@ def _sync_brokerage():
 def sync_brokerage_task():
     """Celery task wrapper for ``_sync_brokerage``."""
     _sync_brokerage()
+
+
+def _check_dividends():
+    """Notify users of upcoming dividend ex-dates."""
+    today = datetime.utcnow().date()
+    end = today + timedelta(days=7)
+    users = User.query.all()
+    for user in users:
+        if not user.email:
+            continue
+        items = PortfolioItem.query.filter_by(user_id=user.id).all()
+        for item in items:
+            events = get_upcoming_dividends(item.symbol, days=7)
+            for ev in events:
+                date_str = ev.get("date")
+                if not date_str:
+                    continue
+                try:
+                    ex_date = datetime.fromisoformat(date_str).date()
+                except Exception:
+                    continue
+                if today <= ex_date <= end:
+                    msg = f"{item.symbol} dividend ex-date on {date_str}"
+                    send_email(user.email, "Dividend Reminder", msg)
+                    if user.sms_opt_in and user.phone_number:
+                        send_sms(user.phone_number, msg)
+                    db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
+                    notify_user_push(user.id, msg)
+    db.session.commit()
+
+
+@celery.task(name="stockapp.tasks.check_dividends_task")
+def check_dividends_task():
+    """Celery task wrapper for ``_check_dividends``."""
+    _check_dividends()

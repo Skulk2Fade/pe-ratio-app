@@ -11,7 +11,7 @@ from flask_login import current_user
 from babel import Locale
 from babel.numbers import format_currency, format_decimal
 from babel.dates import format_datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from pywebpush import webpush
@@ -658,6 +658,73 @@ def bollinger_bands(prices, period=20, num_std=2):
             upper.append(round(m + num_std * s, 2))
             lower.append(round(m - num_std * s, 2))
     return upper, lower
+
+
+def get_dividend_history(symbol, limit=5):
+    """Return recent dividend history for ``symbol``."""
+    cache_key = ("div_hist", symbol, limit)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    url = (
+        f"https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/{symbol}?"
+        f"apikey={API_KEY}&limit={limit}"
+    )
+    try:
+        data = _fetch_json(url, "dividend history", symbol)
+        history = []
+        records = []
+        if isinstance(data, dict):
+            records = data.get("historical") or data.get("historicalStockList") or []
+        if isinstance(records, list):
+            for item in records[:limit]:
+                history.append(
+                    {
+                        "date": item.get("date") or item.get("paymentDate") or item.get("label"),
+                        "dividend": item.get("dividend"),
+                    }
+                )
+        if history:
+            _set_cached(cache_key, history)
+        return history
+    except Exception:
+        logger.exception("Error fetching dividend history for %s", symbol)
+        cached = _get_cached(cache_key)
+        return cached if cached else []
+
+
+def get_upcoming_dividends(symbol, days=30):
+    """Return upcoming dividend events within ``days`` for ``symbol``."""
+    cache_key = ("div_upcoming", symbol, days)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    start = datetime.utcnow().date()
+    end = start + timedelta(days=days)
+    url = (
+        f"https://financialmodelingprep.com/api/v3/stock_dividend_calendar?from={start}&to={end}&apikey={API_KEY}"
+    )
+    try:
+        data = _fetch_json(url, "dividend calendar", symbol)
+        events = []
+        if isinstance(data, list):
+            for item in data:
+                if str(item.get("symbol", "")).upper() == symbol.upper():
+                    events.append(
+                        {
+                            "date": item.get("date")
+                            or item.get("paymentDate")
+                            or item.get("exDate"),
+                            "dividend": item.get("dividend"),
+                        }
+                    )
+        if events:
+            _set_cached(cache_key, events)
+        return events
+    except Exception:
+        logger.exception("Error fetching dividend calendar for %s", symbol)
+        cached = _get_cached(cache_key)
+        return cached if cached else []
 
 
 def generate_xlsx(headers, rows):
