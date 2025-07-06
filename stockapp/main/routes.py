@@ -17,13 +17,14 @@ from babel.numbers import format_currency, format_decimal
 import json
 from ..utils import (
     get_stock_data,
-    get_historical_prices,
+    get_historical_ohlc,
     get_locale,
     ALERT_PE_THRESHOLD,
     moving_average,
     calculate_rsi,
     calculate_macd,
     bollinger_bands,
+    calculate_cci,
     generate_xlsx,
     notify_user_push,
     convert_currency,
@@ -185,10 +186,17 @@ def index():
                 eps = convert_currency(eps, currency, target_currency)
             currency = target_currency
 
-            history_dates, history_prices = get_historical_prices(symbol, days=90)
+            (
+                history_dates,
+                history_opens,
+                history_highs,
+                history_lows,
+                history_prices,
+            ) = get_historical_ohlc(symbol, days=90)
             ma20 = moving_average(history_prices, 20)
             ma50 = moving_average(history_prices, 50)
             rsi_values = calculate_rsi(history_prices, 14)
+            cci_values = calculate_cci(history_highs, history_lows, history_prices, 20)
             macd_vals, macd_signal = calculate_macd(history_prices)
             bb_upper, bb_lower = bollinger_bands(history_prices, 20, 2)
 
@@ -400,9 +408,13 @@ def index():
         alert_message=alert_message,
         history_dates=history_dates,
         history_prices=history_prices,
+        history_opens=history_opens,
+        history_highs=history_highs,
+        history_lows=history_lows,
         ma20=ma20,
         ma50=ma50,
         rsi_values=rsi_values,
+        cci_values=cci_values,
         macd_values=macd_vals,
         macd_signal=macd_signal,
         bb_upper=bb_upper,

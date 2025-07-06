@@ -305,6 +305,36 @@ def get_historical_prices(symbol, days=30):
         return cached if cached else ([], [])
 
 
+def get_historical_ohlc(symbol, days=30):
+    """Return historical open-high-low-close data for ``symbol``."""
+    cache_key = ("hist_ohlc", symbol, days)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    url = (
+        f"https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}"
+        f"?timeseries={days}&apikey={API_KEY}"
+    )
+    try:
+        resp = session.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        hist = data.get("historical", [])
+        dates = [item.get("date") for item in hist][::-1]
+        opens = [item.get("open") for item in hist][::-1]
+        highs = [item.get("high") for item in hist][::-1]
+        lows = [item.get("low") for item in hist][::-1]
+        closes = [item.get("close") for item in hist][::-1]
+        result = (dates, opens, highs, lows, closes)
+        if dates:
+            _set_cached(cache_key, result)
+        return result
+    except Exception as e:  # pragma: no cover - network failure
+        logger.error("Historical OHLC error for %s: %s", symbol, e)
+        cached = _get_cached(cache_key)
+        return cached if cached else ([], [], [], [], [])
+
+
 def format_market_cap(value, currency):
     if value is None:
         return "N/A"
@@ -658,6 +688,24 @@ def bollinger_bands(prices, period=20, num_std=2):
             upper.append(round(m + num_std * s, 2))
             lower.append(round(m - num_std * s, 2))
     return upper, lower
+
+
+def calculate_cci(highs, lows, closes, period=20):
+    """Compute the Commodity Channel Index."""
+    typical = [(h + l + c) / 3 for h, l, c in zip(highs, lows, closes)]
+    cci = []
+    for i in range(len(typical)):
+        if i + 1 < period:
+            cci.append(None)
+            continue
+        window = typical[i + 1 - period : i + 1]
+        sma = sum(window) / period
+        mean_dev = sum(abs(x - sma) for x in window) / period
+        if mean_dev == 0:
+            cci.append(0)
+        else:
+            cci.append(round((typical[i] - sma) / (0.015 * mean_dev), 2))
+    return cci
 
 
 def get_dividend_history(symbol, limit=5):
