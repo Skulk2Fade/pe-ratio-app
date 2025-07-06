@@ -11,7 +11,7 @@ from datetime import datetime
 
 from ..extensions import db
 from ..models import PortfolioItem, Transaction
-from ..utils import get_locale
+from ..utils import get_locale, convert_currency
 from .. import brokerage
 
 
@@ -181,8 +181,12 @@ def calculate_portfolio_analysis(
             price,
             *_rest,
         ) = get_stock_data_func(item.symbol)
+        target_currency = currency
         if current_user.is_authenticated and current_user.default_currency:
-            currency = current_user.default_currency
+            target_currency = current_user.default_currency
+        if price is not None and currency != target_currency:
+            price = convert_currency(price, currency, target_currency)
+        currency = target_currency
         if price is not None:
             current_price = format_currency(price, currency, locale=get_locale())
             value_num = price * item.quantity

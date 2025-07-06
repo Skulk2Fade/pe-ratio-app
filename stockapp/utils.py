@@ -119,6 +119,41 @@ def _cached_or_placeholder(key, size=23):
     return cached if cached else (None,) * size
 
 
+def get_exchange_rate(from_currency: str, to_currency: str) -> float:
+    """Return the exchange rate from ``from_currency`` to ``to_currency``.
+
+    Rates are cached to avoid excessive network calls. If the conversion
+    fails the rate ``1.0`` is returned so values remain unchanged."""
+    if from_currency == to_currency:
+        return 1.0
+    cache_key = ("fx_rate", from_currency, to_currency)
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    url = f"https://api.exchangerate.host/convert?from={from_currency}&to={to_currency}"
+    try:
+        data = _fetch_json(url, "exchange rate")
+        rate = float(data.get("result") or data.get("info", {}).get("rate", 1.0))
+        _set_cached(cache_key, rate)
+        return rate
+    except Exception as e:  # pragma: no cover - network failure
+        logger.error("Exchange rate error %s->%s: %s", from_currency, to_currency, e)
+        return 1.0
+
+
+def convert_currency(
+    value: float | None, from_currency: str, to_currency: str
+) -> float | None:
+    """Convert ``value`` from one currency to another using ``get_exchange_rate``."""
+    if value is None or from_currency == to_currency:
+        return value
+    rate = get_exchange_rate(from_currency, to_currency)
+    try:
+        return round(value * rate, 2)
+    except Exception:
+        return value
+
+
 def get_locale():
     if has_request_context():
         if current_user.is_authenticated and current_user.language:

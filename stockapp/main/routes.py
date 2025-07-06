@@ -26,6 +26,7 @@ from ..utils import (
     bollinger_bands,
     generate_xlsx,
     notify_user_push,
+    convert_currency,
 )
 import time
 from ..extensions import db, sock
@@ -175,8 +176,14 @@ def index():
                 current_ratio,
             ) = get_stock_data(symbol)
 
+            target_currency = currency
             if current_user.is_authenticated and current_user.default_currency:
-                currency = current_user.default_currency
+                target_currency = current_user.default_currency
+            if price is not None and currency != target_currency:
+                price = convert_currency(price, currency, target_currency)
+            if eps is not None and currency != target_currency:
+                eps = convert_currency(eps, currency, target_currency)
+            currency = target_currency
 
             history_dates, history_prices = get_historical_prices(symbol, days=90)
             ma20 = moving_average(history_prices, 20)
@@ -447,8 +454,14 @@ def download():
         current_ratio,
     ) = get_stock_data(symbol)
 
+    target_currency = currency
     if current_user.is_authenticated and current_user.default_currency:
-        currency = current_user.default_currency
+        target_currency = current_user.default_currency
+    if price is not None and currency != target_currency:
+        price = convert_currency(price, currency, target_currency)
+    if eps is not None and currency != target_currency:
+        eps = convert_currency(eps, currency, target_currency)
+    currency = target_currency
 
     if price is not None and eps:
         pe_ratio_val = round(price / eps, 2)

@@ -62,3 +62,18 @@ def test_api_requires_login(client):
         assert resp.status_code in (302, 401)
         if resp.status_code == 302:
             assert "/login" in resp.headers["Location"]
+
+
+def test_convert_currency(monkeypatch):
+    from stockapp import utils
+
+    utils._cache.clear()
+
+    monkeypatch.setattr(utils, "_fetch_json", lambda url, desc: {"result": 2.0})
+
+    val1 = utils.convert_currency(10, "USD", "EUR")
+    assert val1 == 20
+
+    # should use cached rate on second call
+    val2 = utils.convert_currency(5, "USD", "EUR")
+    assert val2 == 10

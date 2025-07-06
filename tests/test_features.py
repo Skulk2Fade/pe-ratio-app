@@ -402,3 +402,32 @@ def test_leaderboard(app, client):
     assert resp.status_code == 200
     data = resp.data.decode()
     assert "l1" in data and "l2" in data
+
+
+def test_currency_conversion_in_index(auth_client, app, monkeypatch):
+    def fake_get_stock(symbol):
+        return (
+            "Test Corp",
+            "",
+            "Tech",
+            "Software",
+            "NASDAQ",
+            "USD",
+            100,
+            5,
+            *([None] * 15),
+        )
+
+    monkeypatch.setattr("stockapp.main.routes.get_stock_data", fake_get_stock)
+    monkeypatch.setattr("stockapp.utils.get_exchange_rate", lambda f, t: 0.5)
+
+    from stockapp.extensions import db
+    from stockapp.models import User
+
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        user.default_currency = "EUR"
+        db.session.commit()
+
+    resp = auth_client.get("/?ticker=AAA")
+    assert b"\xe2\x82\xac50.00" in resp.data
