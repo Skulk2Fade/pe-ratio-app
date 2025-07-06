@@ -26,6 +26,7 @@ def test_indicators():
         calculate_rsi,
         calculate_macd,
         bollinger_bands,
+        calculate_cci,
     )
 
     prices = [1, 2, 3, 4, 5]
@@ -37,6 +38,10 @@ def test_indicators():
     assert len(macd) == len(prices)
     upper, lower = bollinger_bands(prices, period=3, num_std=1)
     assert upper[-1] is not None and lower[-1] is not None
+    highs = [2, 3, 4, 5, 6]
+    lows = [0, 1, 2, 3, 4]
+    cci = calculate_cci(highs, lows, prices, period=3)
+    assert cci[-1] is not None
 
 
 def test_api_endpoints(auth_client, app):
