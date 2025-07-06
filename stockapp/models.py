@@ -55,6 +55,14 @@ class Alert(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
 
+class PushSubscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    endpoint = db.Column(db.String(200))
+    p256dh = db.Column(db.String(200))
+    auth = db.Column(db.String(200))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10))

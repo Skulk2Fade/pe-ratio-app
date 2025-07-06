@@ -2,6 +2,7 @@ import os
 import time
 import pickle
 import logging
+import json
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -13,6 +14,7 @@ from babel.dates import format_datetime
 from datetime import datetime
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from pywebpush import webpush
 
 try:
     import redis
@@ -168,6 +170,35 @@ def send_sms(to, body):
         resp.raise_for_status()
     except Exception as e:
         logger.error("SMS error: %s", e)
+
+
+def send_push(subscription, data):
+    """Send a web push notification to a subscription."""
+    public_key = current_app.config.get("VAPID_PUBLIC_KEY")
+    private_key = current_app.config.get("VAPID_PRIVATE_KEY")
+    if not public_key or not private_key:
+        logger.error("VAPID keys not configured")
+        return
+    try:
+        webpush(
+            subscription_info={
+                "endpoint": subscription.endpoint,
+                "keys": {"p256dh": subscription.p256dh, "auth": subscription.auth},
+            },
+            data=json.dumps(data),
+            vapid_private_key=private_key,
+            vapid_claims={"sub": f"mailto:{current_app.config.get('SMTP_USERNAME')}"},
+        )
+    except Exception as e:
+        logger.error("Web push error: %s", e)
+
+
+def notify_user_push(user_id, message):
+    from .models import PushSubscription
+
+    subs = PushSubscription.query.filter_by(user_id=user_id).all()
+    for sub in subs:
+        send_push(sub, {"title": "MarketMinder Alert", "body": message})
 
 
 def _get_asx_historical_prices(symbol, days=30):

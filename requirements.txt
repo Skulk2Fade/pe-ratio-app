@@ -15,6 +15,7 @@ pytest
 redis
 python-dotenv
 flask-sock
+pywebpush
 
 black
 flake8

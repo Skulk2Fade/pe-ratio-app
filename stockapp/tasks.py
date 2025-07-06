@@ -12,6 +12,7 @@ from .utils import (
     calculate_rsi,
     send_email,
     send_sms,
+    notify_user_push,
     ALERT_PE_THRESHOLD,
 )
 from .portfolio.helpers import (
@@ -119,6 +120,7 @@ def _check_watchlists():
                 if user.sms_opt_in and user.phone_number:
                     send_sms(user.phone_number, msg)
                 db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
+                notify_user_push(user.id, msg)
         user.last_alert_time = now
     db.session.commit()
 

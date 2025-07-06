@@ -217,6 +217,12 @@ ticker, the browser opens `ws://host/ws/price`, sends the symbol and receives
 periodic JSON messages containing the latest price and EPS. This enables future
 bidirectional features like push alerts.
 
+### Push Notifications
+
+If VAPID keys are configured, browsers can subscribe to push alerts. When
+watchlist thresholds are crossed the server sends a Web Push message that is
+displayed via the service worker even if the page is not focused.
+
 ### Frontend Assets
 
 Bootstrap and Plotly are now managed locally instead of pulled from a CDN. A
