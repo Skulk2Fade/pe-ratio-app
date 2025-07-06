@@ -78,7 +78,11 @@ def watchlist():
                         )
                     )
                     db.session.commit()
-    items = WatchlistItem.query.filter_by(user_id=current_user.id).all()
+    items = (
+        WatchlistItem.query.filter_by(user_id=current_user.id)
+        .order_by(WatchlistItem.symbol)
+        .all()
+    )
     news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
     return render_template(
         "watchlist.html",
