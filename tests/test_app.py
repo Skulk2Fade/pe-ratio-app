@@ -95,6 +95,14 @@ def test_ws_price_route(app):
     assert url == "/ws/price"
 
 
+def test_push_subscribe(auth_client):
+    resp = auth_client.post(
+        "/subscribe_push",
+        json={"endpoint": "e", "keys": {"p256dh": "a", "auth": "b"}},
+    )
+    assert resp.status_code == 204
+
+
 def test_localization_es(auth_client, app):
     from stockapp.extensions import db
     from stockapp.models import User

@@ -32,3 +32,13 @@ self.addEventListener('fetch', event => {
       .then(response => response || fetch(event.request))
   );
 });
+
+self.addEventListener('push', event => {
+  let data = {};
+  if (event.data) {
+    try { data = event.data.json(); } catch (e) { data = {body: event.data.text()}; }
+  }
+  const title = data.title || 'MarketMinder Alert';
+  const options = { body: data.body, icon: '/static/icons/icon-192.png' };
+  event.waitUntil(self.registration.showNotification(title, options));
+});

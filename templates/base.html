@@ -48,9 +48,31 @@
     <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
     {% block scripts %}{% endblock %}
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js');
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/service-worker.js').then(reg => {
+                    function subscribe() {
+                        const key = '{{ current_app.config.get("VAPID_PUBLIC_KEY", "") }}';
+                        if (!key) return;
+                        reg.pushManager.getSubscription().then(sub => {
+                            if (!sub) {
+                                reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key })
+                                    .then(s => {
+                                        fetch('{{ url_for("alerts.subscribe_push") }}', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
+                                            body: JSON.stringify(s)
+                                        });
+                                    });
+                            }
+                        });
+                    }
+                    if (Notification.permission === 'granted') {
+                        subscribe();
+                    } else if (Notification.permission === 'default') {
+                        Notification.requestPermission().then(p => { if (p === 'granted') subscribe(); });
+                    }
+                });
             });
         }
     </script>

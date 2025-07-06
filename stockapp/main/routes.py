@@ -25,6 +25,7 @@ from ..utils import (
     calculate_macd,
     bollinger_bands,
     generate_xlsx,
+    notify_user_push,
 )
 import time
 from ..extensions import db, sock
@@ -235,6 +236,7 @@ def index():
                             )
                         )
                         db.session.commit()
+                        notify_user_push(current_user.id, alert_message)
                 elif (
                     de_thr is not None
                     and debt_to_equity is not None
@@ -250,6 +252,7 @@ def index():
                             )
                         )
                         db.session.commit()
+                        notify_user_push(current_user.id, alert_message)
                 elif rsi_thr is not None or ma_thr is not None:
                     if history_prices:
                         if rsi_thr is not None:
@@ -281,6 +284,7 @@ def index():
                                 )
                             )
                             db.session.commit()
+                            notify_user_push(current_user.id, alert_message)
             elif price is None or eps is None:
                 error_message = "Price or EPS data is missing."
             if debt_to_equity is not None:

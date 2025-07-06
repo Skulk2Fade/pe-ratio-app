@@ -26,6 +26,9 @@ class Config:
     TWILIO_TOKEN = ""
     TWILIO_FROM = ""
 
+    VAPID_PUBLIC_KEY = ""
+    VAPID_PRIVATE_KEY = ""
+
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_TRANSLATION_DIRECTORIES = "translations"
 
@@ -50,6 +53,8 @@ class Config:
         self.TWILIO_SID = os.environ.get("TWILIO_SID", self.TWILIO_SID)
         self.TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN", self.TWILIO_TOKEN)
         self.TWILIO_FROM = os.environ.get("TWILIO_FROM", self.TWILIO_FROM)
+        self.VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", self.VAPID_PUBLIC_KEY)
+        self.VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", self.VAPID_PRIVATE_KEY)
 
 
 class DevelopmentConfig(Config):
