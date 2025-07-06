@@ -14,6 +14,7 @@ from babel.dates import format_datetime
 from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+import urllib.parse
 from pywebpush import webpush
 
 try:
@@ -728,7 +729,9 @@ def get_dividend_history(symbol, limit=5):
             for item in records[:limit]:
                 history.append(
                     {
-                        "date": item.get("date") or item.get("paymentDate") or item.get("label"),
+                        "date": item.get("date")
+                        or item.get("paymentDate")
+                        or item.get("label"),
                         "dividend": item.get("dividend"),
                     }
                 )
@@ -749,9 +752,7 @@ def get_upcoming_dividends(symbol, days=30):
         return cached
     start = datetime.utcnow().date()
     end = start + timedelta(days=days)
-    url = (
-        f"https://financialmodelingprep.com/api/v3/stock_dividend_calendar?from={start}&to={end}&apikey={API_KEY}"
-    )
+    url = f"https://financialmodelingprep.com/api/v3/stock_dividend_calendar?from={start}&to={end}&apikey={API_KEY}"
     try:
         data = _fetch_json(url, "dividend calendar", symbol)
         events = []
@@ -835,3 +836,90 @@ def generate_xlsx(headers, rows):
         zf.writestr("xl/_rels/workbook.xml.rels", workbook_rels)
         zf.writestr("xl/worksheets/sheet1.xml", sheet)
     return buf.getvalue()
+
+
+def screen_stocks(
+    pe_min=None, pe_max=None, peg_min=None, peg_max=None, yield_min=None, sector=None
+):
+    """Return a list of stocks matching the given criteria."""
+    params = {"limit": 50, "apikey": API_KEY}
+    if pe_min is not None:
+        params["peMoreThan"] = pe_min
+    if pe_max is not None:
+        params["peLowerThan"] = pe_max
+    if sector:
+        params["sector"] = sector
+    if yield_min is not None:
+        params["dividendMoreThan"] = yield_min
+    query = urllib.parse.urlencode(params)
+    url = f"https://financialmodelingprep.com/api/v3/stock-screener?{query}"
+    try:
+        data = _fetch_json(url, "stock screener")
+    except Exception:
+        return []
+    results = []
+    for item in data:
+        symbol = item.get("symbol")
+        if not symbol:
+            continue
+        (
+            _name,
+            _logo,
+            sec,
+            _industry,
+            _exchange,
+            _currency,
+            price,
+            eps,
+            _mc,
+            _de,
+            _pb,
+            _roe,
+            _roa,
+            _pm,
+            _rating,
+            dividend_yield,
+            _payout,
+            earnings_growth,
+            _fpe,
+            _ps,
+            _ev,
+            _pfcf,
+            _cr,
+        ) = get_stock_data(symbol)
+        pe = item.get("pe")
+        peg = None
+        if (
+            price is not None
+            and eps not in (None, 0)
+            and earnings_growth not in (None, 0)
+        ):
+            try:
+                pe_val = price / eps
+                peg_val = pe_val / (float(earnings_growth) * 100)
+                peg = round(peg_val, 2)
+            except Exception:
+                peg = None
+        if peg_min is not None and (peg is None or peg < peg_min):
+            continue
+        if peg_max is not None and (peg is None or peg > peg_max):
+            continue
+        if yield_min is not None and (
+            dividend_yield is None or dividend_yield * 100 < yield_min
+        ):
+            continue
+        results.append(
+            {
+                "symbol": symbol,
+                "company": item.get("companyName"),
+                "sector": sector or sec,
+                "pe": pe,
+                "peg": peg,
+                "dividend_yield": (
+                    round(dividend_yield * 100, 2)
+                    if dividend_yield is not None
+                    else None
+                ),
+            }
+        )
+    return results

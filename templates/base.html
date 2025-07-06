@@ -31,6 +31,7 @@
                         <a href="{{ url_for('alerts.alerts') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Alerts') }}</a>
                         <a href="{{ url_for('watch.records') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Records') }}</a>
                         <a href="{{ url_for('watch.export_history') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Export History') }}</a>
+                        <a href="{{ url_for('screener.screener') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Screener') }}</a>
                         <a href="{{ url_for('calc.interest') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Calculators') }}</a>
                         <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Settings') }}</a>
                         <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">{{ _('Logout') }}</a>
@@ -38,6 +39,7 @@
                 {% else %}
                     <div class="ms-auto d-lg-flex align-items-center">
                         <a href="{{ url_for('portfolio.leaderboard') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Leaderboard') }}</a>
+                        <a href="{{ url_for('screener.screener') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Screener') }}</a>
                         <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Login') }}</a>
                         <a href="{{ url_for('auth.signup') }}" class="btn btn-sm btn-outline-secondary mb-2 mb-lg-0">{{ _('Sign Up') }}</a>
                     </div>
