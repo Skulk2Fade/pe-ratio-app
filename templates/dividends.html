@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Dividends{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h3 class="mb-4">Dividend Tracker</h3>
+    {% if dividends %}
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Yield %</th>
+                    <th>Upcoming Ex-Date</th>
+                    <th>History</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in dividends %}
+                <tr>
+                    <td>{{ d.symbol }}</td>
+                    <td>{% if d.yield is not none %}{{ d.yield }}{% else %}N/A{% endif %}</td>
+                    <td>{% if d.upcoming %}{{ d.upcoming[0].date }}{% else %}N/A{% endif %}</td>
+                    <td>
+                        {% if d.history %}
+                            <ul class="mb-0">
+                            {% for h in d.history %}
+                                <li>{{ h.date }} - {{ h.dividend }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}N/A{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No portfolio items.</p>
+    {% endif %}
+    <a href="{{ url_for('portfolio.portfolio') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}

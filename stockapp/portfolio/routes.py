@@ -12,6 +12,8 @@ from ..utils import (
     get_historical_prices,
     get_stock_news,
     generate_xlsx,
+    get_dividend_history,
+    get_upcoming_dividends,
 )
 from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
 from .helpers import (
@@ -120,6 +122,32 @@ def portfolio():
         import_form=import_form,
         update_form=update_form,
     )
+
+
+@portfolio_bp.route("/dividends")
+@login_required
+def dividends():
+    items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
+    data = []
+    for item in items:
+        history = get_dividend_history(item.symbol, limit=5)
+        upcoming = get_upcoming_dividends(item.symbol, days=30)
+        info = get_stock_data(item.symbol)
+        yield_pct = info[15]
+        if yield_pct is not None:
+            try:
+                yield_pct = round(yield_pct * 100, 2)
+            except Exception:
+                yield_pct = None
+        data.append(
+            {
+                "symbol": item.symbol,
+                "history": history,
+                "upcoming": upcoming,
+                "yield": yield_pct,
+            }
+        )
+    return render_template("dividends.html", dividends=data)
 
 
 @portfolio_bp.route("/portfolio/delete/<int:item_id>")
