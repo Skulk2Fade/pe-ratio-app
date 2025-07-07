@@ -1,6 +1,7 @@
 import pytest
 
 from stockapp.portfolio.helpers import sync_transactions_from_brokerage
+from stockapp import brokerage
 from stockapp.models import User, PortfolioItem, Transaction
 from stockapp.extensions import db
 
@@ -16,3 +17,8 @@ def test_sync_transactions(app):
         }
         assert "AAA" in items
         assert items["AAA"].quantity >= 1
+
+
+def test_account_balance():
+    bal = brokerage.get_account_balance("demo-token")
+    assert bal == 10000.0

@@ -14,6 +14,7 @@ from .portfolio import portfolio_bp
 from .alerts import alerts_bp
 from .calculators import calc_bp
 from .api import api_bp
+from .brokerage_routes import broker_bp
 from .screener import screener_bp
 from .tasks import init_celery
 
@@ -65,6 +66,7 @@ def create_app(config_class=None):
     app.register_blueprint(calc_bp)
     app.register_blueprint(screener_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(broker_bp)
 
     with app.app_context():
         db.create_all()
