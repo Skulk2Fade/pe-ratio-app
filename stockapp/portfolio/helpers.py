@@ -10,7 +10,7 @@ from flask_login import current_user
 from datetime import datetime
 
 from ..extensions import db
-from ..models import PortfolioItem, Transaction
+from ..models import PortfolioItem, Transaction, User
 from ..utils import get_locale, convert_currency
 from .. import brokerage
 
@@ -44,8 +44,22 @@ def import_portfolio_items(file_storage, user_id: int) -> None:
     db.session.commit()
 
 
-def sync_portfolio_from_brokerage(user_id: int, token: str) -> None:
+def sync_portfolio_from_brokerage(
+    user_id: int, token: str, refresh: str | None = None, expiry: datetime | None = None
+) -> None:
     """Synchronize holdings from a brokerage account."""
+    if refresh and expiry and expiry <= datetime.utcnow():
+        data = brokerage.refresh_access_token(refresh)
+        if data and data.get("access_token"):
+            token = data["access_token"]
+            refresh = data.get("refresh_token", refresh)
+            expiry = brokerage.token_expiry_time(data.get("expires_in", 0))
+            user = User.query.get(user_id)
+            if user:
+                user.brokerage_access_token = token
+                user.brokerage_refresh_token = refresh
+                user.brokerage_token_expiry = expiry
+                db.session.commit()
     holdings = brokerage.get_holdings(token)
     for h in holdings:
         symbol = h.get("symbol", "").upper()
@@ -69,8 +83,22 @@ def sync_portfolio_from_brokerage(user_id: int, token: str) -> None:
     db.session.commit()
 
 
-def sync_transactions_from_brokerage(user_id: int, token: str) -> None:
+def sync_transactions_from_brokerage(
+    user_id: int, token: str, refresh: str | None = None, expiry: datetime | None = None
+) -> None:
     """Import transaction history and update portfolio positions."""
+    if refresh and expiry and expiry <= datetime.utcnow():
+        data = brokerage.refresh_access_token(refresh)
+        if data and data.get("access_token"):
+            token = data["access_token"]
+            refresh = data.get("refresh_token", refresh)
+            expiry = brokerage.token_expiry_time(data.get("expires_in", 0))
+            user = User.query.get(user_id)
+            if user:
+                user.brokerage_access_token = token
+                user.brokerage_refresh_token = refresh
+                user.brokerage_token_expiry = expiry
+                db.session.commit()
     transactions = brokerage.get_transactions(token)
     for t in transactions:
         symbol = t.get("symbol", "").upper()

@@ -174,10 +174,23 @@ def send_trend_summaries_task():
 
 def _sync_brokerage():
     """Synchronize portfolios with brokerage holdings."""
-    users = User.query.filter(User.brokerage_token.isnot(None)).all()
+    users = User.query.filter(
+        (User.brokerage_token.isnot(None)) | (User.brokerage_access_token.isnot(None))
+    ).all()
     for user in users:
-        sync_portfolio_from_brokerage(user.id, user.brokerage_token)
-        sync_transactions_from_brokerage(user.id, user.brokerage_token)
+        token = user.brokerage_access_token or user.brokerage_token
+        sync_portfolio_from_brokerage(
+            user.id,
+            token,
+            refresh=user.brokerage_refresh_token,
+            expiry=user.brokerage_token_expiry,
+        )
+        sync_transactions_from_brokerage(
+            user.id,
+            token,
+            refresh=user.brokerage_refresh_token,
+            expiry=user.brokerage_token_expiry,
+        )
 
 
 @celery.task(name="stockapp.tasks.sync_brokerage_task")
@@ -210,7 +223,9 @@ def _check_dividends():
                     send_email(user.email, "Dividend Reminder", msg)
                     if user.sms_opt_in and user.phone_number:
                         send_sms(user.phone_number, msg)
-                    db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
+                    db.session.add(
+                        Alert(symbol=item.symbol, message=msg, user_id=user.id)
+                    )
                     notify_user_push(user.id, msg)
     db.session.commit()
 

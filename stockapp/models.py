@@ -26,6 +26,9 @@ class User(db.Model, UserMixin):
     language = db.Column(db.String(5), default="en")
     theme = db.Column(db.String(10), default="light")
     brokerage_token = db.Column(db.String(100))
+    brokerage_access_token = db.Column(db.String(200))
+    brokerage_refresh_token = db.Column(db.String(200))
+    brokerage_token_expiry = db.Column(db.DateTime)
 
 
 class WatchlistItem(db.Model):

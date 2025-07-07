@@ -180,7 +180,7 @@ import a file to quickly populate your portfolio. The CSV format uses the
 columns `Symbol`, `Quantity` and `Price Paid`.
 
 * **Portfolio Diversification Analyzer** – automatically analyzes sector allocations, asset correlations and overall portfolio volatility to highlight concentration risk. Enhanced metrics like Beta, Sharpe ratio, Value at Risk and Monte Carlo simulations provide deeper risk insights.
-* **Brokerage Transaction Sync** – portfolio holdings and recent transactions can now be synchronized from connected brokerage accounts using the new stub API.
+* **Brokerage Transaction Sync** – connect your real brokerage via OAuth to automatically import holdings, transactions and account balances. A demo token is still supported for tests.
 
 ## Social Features
 

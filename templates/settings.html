@@ -38,6 +38,13 @@
             </select>
             <label class="form-label mt-3">{{ _('Brokerage API Token') }}</label>
             <input type="text" name="brokerage_token" class="form-control" value="{{ brokerage_token }}">
+            <div class="mt-2">
+                {% if current_user.brokerage_access_token %}
+                    <a href="{{ url_for('broker.disconnect') }}" class="btn btn-warning btn-sm">{{ _('Disconnect Brokerage') }}</a>
+                {% else %}
+                    <a href="{{ url_for('broker.connect') }}" class="btn btn-secondary btn-sm">{{ _('Connect Brokerage') }}</a>
+                {% endif %}
+            </div>
             <button class="btn btn-primary mt-3" type="submit">{{ _('Save') }}</button>
         </form>
         <a href="{{ url_for('main.index') }}" class="btn btn-secondary">{{ _('Back') }}</a>

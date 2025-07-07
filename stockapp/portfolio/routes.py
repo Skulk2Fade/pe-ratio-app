@@ -73,9 +73,15 @@ def export_portfolio():
 @portfolio_bp.route("/portfolio/sync")
 @login_required
 def sync_brokerage():
-    if not current_user.brokerage_token:
+    token = current_user.brokerage_access_token or current_user.brokerage_token
+    if not token:
         return redirect(url_for("portfolio.portfolio"))
-    sync_portfolio_from_brokerage(current_user.id, current_user.brokerage_token)
+    sync_portfolio_from_brokerage(
+        current_user.id,
+        token,
+        refresh=current_user.brokerage_refresh_token,
+        expiry=current_user.brokerage_token_expiry,
+    )
     return redirect(url_for("portfolio.portfolio"))
 
 
