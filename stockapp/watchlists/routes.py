@@ -84,6 +84,13 @@ def watchlist():
         .all()
     )
     news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
+    sentiments = {}
+    for sym, articles in news.items():
+        if articles:
+            avg = sum(a.get("sentiment", 0) for a in articles) / len(articles)
+            sentiments[sym] = round(avg, 2)
+        else:
+            sentiments[sym] = None
     return render_template(
         "watchlist.html",
         items=items,
@@ -91,6 +98,7 @@ def watchlist():
         update_form=update_form,
         default_threshold=ALERT_PE_THRESHOLD,
         news=news,
+        sentiments=sentiments,
     )
 
 
@@ -287,9 +295,17 @@ def public_watchlist(username):
     user = User.query.filter_by(username=username).first_or_404()
     items = WatchlistItem.query.filter_by(user_id=user.id, is_public=True).all()
     news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
+    sentiments = {}
+    for sym, articles in news.items():
+        if articles:
+            avg = sum(a.get("sentiment", 0) for a in articles) / len(articles)
+            sentiments[sym] = round(avg, 2)
+        else:
+            sentiments[sym] = None
     return render_template(
         "public_watchlist.html",
         items=items,
         user=user,
         news=news,
+        sentiments=sentiments,
     )

@@ -47,6 +47,9 @@
                     <input type="hidden" name="item_id" value="{{ item.id }}">
                     <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 stack-sm">
                         <strong>{{ item.symbol }}</strong>
+                        {% if sentiments[item.symbol] is not none %}
+                        <span class="badge bg-info text-dark">Sentiment {{ '%.2f'|format(sentiments[item.symbol]) }}</span>
+                        {% endif %}
                         <input type="number" name="threshold" value="{{ item.pe_threshold }}" class="form-control d-inline-block w-auto" />
                         <input type="number" name="de_threshold" value="{{ item.de_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="D/E" />
                         <input type="number" name="rsi_threshold" value="{{ item.rsi_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="RSI" />
@@ -66,7 +69,11 @@
                     {% for n in news[item.symbol] %}
                     <li>
                         <a href="{{ n.url }}" target="_blank">{{ n.headline }}</a>
+                        {% if n.sentiment is defined %}
+                        <small class="text-muted">{{ n.published }} ({{ '%.2f'|format(n.sentiment) }})</small>
+                        {% else %}
                         <small class="text-muted">{{ n.published }}</small>
+                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
