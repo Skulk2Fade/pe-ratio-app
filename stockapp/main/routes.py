@@ -192,7 +192,7 @@ def index():
                 history_highs,
                 history_lows,
                 history_prices,
-            ) = get_historical_ohlc(symbol, days=90)
+            ) = get_historical_ohlc(symbol, days=365)
             ma20 = moving_average(history_prices, 20)
             ma50 = moving_average(history_prices, 50)
             rsi_values = calculate_rsi(history_prices, 14)

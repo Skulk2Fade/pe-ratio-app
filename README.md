@@ -170,6 +170,7 @@ Alongside the standard P/E ratio the app now fetches and displays:
 * **Dividend Payout Ratio** – shows what percentage of earnings are distributed as dividends.
 * **Current Ratio** – current assets divided by current liabilities, indicating short-term liquidity.
 * **MACD and Bollinger Bands** – additional technical indicators for chart analysis.
+* **Enhanced Charting** – candlestick views with adjustable time ranges and optional overlays like RSI, CCI and moving averages of any length.
 
 These extra metrics appear on the main page and in exported CSV/PDF/XLSX/JSON files.
 
