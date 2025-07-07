@@ -3,6 +3,7 @@ import time
 import pickle
 import logging
 import json
+import re
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -36,6 +37,34 @@ if not API_KEY:
 ALERT_PE_THRESHOLD = 30
 
 logger = logging.getLogger(__name__)
+
+# Simple sentiment word lists for headline analysis
+POSITIVE_WORDS = {
+    "gain",
+    "gains",
+    "up",
+    "surge",
+    "positive",
+    "growth",
+    "improve",
+    "beat",
+    "beats",
+    "strong",
+    "bullish",
+}
+NEGATIVE_WORDS = {
+    "loss",
+    "losses",
+    "down",
+    "drop",
+    "plunge",
+    "negative",
+    "fall",
+    "weak",
+    "bearish",
+    "miss",
+    "decline",
+}
 
 # Use a requests Session with retries for better resilience
 session = requests.Session()
@@ -118,6 +147,26 @@ def _fetch_json(url, desc, symbol=None):
 def _cached_or_placeholder(key, size=23):
     cached = _get_cached(key)
     return cached if cached else (None,) * size
+
+
+def analyze_headline_sentiment(text: str) -> float:
+    """Return a simple sentiment score for a headline.
+
+    The score ranges from -1 (negative) to 1 (positive) based on
+    occurrences of words in :data:`POSITIVE_WORDS` and
+    :data:`NEGATIVE_WORDS`.
+    """
+    if not text:
+        return 0.0
+    tokens = re.findall(r"\b\w+\b", text.lower())
+    if not tokens:
+        return 0.0
+    pos = sum(1 for t in tokens if t in POSITIVE_WORDS)
+    neg = sum(1 for t in tokens if t in NEGATIVE_WORDS)
+    total = pos + neg
+    if total == 0:
+        return 0.0
+    return round((pos - neg) / total, 2)
 
 
 def get_exchange_rate(from_currency: str, to_currency: str) -> float:
@@ -582,11 +631,13 @@ def get_stock_news(symbol, limit=3):
         articles = []
         if isinstance(data, list):
             for item in data:
+                headline = item.get("title")
                 articles.append(
                     {
-                        "headline": item.get("title"),
+                        "headline": headline,
                         "url": item.get("url"),
                         "published": item.get("publishedDate"),
+                        "sentiment": analyze_headline_sentiment(headline or ""),
                     }
                 )
         if articles:

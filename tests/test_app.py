@@ -44,6 +44,33 @@ def test_indicators():
     assert cci[-1] is not None
 
 
+def test_news_sentiment(monkeypatch):
+    from stockapp import utils
+
+    utils._cache.clear()
+
+    sample = [
+        {
+            "title": "Stock surges on strong growth",
+            "url": "u1",
+            "publishedDate": "2023-01-01",
+        },
+        {
+            "title": "Shares drop after bad results",
+            "url": "u2",
+            "publishedDate": "2023-01-02",
+        },
+    ]
+
+    monkeypatch.setattr(utils, "_fetch_json", lambda url, desc, symbol=None: sample)
+
+    news = utils.get_stock_news("AAA", limit=2)
+    assert len(news) == 2
+    sentiments = [a["sentiment"] for a in news]
+    assert sentiments[0] > 0
+    assert sentiments[1] < 0
+
+
 def test_api_endpoints(auth_client, app):
     from stockapp.models import WatchlistItem, PortfolioItem, Alert, User
     from stockapp.extensions import db

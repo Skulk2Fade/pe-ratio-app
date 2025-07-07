@@ -8,12 +8,19 @@
     {% for item in items %}
     <li class="list-group-item">
       <strong>{{ item.symbol }}</strong>
+      {% if sentiments[item.symbol] is not none %}
+      <span class="badge bg-info text-dark">Sentiment {{ '%.2f'|format(sentiments[item.symbol]) }}</span>
+      {% endif %}
       {% if news[item.symbol] %}
       <ul class="mt-2">
         {% for n in news[item.symbol] %}
         <li>
           <a href="{{ n.url }}" target="_blank">{{ n.headline }}</a>
+          {% if n.sentiment is defined %}
+          <small class="text-muted">{{ n.published }} ({{ '%.2f'|format(n.sentiment) }})</small>
+          {% else %}
           <small class="text-muted">{{ n.published }}</small>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>
