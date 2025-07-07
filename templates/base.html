@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ app_name }}{% endblock %}</title>
     <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     {% block head %}{% endblock %}
 </head>
@@ -34,6 +35,12 @@
                         <a href="{{ url_for('screener.screener') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Screener') }}</a>
                         <a href="{{ url_for('calc.interest') }}" class="btn btn-sm btn-outline-primary me-2 mb-2 mb-lg-0">{{ _('Calculators') }}</a>
                         <a href="{{ url_for('watch.settings') }}" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">{{ _('Settings') }}</a>
+                        <form method="post" action="{{ url_for('watch.toggle_theme') }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary me-2 mb-2 mb-lg-0">
+                                {% if current_user.theme == 'dark' %}{{ _('Light Theme') }}{% else %}{{ _('Dark Theme') }}{% endif %}
+                            </button>
+                        </form>
                         <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger">{{ _('Logout') }}</a>
                     </div>
                 {% else %}

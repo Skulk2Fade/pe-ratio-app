@@ -203,6 +203,14 @@ def settings():
     )
 
 
+@watch_bp.route("/toggle_theme", methods=["POST"])
+@login_required
+def toggle_theme():
+    current_user.theme = "dark" if current_user.theme == "light" else "light"
+    db.session.commit()
+    return redirect(request.referrer or url_for("main.index"))
+
+
 @watch_bp.route("/export_history")
 @login_required
 def export_history():
