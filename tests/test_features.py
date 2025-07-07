@@ -507,3 +507,16 @@ def test_dividend_notifications(app, monkeypatch):
     with app.app_context():
         alert = Alert.query.filter_by(user_id=u.id).first()
         assert alert and "DVD" in alert.message
+
+
+def test_theme_toggle(auth_client, app):
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        user.theme = "light"
+        from stockapp.extensions import db
+        db.session.commit()
+    resp = auth_client.post("/toggle_theme", follow_redirects=True)
+    assert resp.status_code == 200
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        assert user.theme == "dark"

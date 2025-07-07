@@ -211,6 +211,12 @@ The app registers a small service worker so it can behave like a Progressive
 Web App. Only static assets are cached. The main pages are always fetched from
 the server so that dynamic CSRF tokens stay valid.
 
+### Mobile UI and Dark Theme
+
+When logged in you can quickly switch between light and dark modes using the
+toggle in the navigation bar. Forms and tables now adapt better on small
+screens thanks to additional responsive styles.
+
 ### WebSocket Price Streaming
 
 Price updates are now pushed over a WebSocket connection. When viewing a

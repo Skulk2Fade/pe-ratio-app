@@ -7,7 +7,7 @@
         <h3 class="mb-4">Watchlist</h3>
         <form method="POST" class="mb-3">
             {{ add_form.hidden_tag() }}
-            <div class="row g-2">
+            <div class="row g-2 stack-sm">
                 <div class="col">
                     {{ add_form.symbol(class="form-control", placeholder="Symbol") }}
                 </div>
@@ -45,7 +45,7 @@
                 <form method="POST" class="d-flex flex-column gap-2">
                     {{ update_form.hidden_tag() }}
                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 stack-sm">
                         <strong>{{ item.symbol }}</strong>
                         <input type="number" name="threshold" value="{{ item.pe_threshold }}" class="form-control d-inline-block w-auto" />
                         <input type="number" name="de_threshold" value="{{ item.de_threshold or '' }}" class="form-control d-inline-block w-auto" placeholder="D/E" />
