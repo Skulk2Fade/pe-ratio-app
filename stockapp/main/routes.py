@@ -5,14 +5,10 @@ from flask import (
     session,
     redirect,
     url_for,
-    make_response,
     current_app,
     Response,
 )
 from flask_login import current_user
-import csv
-import io
-from fpdf import FPDF
 from babel.numbers import format_currency, format_decimal
 import json
 from ..utils import (
@@ -25,9 +21,14 @@ from ..utils import (
     calculate_macd,
     bollinger_bands,
     calculate_cci,
-    generate_xlsx,
     notify_user_push,
     convert_currency,
+)
+from .export_helpers import (
+    csv_response,
+    xlsx_response,
+    json_response,
+    pdf_response,
 )
 import time
 from ..extensions import db, sock
@@ -538,182 +539,99 @@ def download():
     if eps is not None:
         eps = format_currency(eps, currency, locale=get_locale())
 
+    headers = [
+        "Company Name",
+        "Symbol",
+        "Price",
+        "EPS",
+        "P/E Ratio",
+        "PEG Ratio",
+        "Valuation",
+        "Market Cap",
+        "Debt/Equity",
+        "P/B",
+        "ROE %",
+        "ROA %",
+        "Profit Margin %",
+        "Analyst Rating",
+        "Dividend Yield %",
+        "Dividend Payout Ratio %",
+        "Earnings Growth %",
+        "Forward P/E",
+        "P/S Ratio",
+        "EV/EBITDA",
+        "P/FCF Ratio",
+        "Current Ratio",
+        "Sector",
+        "Industry",
+        "Exchange",
+        "Currency",
+    ]
+
+    row = [
+        company_name,
+        symbol,
+        price,
+        eps,
+        pe_ratio,
+        peg_ratio,
+        valuation,
+        market_cap,
+        debt_to_equity,
+        pb_ratio,
+        roe,
+        roa,
+        profit_margin,
+        analyst_rating,
+        dividend_yield,
+        payout_ratio,
+        earnings_growth,
+        forward_pe,
+        price_to_sales,
+        ev_to_ebitda,
+        price_to_fcf,
+        current_ratio,
+        sector,
+        industry,
+        exchange,
+        currency,
+    ]
+
     if fmt == "csv":
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
-            [
-                "Company Name",
-                "Symbol",
-                "Price",
-                "EPS",
-                "P/E Ratio",
-                "PEG Ratio",
-                "Valuation",
-                "Market Cap",
-                "Debt/Equity",
-                "P/B",
-                "ROE %",
-                "ROA %",
-                "Profit Margin %",
-                "Analyst Rating",
-                "Dividend Yield %",
-                "Dividend Payout Ratio %",
-                "Earnings Growth %",
-                "Forward P/E",
-                "P/S Ratio",
-                "EV/EBITDA",
-                "P/FCF Ratio",
-                "Current Ratio",
-                "Sector",
-                "Industry",
-                "Exchange",
-                "Currency",
-            ]
-        )
-        writer.writerow(
-            [
-                company_name,
-                symbol,
-                price,
-                eps,
-                pe_ratio,
-                peg_ratio,
-                valuation,
-                market_cap,
-                debt_to_equity,
-                pb_ratio,
-                roe,
-                roa,
-                profit_margin,
-                analyst_rating,
-                dividend_yield,
-                payout_ratio,
-                earnings_growth,
-                forward_pe,
-                price_to_sales,
-                ev_to_ebitda,
-                price_to_fcf,
-                current_ratio,
-                sector,
-                industry,
-                exchange,
-                currency,
-            ]
-        )
-        response = make_response(output.getvalue())
-        response.headers["Content-Disposition"] = (
-            f"attachment; filename={symbol}_data.csv"
-        )
-        response.headers["Content-Type"] = "text/csv"
-        return response
+        return csv_response(symbol, headers, row)
     elif fmt == "xlsx":
-        output = generate_xlsx(
-            [
-                "Company Name",
-                "Symbol",
-                "Price",
-                "EPS",
-                "P/E Ratio",
-                "PEG Ratio",
-                "Valuation",
-                "Market Cap",
-                "Debt/Equity",
-                "P/B",
-                "ROE %",
-                "ROA %",
-                "Profit Margin %",
-                "Analyst Rating",
-                "Dividend Yield %",
-                "Dividend Payout Ratio %",
-                "Earnings Growth %",
-                "Forward P/E",
-                "P/S Ratio",
-                "EV/EBITDA",
-                "P/FCF Ratio",
-                "Current Ratio",
-                "Sector",
-                "Industry",
-                "Exchange",
-                "Currency",
-            ],
-            [
-                company_name,
-                symbol,
-                price,
-                eps,
-                pe_ratio,
-                peg_ratio,
-                valuation,
-                market_cap,
-                debt_to_equity,
-                pb_ratio,
-                roe,
-                roa,
-                profit_margin,
-                analyst_rating,
-                dividend_yield,
-                payout_ratio,
-                earnings_growth,
-                forward_pe,
-                price_to_sales,
-                ev_to_ebitda,
-                price_to_fcf,
-                current_ratio,
-                sector,
-                industry,
-                exchange,
-                currency,
-            ],
-        )
-        response = make_response(output)
-        response.headers["Content-Disposition"] = (
-            f"attachment; filename={symbol}_data.xlsx"
-        )
-        response.headers["Content-Type"] = (
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        return response
+        return xlsx_response(symbol, headers, row)
     elif fmt == "json":
-        data = {
-            "company_name": company_name,
-            "symbol": symbol,
-            "price": price,
-            "eps": eps,
-            "pe_ratio": pe_ratio,
-            "peg_ratio": peg_ratio,
-            "valuation": valuation,
-            "market_cap": market_cap,
-            "debt_to_equity": debt_to_equity,
-            "pb_ratio": pb_ratio,
-            "roe": roe,
-            "roa": roa,
-            "profit_margin": profit_margin,
-            "analyst_rating": analyst_rating,
-            "dividend_yield": dividend_yield,
-            "payout_ratio": payout_ratio,
-            "earnings_growth": earnings_growth,
-            "forward_pe": forward_pe,
-            "price_to_sales": price_to_sales,
-            "ev_to_ebitda": ev_to_ebitda,
-            "price_to_fcf": price_to_fcf,
-            "current_ratio": current_ratio,
-            "sector": sector,
-            "industry": industry,
-            "exchange": exchange,
-            "currency": currency,
-        }
-        response = make_response(json.dumps(data))
-        response.headers["Content-Disposition"] = (
-            f"attachment; filename={symbol}_data.json"
+        data = dict(
+            company_name=company_name,
+            symbol=symbol,
+            price=price,
+            eps=eps,
+            pe_ratio=pe_ratio,
+            peg_ratio=peg_ratio,
+            valuation=valuation,
+            market_cap=market_cap,
+            debt_to_equity=debt_to_equity,
+            pb_ratio=pb_ratio,
+            roe=roe,
+            roa=roa,
+            profit_margin=profit_margin,
+            analyst_rating=analyst_rating,
+            dividend_yield=dividend_yield,
+            payout_ratio=payout_ratio,
+            earnings_growth=earnings_growth,
+            forward_pe=forward_pe,
+            price_to_sales=price_to_sales,
+            ev_to_ebitda=ev_to_ebitda,
+            price_to_fcf=price_to_fcf,
+            current_ratio=current_ratio,
+            sector=sector,
+            industry=industry,
+            exchange=exchange,
+            currency=currency,
         )
-        response.headers["Content-Type"] = "application/json"
-        return response
+        return json_response(symbol, data)
     elif fmt == "pdf":
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, txt=f"Stock Data for {symbol}", ln=1)
         fields = [
             ("Company Name", company_name),
             ("Price", price),
@@ -741,14 +659,6 @@ def download():
             ("Exchange", exchange),
             ("Currency", currency),
         ]
-        for label, value in fields:
-            pdf.cell(0, 10, txt=f"{label}: {value}", ln=1)
-        pdf_output = pdf.output(dest="S").encode("latin-1")
-        response = make_response(pdf_output)
-        response.headers["Content-Disposition"] = (
-            f"attachment; filename={symbol}_data.pdf"
-        )
-        response.headers["Content-Type"] = "application/pdf"
-        return response
+        return pdf_response(symbol, fields)
     else:
         return "Invalid format", 400
