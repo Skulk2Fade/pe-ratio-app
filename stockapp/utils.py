@@ -123,36 +123,60 @@ def _set_cached(key, value):
 
 
 def _fetch_json(url, desc, symbol=None):
-    """Fetch JSON data from a URL and log any errors."""
+    """Fetch JSON data from ``url``.
+
+    On network errors the function falls back to cached results when
+    available and otherwise returns an empty dictionary so callers do not have
+    to handle exceptions.
+    """
     if API_KEY_MISSING and "financialmodelingprep.com" in url:
         if symbol:
             logger.warning(
-                "API key missing; returning placeholder for %s data on %s", desc, symbol
+                "API key missing; returning placeholder for %s data on %s",
+                desc,
+                symbol,
             )
         else:
             logger.warning("API key missing; returning placeholder for %s", desc)
         return {}
+
+    cached = _get_cached(url)
+
     try:
         resp = session.get(url, timeout=10)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        _set_cached(url, data)
+        return data
     except (
         requests.exceptions.RequestException
     ) as e:  # pragma: no cover - network failure
         status = getattr(e.response, "status_code", "unknown")
         if symbol:
             logger.error(
-                "Error fetching %s for %s: %s (status %s)", desc, symbol, e, status
+                "Network error fetching %s for %s: %s (status %s)",
+                desc,
+                symbol,
+                e,
+                status,
             )
         else:
-            logger.error("Error fetching %s: %s (status %s)", desc, e, status)
-        raise
+            logger.error(
+                "Network error fetching %s: %s (status %s)",
+                desc,
+                e,
+                status,
+            )
     except Exception as e:  # pragma: no cover - other failure
         if symbol:
             logger.error("Error fetching %s for %s: %s", desc, symbol, e)
         else:
             logger.error("Error fetching %s: %s", desc, e)
-        raise
+
+    if cached is not None:
+        logger.info("Using cached %s for %s", desc, symbol or url)
+        return cached
+    return {}
 
 
 def _cached_or_placeholder(key, size=23):

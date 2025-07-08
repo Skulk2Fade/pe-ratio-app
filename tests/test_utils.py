@@ -1,5 +1,6 @@
 import importlib
 import os
+import requests
 
 
 def test_no_api_key_returns_placeholders(monkeypatch):
@@ -17,3 +18,27 @@ def test_no_api_key_returns_placeholders(monkeypatch):
 
     assert utils.get_stock_news("AAPL") == []
     assert utils.screen_stocks() == []
+
+
+def test_fetch_json_network_error(monkeypatch):
+    import stockapp.utils as utils
+
+    utils._cache.clear()
+
+    # simulate network failure
+    class FakeExc(requests.exceptions.RequestException):
+        pass
+
+    def raise_exc(*args, **kwargs):
+        raise FakeExc("boom")
+
+    monkeypatch.setattr(utils.session, "get", raise_exc)
+
+    # no cached value -> empty dict
+    data = utils._fetch_json("http://test", "desc")
+    assert data == {}
+
+    # cached value should be returned on failure
+    utils._set_cached("http://test", {"cached": True})
+    data = utils._fetch_json("http://test", "desc")
+    assert data == {"cached": True}
