@@ -22,6 +22,11 @@ class Config:
     CELERY_BROKER_URL = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
+    CHECK_WATCHLISTS_CRON = "0 * * * *"
+    SEND_TREND_SUMMARIES_CRON = "0 8 * * *"
+    SYNC_BROKERAGE_CRON = "0 6 * * *"
+    CHECK_DIVIDENDS_CRON = "0 9 * * *"
+
     TWILIO_SID = ""
     TWILIO_TOKEN = ""
     TWILIO_FROM = ""
@@ -55,6 +60,18 @@ class Config:
         self.TWILIO_FROM = os.environ.get("TWILIO_FROM", self.TWILIO_FROM)
         self.VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", self.VAPID_PUBLIC_KEY)
         self.VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", self.VAPID_PRIVATE_KEY)
+        self.CHECK_WATCHLISTS_CRON = os.environ.get(
+            "CHECK_WATCHLISTS_CRON", self.CHECK_WATCHLISTS_CRON
+        )
+        self.SEND_TREND_SUMMARIES_CRON = os.environ.get(
+            "SEND_TREND_SUMMARIES_CRON", self.SEND_TREND_SUMMARIES_CRON
+        )
+        self.SYNC_BROKERAGE_CRON = os.environ.get(
+            "SYNC_BROKERAGE_CRON", self.SYNC_BROKERAGE_CRON
+        )
+        self.CHECK_DIVIDENDS_CRON = os.environ.get(
+            "CHECK_DIVIDENDS_CRON", self.CHECK_DIVIDENDS_CRON
+        )
 
 
 class DevelopmentConfig(Config):

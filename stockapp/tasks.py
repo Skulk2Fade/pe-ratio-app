@@ -3,6 +3,21 @@ from datetime import datetime, timedelta
 from celery import Celery
 from celery.schedules import crontab
 
+
+def _parse_cron(expr: str):
+    """Return a ``crontab`` schedule from a five-field cron expression."""
+    parts = expr.split()
+    if len(parts) != 5:
+        raise ValueError(f"Invalid cron expression: {expr}")
+    minute, hour, day_of_month, month_of_year, day_of_week = parts
+    return crontab(
+        minute=minute,
+        hour=hour,
+        day_of_month=day_of_month,
+        month_of_year=month_of_year,
+        day_of_week=day_of_week,
+    )
+
 from .extensions import db
 from .models import User, WatchlistItem, Alert, PortfolioItem
 from .utils import (
@@ -44,19 +59,27 @@ def init_celery(app):
     celery.conf.beat_schedule = {
         "check-watchlists-hourly": {
             "task": "stockapp.tasks.check_watchlists_task",
-            "schedule": crontab(minute=0, hour="*"),
+            "schedule": _parse_cron(
+                app.config.get("CHECK_WATCHLISTS_CRON", "0 * * * *")
+            ),
         },
         "send-trend-summaries-daily": {
             "task": "stockapp.tasks.send_trend_summaries_task",
-            "schedule": crontab(minute=0, hour=8),
+            "schedule": _parse_cron(
+                app.config.get("SEND_TREND_SUMMARIES_CRON", "0 8 * * *")
+            ),
         },
         "sync-brokerage-daily": {
             "task": "stockapp.tasks.sync_brokerage_task",
-            "schedule": crontab(minute=0, hour=6),
+            "schedule": _parse_cron(
+                app.config.get("SYNC_BROKERAGE_CRON", "0 6 * * *")
+            ),
         },
         "check-dividends-daily": {
             "task": "stockapp.tasks.check_dividends_task",
-            "schedule": crontab(minute=0, hour=9),
+            "schedule": _parse_cron(
+                app.config.get("CHECK_DIVIDENDS_CRON", "0 9 * * *")
+            ),
         },
     }
 
