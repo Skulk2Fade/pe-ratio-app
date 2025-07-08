@@ -140,14 +140,16 @@ URL can be assigned to `REDIS_URL` if you want API caching enabled.
 
 ### Default Login
 
-On startup the app creates a verified user if it doesn't already exist. The
+When running in development mode (`FLASK_ENV=development`) the app creates a
+verified user if one doesn't already exist. This makes local testing easier. The
 default credentials are:
 
 * Username: `testuser`
 * Password: `testpass`
 
-You can override these by setting the `DEFAULT_USERNAME` and `DEFAULT_PASSWORD`
-environment variables before running the app.
+You can override these by setting `DEFAULT_USERNAME` and `DEFAULT_PASSWORD`.
+The account is **not** created when `FLASK_ENV` is anything other than
+`development`.
 
 ## Account Verification and Password Reset
 

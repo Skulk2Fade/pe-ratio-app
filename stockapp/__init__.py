@@ -71,21 +71,22 @@ def create_app(config_class=None):
     with app.app_context():
         db.create_all()
 
-        # Create a default user for testing if credentials provided
-        default_user = os.environ.get("DEFAULT_USERNAME", "testuser")
-        default_pass = os.environ.get("DEFAULT_PASSWORD", "testpass")
-        if default_user and default_pass:
-            if not User.query.filter_by(username=default_user).first():
-                user = User(
-                    username=default_user,
-                    password_hash=generate_password_hash(default_pass),
-                    is_verified=True,
-                    default_currency="USD",
-                    language="en",
-                    theme="light",
-                )
-                db.session.add(user)
-                db.session.commit()
+        # Only create the default user in development mode
+        if app.config.get("ENV") == "development":
+            default_user = os.environ.get("DEFAULT_USERNAME", "testuser")
+            default_pass = os.environ.get("DEFAULT_PASSWORD", "testpass")
+            if default_user and default_pass:
+                if not User.query.filter_by(username=default_user).first():
+                    user = User(
+                        username=default_user,
+                        password_hash=generate_password_hash(default_pass),
+                        is_verified=True,
+                        default_currency="USD",
+                        language="en",
+                        theme="light",
+                    )
+                    db.session.add(user)
+                    db.session.commit()
 
     init_celery(app)
     return app
