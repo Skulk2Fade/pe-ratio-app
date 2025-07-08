@@ -30,13 +30,16 @@ except Exception:  # pragma: no cover - optional dependency
         pass
 
 
+logger = logging.getLogger(__name__)
+
 API_KEY = os.environ.get("API_KEY")
-if not API_KEY:
-    raise RuntimeError("API_KEY environment variable not set")
+API_KEY_MISSING = not API_KEY
+if API_KEY_MISSING:
+    logger.warning(
+        "API_KEY environment variable not set. External API calls will return placeholder data."
+    )
 
 ALERT_PE_THRESHOLD = 30
-
-logger = logging.getLogger(__name__)
 
 # Simple sentiment word lists for headline analysis
 POSITIVE_WORDS = {
@@ -121,6 +124,14 @@ def _set_cached(key, value):
 
 def _fetch_json(url, desc, symbol=None):
     """Fetch JSON data from a URL and log any errors."""
+    if API_KEY_MISSING and "financialmodelingprep.com" in url:
+        if symbol:
+            logger.warning(
+                "API key missing; returning placeholder for %s data on %s", desc, symbol
+            )
+        else:
+            logger.warning("API key missing; returning placeholder for %s", desc)
+        return {}
     try:
         resp = session.get(url, timeout=10)
         resp.raise_for_status()
@@ -323,6 +334,11 @@ def get_historical_prices(symbol, days=30):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+    if API_KEY_MISSING and not symbol.lower().endswith(".ax"):
+        logger.warning(
+            "API key missing; returning empty historical prices for %s", symbol
+        )
+        return ([], [])
     if symbol.lower().endswith(".ax"):
         result = _get_asx_historical_prices(symbol, days)
         if result[0]:
@@ -361,6 +377,9 @@ def get_historical_ohlc(symbol, days=30):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+    if API_KEY_MISSING:
+        logger.warning("API key missing; returning empty OHLC data for %s", symbol)
+        return ([], [], [], [], [])
     url = (
         f"https://financialmodelingprep.com/api/v3/historical-price-full/{symbol}"
         f"?timeseries={days}&apikey={API_KEY}"
@@ -457,6 +476,12 @@ def get_stock_data(symbol):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+
+    if API_KEY_MISSING and not symbol.lower().endswith(".ax"):
+        logger.warning(
+            "API key missing; returning placeholder stock data for %s", symbol
+        )
+        return _cached_or_placeholder(cache_key)
 
     if symbol.lower().endswith(".ax"):
         data = _get_asx_stock_data(symbol)
@@ -622,6 +647,9 @@ def get_stock_news(symbol, limit=3):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+    if API_KEY_MISSING:
+        logger.warning("API key missing; returning empty news list for %s", symbol)
+        return []
     url = (
         f"https://financialmodelingprep.com/api/v3/stock_news?"
         f"tickers={symbol}&limit={limit}&apikey={API_KEY}"
@@ -766,6 +794,11 @@ def get_dividend_history(symbol, limit=5):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+    if API_KEY_MISSING:
+        logger.warning(
+            "API key missing; returning empty dividend history for %s", symbol
+        )
+        return []
     url = (
         f"https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/{symbol}?"
         f"apikey={API_KEY}&limit={limit}"
@@ -801,6 +834,11 @@ def get_upcoming_dividends(symbol, days=30):
     cached = _get_cached(cache_key)
     if cached:
         return cached
+    if API_KEY_MISSING:
+        logger.warning(
+            "API key missing; returning empty upcoming dividends for %s", symbol
+        )
+        return []
     start = datetime.utcnow().date()
     end = start + timedelta(days=days)
     url = f"https://financialmodelingprep.com/api/v3/stock_dividend_calendar?from={start}&to={end}&apikey={API_KEY}"
@@ -893,6 +931,9 @@ def screen_stocks(
     pe_min=None, pe_max=None, peg_min=None, peg_max=None, yield_min=None, sector=None
 ):
     """Return a list of stocks matching the given criteria."""
+    if API_KEY_MISSING:
+        logger.warning("API key missing; stock screener will return no results")
+        return []
     params = {"limit": 50, "apikey": API_KEY}
     if pe_min is not None:
         params["peMoreThan"] = pe_min
