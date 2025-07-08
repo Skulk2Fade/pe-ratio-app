@@ -5,16 +5,15 @@ This Flask application calculates P/E ratios and stores user data using SQLAlche
 ## Quickstart
 
 1. Copy `.env.example` to `.env` and edit the values.
-2. Create the virtual environment and install dependencies:
+2. Install all required dependencies and build the frontend assets
+   using the provided bootstrap script:
    ```bash
-   ./setup_env.sh
+   ./scripts/bootstrap.sh
    source venv/bin/activate
    ```
-3. Build the frontend assets:
-   ```bash
-   npm install
-   npm run build
-   ```
+   This combines the previous `setup_env.sh` and manual `npm` steps.
+3. (Optional) If you prefer to manage the steps manually you can still
+   run `./setup_env.sh` followed by `npm install && npm run build`.
 4. Start the application:
    ```bash
    python app.py
@@ -92,16 +91,17 @@ export TWILIO_FROM="+15551234567"
 
 ## Setup
 
-Install dependencies and create a virtual environment by running the helper
-script included in the repository:
+Install dependencies and create a virtual environment by running the
+bootstrap helper script:
 
 ```bash
-./setup_env.sh
+./scripts/bootstrap.sh
 source venv/bin/activate
 ```
 
-The script creates a `venv/` directory in the project root and installs the
-packages listed in `requirements.txt`.
+This will create a `venv/` directory and also fetch the frontend assets so
+tests and linters can run immediately. The older `./setup_env.sh` script is
+still provided if you only want to install the Python packages.
 
 If your environment does not have internet access you can install dependencies
 from a local **wheelhouse** directory instead. First, on a machine with

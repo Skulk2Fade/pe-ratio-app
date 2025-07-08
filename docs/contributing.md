@@ -3,14 +3,20 @@
 Thank you for considering a contribution! The steps below outline the typical
 workflow:
 
-1. Create a Python virtual environment and install dependencies:
+1. Create a Python virtual environment and install dependencies. The
+   easiest way is to run the bootstrap script which also installs the
+   frontend packages:
 
    ```bash
-   ./setup_env.sh
+   ./scripts/bootstrap.sh
    source venv/bin/activate
    ```
 
-2. Install frontend packages and build the static assets:
+   The previous `setup_env.sh` script remains available if you prefer
+   to manage the Node dependencies separately.
+
+2. If you skip the bootstrap script, install the frontend packages and
+   build the static assets manually:
 
    ```bash
    npm install
