@@ -7,6 +7,7 @@ from stockapp import create_app
 def app(monkeypatch):
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     os.environ.setdefault("API_KEY", "demo")
+    os.environ["FLASK_ENV"] = "development"
     os.environ["DEFAULT_USERNAME"] = "tester"
     os.environ["DEFAULT_PASSWORD"] = "password"
     app = create_app()
