@@ -52,7 +52,8 @@ store secrets in the source code:
 
 * `SECRET_KEY` &ndash; Flask session secret. If omitted, a random key is generated
   at startup. **In production this variable must be set or the app will not start.**
-* `API_KEY` &ndash; Financial Modeling Prep API key (required).
+* `API_KEY` &ndash; Financial Modeling Prep API key. When not set, placeholder data is
+  returned instead of live market data.
 * `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` &ndash; SMTP
   credentials for sending alert emails.
 * `FLASK_DEBUG` &ndash; Set to `1` to enable Flask debug mode (defaults to `0`).
