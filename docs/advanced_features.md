@@ -21,6 +21,9 @@ celery -A stockapp.tasks.celery worker -B --loglevel=info
 Configure the broker and result backend using `CELERY_BROKER_URL` and
 `CELERY_RESULT_BACKEND`.  `REDIS_URL` may be set to enable API response
 caching.
+The schedules for periodic tasks can also be overridden by setting
+`CHECK_WATCHLISTS_CRON`, `SEND_TREND_SUMMARIES_CRON`, `SYNC_BROKERAGE_CRON` and
+`CHECK_DIVIDENDS_CRON` to cron strings.
 
 ## SMS Notifications
 
