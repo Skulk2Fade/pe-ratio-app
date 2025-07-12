@@ -5,7 +5,7 @@ from .extensions import db
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=True)
     phone_number = db.Column(db.String(20))
@@ -33,7 +33,7 @@ class User(db.Model, UserMixin):
 
 class WatchlistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     pe_threshold = db.Column(db.Float, default=30)
     de_threshold = db.Column(db.Float)
@@ -55,7 +55,9 @@ class Alert(db.Model):
     symbol = db.Column(db.String(10))
     message = db.Column(db.String(200))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, index=True
+    )
 
 
 class PushSubscription(db.Model):
