@@ -38,18 +38,18 @@ main_bp = Blueprint("main", __name__)
 
 
 @main_bp.route("/service-worker.js")
-def service_worker():
+def service_worker() -> Response:
     return current_app.send_static_file("service-worker.js")
 
 
 @main_bp.route("/health")
-def health():
+def health() -> tuple[str, int]:
     """Simple health check endpoint."""
     return "OK", 200
 
 
 @main_bp.route("/stream_price")
-def stream_price():
+def stream_price() -> Response:
     """Server-Sent Events endpoint streaming price and EPS."""
     symbol = request.args.get("symbol", "").upper()
     if not symbol:
@@ -83,7 +83,7 @@ def stream_price():
 
 
 @sock.route("/ws/price")
-def ws_price(ws):
+def ws_price(ws) -> None:
     """WebSocket endpoint streaming price and EPS."""
     symbol = (ws.receive() or "").upper()
     if not symbol:
@@ -115,7 +115,7 @@ def ws_price(ws):
 
 
 @main_bp.route("/", methods=["GET", "POST"])
-def index():
+def index() -> str:
     symbol = ""
     price = eps = pe_ratio = valuation = company_name = logo_url = market_cap = None
     sector = industry = exchange = currency = debt_to_equity = None
@@ -425,7 +425,7 @@ def index():
 
 
 @main_bp.route("/clear_history")
-def clear_history():
+def clear_history() -> Response:
     if current_user.is_authenticated:
         History.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -435,7 +435,7 @@ def clear_history():
 
 
 @main_bp.route("/download")
-def download():
+def download() -> Response | tuple[str, int]:
     symbol = request.args.get("symbol", "").upper()
     fmt = request.args.get("format", "csv").lower()
     if not symbol:

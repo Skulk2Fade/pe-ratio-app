@@ -7,6 +7,8 @@ import re
 import requests
 import smtplib
 from email.mime.text import MIMEText
+from typing import Any, Iterable, TYPE_CHECKING
+
 from flask import current_app, has_request_context, request
 from flask_login import current_user
 from babel import Locale
@@ -17,6 +19,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import urllib.parse
 from pywebpush import webpush
+
+if TYPE_CHECKING:  # pragma: no cover - optional dependency types
+    from .models import PushSubscription
 
 try:
     import redis
@@ -97,7 +102,7 @@ if redis and REDIS_URL:
         _redis = None
 
 
-def _get_cached(key):
+def _get_cached(key: Any) -> Any | None:
     if _redis:
         try:
             val = _redis.get(key)
@@ -117,7 +122,7 @@ def _get_cached(key):
     return None
 
 
-def _set_cached(key, value):
+def _set_cached(key: Any, value: Any) -> None:
     if _redis:
         try:
             _redis.setex(key, CACHE_TTL, pickle.dumps(value))
@@ -129,7 +134,7 @@ def _set_cached(key, value):
     _cache[key] = (value, time.time())
 
 
-def _fetch_json(url, desc, symbol=None):
+def _fetch_json(url: str, desc: str, symbol: str | None = None) -> Any:
     """Fetch JSON data from ``url``.
 
     On network errors the function falls back to cached results when
@@ -186,7 +191,7 @@ def _fetch_json(url, desc, symbol=None):
     return {}
 
 
-def _cached_or_placeholder(key, size=23):
+def _cached_or_placeholder(key: Any, size: int = 23) -> Any:
     cached = _get_cached(key)
     return cached if cached else (None,) * size
 
@@ -246,7 +251,7 @@ def convert_currency(
         return value
 
 
-def get_locale():
+def get_locale() -> str:
     if has_request_context():
         if current_user.is_authenticated and current_user.language:
             return current_user.language
@@ -258,7 +263,7 @@ def get_locale():
     return "en"
 
 
-def send_email(to, subject, body):
+def send_email(to: str, subject: str, body: str) -> None:
     smtp_server = current_app.config.get("SMTP_SERVER")
     smtp_port = current_app.config.get("SMTP_PORT", 587)
     smtp_user = current_app.config.get("SMTP_USERNAME")
@@ -280,7 +285,7 @@ def send_email(to, subject, body):
         raise NotificationError(str(e))
 
 
-def send_sms(to, body):
+def send_sms(to: str, body: str) -> None:
     sid = current_app.config.get("TWILIO_SID")
     token = current_app.config.get("TWILIO_TOKEN")
     from_number = current_app.config.get("TWILIO_FROM")
@@ -301,7 +306,7 @@ def send_sms(to, body):
         raise NotificationError(str(e))
 
 
-def send_push(subscription, data):
+def send_push(subscription: "PushSubscription", data: dict) -> None:
     """Send a web push notification to a subscription."""
     public_key = current_app.config.get("VAPID_PUBLIC_KEY")
     private_key = current_app.config.get("VAPID_PRIVATE_KEY")
@@ -323,7 +328,7 @@ def send_push(subscription, data):
         raise NotificationError(str(e))
 
 
-def notify_user_push(user_id, message):
+def notify_user_push(user_id: int, message: str) -> None:
     from .models import PushSubscription
 
     subs = PushSubscription.query.filter_by(user_id=user_id).all()
@@ -331,7 +336,9 @@ def notify_user_push(user_id, message):
         send_push(sub, {"title": "MarketMinder Alert", "body": message})
 
 
-def _get_asx_historical_prices(symbol, days=30):
+def _get_asx_historical_prices(
+    symbol: str, days: int = 30
+) -> tuple[list[str], list[float]]:
     """Fetch historical prices from Yahoo Finance for ASX tickers."""
     range_str = f"{days}d"
     url = (
@@ -362,7 +369,7 @@ def _get_asx_historical_prices(symbol, days=30):
         return [], []
 
 
-def get_historical_prices(symbol, days=30):
+def get_historical_prices(symbol: str, days: int = 30) -> tuple[list[str], list[float]]:
     """Retrieve historical prices for a ticker."""
     cache_key = ("hist", symbol, days)
     cached = _get_cached(cache_key)
@@ -405,7 +412,9 @@ def get_historical_prices(symbol, days=30):
         return cached if cached else ([], [])
 
 
-def get_historical_ohlc(symbol, days=30):
+def get_historical_ohlc(
+    symbol: str, days: int = 30
+) -> tuple[list[str], list[float], list[float], list[float], list[float]]:
     """Return historical open-high-low-close data for ``symbol``."""
     cache_key = ("hist_ohlc", symbol, days)
     cached = _get_cached(cache_key)
@@ -438,7 +447,7 @@ def get_historical_ohlc(symbol, days=30):
         return cached if cached else ([], [], [], [], [])
 
 
-def format_market_cap(value, currency):
+def format_market_cap(value: float | None, currency: str) -> str:
     if value is None:
         return "N/A"
     suffix = ""
@@ -455,7 +464,7 @@ def format_market_cap(value, currency):
     return f"{formatted}{suffix}"
 
 
-def _get_asx_stock_data(symbol):
+def _get_asx_stock_data(symbol: str) -> tuple[Any, ...]:
     """Retrieve stock information for ASX tickers using Yahoo Finance."""
     try:
         url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
@@ -505,7 +514,7 @@ def _get_asx_stock_data(symbol):
         return (None,) * 23
 
 
-def get_stock_data(symbol):
+def get_stock_data(symbol: str) -> tuple[Any, ...]:
     cache_key = ("stock", symbol)
     cached = _get_cached(cache_key)
     if cached:
@@ -675,7 +684,7 @@ def get_stock_data(symbol):
         return _cached_or_placeholder(cache_key)
 
 
-def get_stock_news(symbol, limit=3):
+def get_stock_news(symbol: str, limit: int = 3) -> list[dict]:
     """Fetch recent news articles for a stock ticker."""
     cache_key = ("news", symbol, limit)
     cached = _get_cached(cache_key)
@@ -718,7 +727,7 @@ def get_stock_news(symbol, limit=3):
         return cached if cached else []
 
 
-def moving_average(prices, period):
+def moving_average(prices: list[float], period: int) -> list[float | None]:
     """Simple moving average for a list of prices."""
     ma = []
     for i in range(len(prices)):
@@ -730,7 +739,7 @@ def moving_average(prices, period):
     return ma
 
 
-def calculate_rsi(prices, period=14):
+def calculate_rsi(prices: list[float], period: int = 14) -> list[float | None]:
     """Calculate the Relative Strength Index (RSI)."""
     rsi = []
     for i in range(len(prices)):
@@ -755,7 +764,9 @@ def calculate_rsi(prices, period=14):
     return rsi
 
 
-def calculate_macd(prices, slow=26, fast=12, signal=9):
+def calculate_macd(
+    prices: list[float], slow: int = 26, fast: int = 12, signal: int = 9
+) -> tuple[list[float], list[float]]:
     """Compute MACD and signal line using exponential moving averages."""
     ema_fast = []
     ema_slow = []
@@ -780,7 +791,9 @@ def calculate_macd(prices, slow=26, fast=12, signal=9):
     return macd, signal_line
 
 
-def bollinger_bands(prices, period=20, num_std=2):
+def bollinger_bands(
+    prices: list[float], period: int = 20, num_std: int = 2
+) -> tuple[list[float | None], list[float | None]]:
     """Return upper and lower Bollinger Bands."""
     ma = moving_average(prices, period)
     stds = []
@@ -804,7 +817,9 @@ def bollinger_bands(prices, period=20, num_std=2):
     return upper, lower
 
 
-def calculate_cci(highs, lows, closes, period=20):
+def calculate_cci(
+    highs: list[float], lows: list[float], closes: list[float], period: int = 20
+) -> list[float | None]:
     """Compute the Commodity Channel Index."""
     typical = [(h + l + c) / 3 for h, l, c in zip(highs, lows, closes)]
     cci = []
@@ -822,7 +837,7 @@ def calculate_cci(highs, lows, closes, period=20):
     return cci
 
 
-def get_dividend_history(symbol, limit=5):
+def get_dividend_history(symbol: str, limit: int = 5) -> list[dict]:
     """Return recent dividend history for ``symbol``."""
     cache_key = ("div_hist", symbol, limit)
     cached = _get_cached(cache_key)
@@ -862,7 +877,7 @@ def get_dividend_history(symbol, limit=5):
         return cached if cached else []
 
 
-def get_upcoming_dividends(symbol, days=30):
+def get_upcoming_dividends(symbol: str, days: int = 30) -> list[dict]:
     """Return upcoming dividend events within ``days`` for ``symbol``."""
     cache_key = ("div_upcoming", symbol, days)
     cached = _get_cached(cache_key)
@@ -899,7 +914,7 @@ def get_upcoming_dividends(symbol, days=30):
         return cached if cached else []
 
 
-def generate_xlsx(headers, rows):
+def generate_xlsx(headers: Iterable[str], rows: Iterable[Iterable[str]]) -> bytes:
     """Return XLSX binary for the provided table data."""
     import zipfile
     from io import BytesIO
@@ -962,8 +977,13 @@ def generate_xlsx(headers, rows):
 
 
 def screen_stocks(
-    pe_min=None, pe_max=None, peg_min=None, peg_max=None, yield_min=None, sector=None
-):
+    pe_min: float | None = None,
+    pe_max: float | None = None,
+    peg_min: float | None = None,
+    peg_max: float | None = None,
+    yield_min: float | None = None,
+    sector: str | None = None,
+) -> list[dict]:
     """Return a list of stocks matching the given criteria."""
     if API_KEY_MISSING:
         logger.warning("API key missing; stock screener will return no results")
