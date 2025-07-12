@@ -10,7 +10,8 @@ This page covers basic setup and workflow for running MarketMinder locally.
    ./scripts/bootstrap.sh
    source venv/bin/activate
    ```
-   You may also run `./setup_env.sh` and `npm install && npm run build` manually.
+   You may also run `./setup_env.sh` and `npm ci && npm run build` manually to
+   use the pinned asset versions.
 3. Start the application:
    ```bash
    python app.py

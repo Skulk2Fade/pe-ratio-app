@@ -11,7 +11,7 @@ source venv/bin/activate
 
 # Install frontend node modules and build assets
 if [ -f package.json ]; then
-    npm install
+    npm ci
     npm run build
 fi
 

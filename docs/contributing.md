@@ -19,9 +19,11 @@ workflow:
    build the static assets manually:
 
    ```bash
-   npm install
+   npm ci
    npm run build
    ```
+   The `package.json` file pins Bootstrap and Plotly versions so `npm ci`
+   installs exactly those dependencies for reproducible builds.
 
 3. Run the unit tests and style checks before committing:
 

@@ -27,7 +27,7 @@ function main() {
       copy(src, dest);
       console.log(`Copied ${src} -> ${dest}`);
     } else {
-      console.warn(`Missing ${src}, did you run \`npm install\`?`);
+      console.warn(`Missing ${src}, did you run \`npm ci\`?`);
     }
   }
 }

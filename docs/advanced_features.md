@@ -100,8 +100,8 @@ are configured.
 
 ## Frontend Assets
 
-Bootstrap and Plotly are managed locally. Run `npm install && npm run build` once after cloning to populate
-`static/vendor/` so the service worker can cache the assets.
+Bootstrap and Plotly are managed locally. Run `npm ci && npm run build` once after cloning to populate
+`static/vendor/` so the service worker can cache the assets using the versions pinned in `package.json`.
 
 ## Localization
 
