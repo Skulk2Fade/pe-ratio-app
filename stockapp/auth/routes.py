@@ -7,7 +7,7 @@ import pyotp
 
 from ..extensions import db, login_manager
 from ..models import User
-from ..utils import send_email
+from ..utils import send_email, NotificationError
 from ..forms import SignupForm, LoginForm
 
 auth_bp = Blueprint("auth", __name__)
@@ -45,12 +45,15 @@ def signup():
             db.session.add(user)
             db.session.commit()
             verify_link = url_for("auth.verify_email", token=token, _external=True)
-            send_email(
-                email,
-                "Verify your account",
-                f"Please click the link to verify your account: {verify_link}",
-            )
-            message = "Check your email to verify your account."
+            try:
+                send_email(
+                    email,
+                    "Verify your account",
+                    f"Please click the link to verify your account: {verify_link}",
+                )
+                message = "Check your email to verify your account."
+            except NotificationError as e:
+                error = f"Email failed: {e}"
     return render_template("signup.html", form=form, error=error, message=message)
 
 
@@ -129,12 +132,15 @@ def forgot_password():
             user.reset_token_sent = datetime.utcnow()
             db.session.commit()
             reset_link = url_for("auth.reset_password", token=token, _external=True)
-            send_email(
-                email,
-                "Password reset",
-                f"Click the link to reset your password: {reset_link}",
-            )
-            message = "Check your email for a password reset link."
+            try:
+                send_email(
+                    email,
+                    "Password reset",
+                    f"Click the link to reset your password: {reset_link}",
+                )
+                message = "Check your email for a password reset link."
+            except NotificationError as e:
+                error = f"Email failed: {e}"
         else:
             error = "Email not found"
     return render_template("forgot_password.html", error=error, message=message)

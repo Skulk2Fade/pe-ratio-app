@@ -18,6 +18,7 @@ def _parse_cron(expr: str):
         day_of_week=day_of_week,
     )
 
+
 from .extensions import db
 from .models import User, WatchlistItem, Alert, PortfolioItem
 from .utils import (
@@ -30,6 +31,7 @@ from .utils import (
     notify_user_push,
     ALERT_PE_THRESHOLD,
     get_upcoming_dividends,
+    NotificationError,
 )
 from .portfolio.helpers import (
     sync_portfolio_from_brokerage,
@@ -38,6 +40,24 @@ from .portfolio.helpers import (
 
 # Celery application instance configured in ``init_celery``.
 celery = Celery(__name__)
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=60)
+def send_email_task(self, to, subject, body):
+    """Send email asynchronously with retries."""
+    try:
+        send_email(to, subject, body)
+    except NotificationError as e:
+        raise self.retry(exc=e)
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=60)
+def send_sms_task(self, to, body):
+    """Send SMS asynchronously with retries."""
+    try:
+        send_sms(to, body)
+    except NotificationError as e:
+        raise self.retry(exc=e)
 
 
 def init_celery(app):
@@ -71,9 +91,7 @@ def init_celery(app):
         },
         "sync-brokerage-daily": {
             "task": "stockapp.tasks.sync_brokerage_task",
-            "schedule": _parse_cron(
-                app.config.get("SYNC_BROKERAGE_CRON", "0 6 * * *")
-            ),
+            "schedule": _parse_cron(app.config.get("SYNC_BROKERAGE_CRON", "0 6 * * *")),
         },
         "check-dividends-daily": {
             "task": "stockapp.tasks.check_dividends_task",
@@ -144,9 +162,9 @@ def _check_watchlists():
                                     f"{item.symbol} price deviation {round(diff,2)}% exceeds {item.ma_threshold}% from 50d MA"
                                 )
             for msg in alerts:
-                send_email(user.email, "Watchlist Alert", msg)
+                send_email_task.delay(user.email, "Watchlist Alert", msg)
                 if user.sms_opt_in and user.phone_number:
-                    send_sms(user.phone_number, msg)
+                    send_sms_task.delay(user.phone_number, msg)
                 db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
                 notify_user_push(user.id, msg)
         user.last_alert_time = now
@@ -186,7 +204,7 @@ def _send_trend_summaries():
                     lines.append(f"{item.symbol}: {pct:+.2f}%")
         if lines:
             body = "\n".join(lines)
-            send_email(user.email, "MarketMinder Summary", body)
+            send_email_task.delay(user.email, "MarketMinder Summary", body)
 
 
 @celery.task(name="stockapp.tasks.send_trend_summaries_task")
@@ -243,9 +261,9 @@ def _check_dividends():
                     continue
                 if today <= ex_date <= end:
                     msg = f"{item.symbol} dividend ex-date on {date_str}"
-                    send_email(user.email, "Dividend Reminder", msg)
+                    send_email_task.delay(user.email, "Dividend Reminder", msg)
                     if user.sms_opt_in and user.phone_number:
-                        send_sms(user.phone_number, msg)
+                        send_sms_task.delay(user.phone_number, msg)
                     db.session.add(
                         Alert(symbol=item.symbol, message=msg, user_id=user.id)
                     )

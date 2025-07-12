@@ -218,11 +218,11 @@ def test_check_watchlists(app, monkeypatch):
     monkeypatch.setattr("stockapp.tasks.moving_average", lambda prices, p: [80])
     monkeypatch.setattr("stockapp.tasks.calculate_rsi", lambda prices, p=14: [80])
     monkeypatch.setattr(
-        "stockapp.tasks.send_email",
+        "stockapp.tasks.send_email_task.delay",
         lambda to, subject, body: emails.append((to, subject, body)),
     )
     monkeypatch.setattr(
-        "stockapp.tasks.send_sms", lambda to, body: sms.append((to, body))
+        "stockapp.tasks.send_sms_task.delay", lambda to, body: sms.append((to, body))
     )
     from stockapp.extensions import db
 
@@ -268,7 +268,7 @@ def test_trend_summary_notifications(app, monkeypatch):
     )
     emails = []
     monkeypatch.setattr(
-        "stockapp.tasks.send_email",
+        "stockapp.tasks.send_email_task.delay",
         lambda to, subject, body: emails.append((to, subject, body)),
     )
     from stockapp.extensions import db
@@ -478,10 +478,11 @@ def test_dividend_notifications(app, monkeypatch):
     emails = []
     sms = []
     monkeypatch.setattr(
-        "stockapp.tasks.send_email", lambda to, subject, body: emails.append((to, subject, body))
+        "stockapp.tasks.send_email_task.delay",
+        lambda to, subject, body: emails.append((to, subject, body)),
     )
     monkeypatch.setattr(
-        "stockapp.tasks.send_sms", lambda to, body: sms.append((to, body))
+        "stockapp.tasks.send_sms_task.delay", lambda to, body: sms.append((to, body))
     )
     from stockapp.extensions import db
     from stockapp.models import User, PortfolioItem, Alert
@@ -498,7 +499,9 @@ def test_dividend_notifications(app, monkeypatch):
         )
         db.session.add(u)
         db.session.commit()
-        db.session.add(PortfolioItem(symbol="DVD", quantity=1, price_paid=10, user_id=u.id))
+        db.session.add(
+            PortfolioItem(symbol="DVD", quantity=1, price_paid=10, user_id=u.id)
+        )
         db.session.commit()
     from stockapp import tasks
 
@@ -514,6 +517,7 @@ def test_theme_toggle(auth_client, app):
         user = User.query.filter_by(username="tester").first()
         user.theme = "light"
         from stockapp.extensions import db
+
         db.session.commit()
     resp = auth_client.post("/toggle_theme", follow_redirects=True)
     assert resp.status_code == 200
