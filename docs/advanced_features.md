@@ -24,6 +24,8 @@ caching.
 The schedules for periodic tasks can also be overridden by setting
 `CHECK_WATCHLISTS_CRON`, `SEND_TREND_SUMMARIES_CRON`, `SYNC_BROKERAGE_CRON` and
 `CHECK_DIVIDENDS_CRON` to cron strings.
+Notification emails and SMS messages are queued through Celery so failed
+deliveries are automatically retried.
 
 ## SMS Notifications
 

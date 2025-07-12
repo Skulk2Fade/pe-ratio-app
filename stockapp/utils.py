@@ -32,6 +32,13 @@ except Exception:  # pragma: no cover - optional dependency
 
 logger = logging.getLogger(__name__)
 
+
+class NotificationError(Exception):
+    """Raised when sending a notification fails."""
+
+    pass
+
+
 API_KEY = os.environ.get("API_KEY")
 API_KEY_MISSING = not API_KEY
 if API_KEY_MISSING:
@@ -258,7 +265,7 @@ def send_email(to, subject, body):
     smtp_pass = current_app.config.get("SMTP_PASSWORD")
     if not all([smtp_server, smtp_user, smtp_pass]):
         logger.error("Email configuration incomplete")
-        return
+        raise NotificationError("Email configuration incomplete")
     msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = smtp_user
@@ -270,6 +277,7 @@ def send_email(to, subject, body):
             server.send_message(msg)
     except Exception as e:
         logger.error("Email error: %s", e)
+        raise NotificationError(str(e))
 
 
 def send_sms(to, body):
@@ -278,7 +286,7 @@ def send_sms(to, body):
     from_number = current_app.config.get("TWILIO_FROM")
     if not all([sid, token, from_number]):
         logger.error("SMS configuration incomplete")
-        return
+        raise NotificationError("SMS configuration incomplete")
     url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
     try:
         resp = session.post(
@@ -290,6 +298,7 @@ def send_sms(to, body):
         resp.raise_for_status()
     except Exception as e:
         logger.error("SMS error: %s", e)
+        raise NotificationError(str(e))
 
 
 def send_push(subscription, data):
@@ -298,7 +307,7 @@ def send_push(subscription, data):
     private_key = current_app.config.get("VAPID_PRIVATE_KEY")
     if not public_key or not private_key:
         logger.error("VAPID keys not configured")
-        return
+        raise NotificationError("VAPID keys not configured")
     try:
         webpush(
             subscription_info={
@@ -311,6 +320,7 @@ def send_push(subscription, data):
         )
     except Exception as e:
         logger.error("Web push error: %s", e)
+        raise NotificationError(str(e))
 
 
 def notify_user_push(user_id, message):
