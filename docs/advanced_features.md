@@ -22,8 +22,8 @@ Configure the broker and result backend using `CELERY_BROKER_URL` and
 `CELERY_RESULT_BACKEND`.  `REDIS_URL` may be set to enable API response
 caching.
 The schedules for periodic tasks can also be overridden by setting
-`CHECK_WATCHLISTS_CRON`, `SEND_TREND_SUMMARIES_CRON`, `SYNC_BROKERAGE_CRON` and
-`CHECK_DIVIDENDS_CRON` to cron strings.
+`CHECK_WATCHLISTS_CRON`, `SEND_TREND_SUMMARIES_CRON`, `SYNC_BROKERAGE_CRON`,
+`CHECK_DIVIDENDS_CRON` and `CLEANUP_OLD_DATA_CRON` to cron strings.
 Notification emails and SMS messages are queued through Celery so failed
 deliveries are automatically retried.
 
@@ -84,6 +84,8 @@ Quick calculators are available at the `/calc/` routes for interest, compound gr
 ## Viewing Alerts
 
 Triggered alerts are saved in the database. After logging in click the *Alerts* link to review them or clear old entries.
+
+Old alerts and historical price records can build up over time. A scheduled task cleans up data older than 30 days. Control the timing with the `CLEANUP_OLD_DATA_CRON` variable.
 
 ## Historical Trend Notifications
 

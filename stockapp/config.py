@@ -26,6 +26,7 @@ class Config:
     SEND_TREND_SUMMARIES_CRON = "0 8 * * *"
     SYNC_BROKERAGE_CRON = "0 6 * * *"
     CHECK_DIVIDENDS_CRON = "0 9 * * *"
+    CLEANUP_OLD_DATA_CRON = "0 3 * * *"
 
     TWILIO_SID = ""
     TWILIO_TOKEN = ""
@@ -75,6 +76,9 @@ class Config:
         )
         self.CHECK_DIVIDENDS_CRON = os.environ.get(
             "CHECK_DIVIDENDS_CRON", self.CHECK_DIVIDENDS_CRON
+        )
+        self.CLEANUP_OLD_DATA_CRON = os.environ.get(
+            "CLEANUP_OLD_DATA_CRON", self.CLEANUP_OLD_DATA_CRON
         )
 
 

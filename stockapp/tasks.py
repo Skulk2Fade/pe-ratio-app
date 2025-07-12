@@ -20,7 +20,14 @@ def _parse_cron(expr: str):
 
 
 from .extensions import db
-from .models import User, WatchlistItem, Alert, PortfolioItem
+from .models import (
+    User,
+    WatchlistItem,
+    Alert,
+    PortfolioItem,
+    History,
+    StockRecord,
+)
 from .utils import (
     get_stock_data,
     get_historical_prices,
@@ -97,6 +104,12 @@ def init_celery(app):
             "task": "stockapp.tasks.check_dividends_task",
             "schedule": _parse_cron(
                 app.config.get("CHECK_DIVIDENDS_CRON", "0 9 * * *")
+            ),
+        },
+        "cleanup-old-data": {
+            "task": "stockapp.tasks.cleanup_old_data_task",
+            "schedule": _parse_cron(
+                app.config.get("CLEANUP_OLD_DATA_CRON", "0 3 * * *")
             ),
         },
     }
@@ -275,3 +288,18 @@ def _check_dividends():
 def check_dividends_task():
     """Celery task wrapper for ``_check_dividends``."""
     _check_dividends()
+
+
+def _cleanup_old_data(days: int = 30) -> None:
+    """Remove stale alerts, history and stock records."""
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    Alert.query.filter(Alert.timestamp < cutoff).delete()
+    History.query.filter(History.timestamp < cutoff).delete()
+    StockRecord.query.filter(StockRecord.timestamp < cutoff).delete()
+    db.session.commit()
+
+
+@celery.task(name="stockapp.tasks.cleanup_old_data_task")
+def cleanup_old_data_task() -> None:
+    """Celery task wrapper for ``_cleanup_old_data``."""
+    _cleanup_old_data()
