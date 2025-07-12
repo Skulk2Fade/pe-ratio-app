@@ -13,6 +13,7 @@ from babel.numbers import format_currency, format_decimal
 import json
 from ..utils import (
     get_stock_data,
+    get_realtime_data,
     get_historical_ohlc,
     get_locale,
     ALERT_PE_THRESHOLD,
@@ -59,17 +60,9 @@ def stream_price() -> Response:
         loops = 0
         while True:
             try:
-                (
-                    _name,
-                    _logo_url,
-                    _sector,
-                    _industry,
-                    _exchange,
-                    _currency,
-                    price,
-                    eps,
-                    *_rest,
-                ) = get_stock_data(symbol)
+                price, eps = get_realtime_data(
+                    symbol, current_app.config.get("REALTIME_PROVIDER", "fmp")
+                )
                 data = json.dumps({"price": price, "eps": eps})
             except Exception:
                 data = json.dumps({"error": "fetch"})
@@ -77,7 +70,7 @@ def stream_price() -> Response:
             loops += 1
             if current_app.config.get("TESTING") and loops >= 2:
                 break
-            time.sleep(5)
+            time.sleep(current_app.config.get("PRICE_STREAM_INTERVAL", 5))
 
     return Response(generate(), mimetype="text/event-stream")
 
@@ -93,17 +86,9 @@ def ws_price(ws) -> None:
     loops = 0
     while True:
         try:
-            (
-                _name,
-                _logo_url,
-                _sector,
-                _industry,
-                _exchange,
-                _currency,
-                price,
-                eps,
-                *_rest,
-            ) = get_stock_data(symbol)
+            price, eps = get_realtime_data(
+                symbol, current_app.config.get("REALTIME_PROVIDER", "fmp")
+            )
             data = json.dumps({"price": price, "eps": eps})
         except Exception:
             data = json.dumps({"error": "fetch"})
@@ -111,7 +96,7 @@ def ws_price(ws) -> None:
         loops += 1
         if current_app.config.get("TESTING") and loops >= 2:
             break
-        time.sleep(5)
+        time.sleep(current_app.config.get("PRICE_STREAM_INTERVAL", 5))
 
 
 @main_bp.route("/", methods=["GET", "POST"])

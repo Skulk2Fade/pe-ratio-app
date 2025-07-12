@@ -39,6 +39,10 @@ The price feed supports a WebSocket endpoint at `/ws/price`. Clients send the
 desired ticker symbol after connecting and receive periodic JSON updates. This
 opens the door for real-time push notifications in the future.
 
+Set `REALTIME_PROVIDER` to `yfinance` to fetch updates from Yahoo Finance
+instead of Financial Modeling Prep. Use `PRICE_STREAM_INTERVAL` to control how
+often updates are pushed to connected clients.
+
 ## Account Verification and Password Reset
 
 After signing up the application sends a verification email containing a link to activate the account.
