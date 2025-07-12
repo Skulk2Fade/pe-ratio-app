@@ -73,6 +73,15 @@ Provide your own Redis instance for Celery in production. Set `CELERY_BROKER_URL
 `CELERY_RESULT_BACKEND` to the connection string. Assign the same value to `REDIS_URL` if you
 would like API caching enabled.
 
+When running with `FLASK_ENV=production` the app requires several environment
+variables:
+
+- `SECRET_KEY`
+- `DATABASE_URL`
+- `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`
+
+See [Secure deployment](deployment.md) for a sample startup snippet.
+
 ### Default Login
 
 When `FLASK_ENV=development` a verified user is created automatically if one does not already
