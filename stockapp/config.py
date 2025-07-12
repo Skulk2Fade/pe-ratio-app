@@ -58,8 +58,12 @@ class Config:
         self.TWILIO_SID = os.environ.get("TWILIO_SID", self.TWILIO_SID)
         self.TWILIO_TOKEN = os.environ.get("TWILIO_TOKEN", self.TWILIO_TOKEN)
         self.TWILIO_FROM = os.environ.get("TWILIO_FROM", self.TWILIO_FROM)
-        self.VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", self.VAPID_PUBLIC_KEY)
-        self.VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", self.VAPID_PRIVATE_KEY)
+        self.VAPID_PUBLIC_KEY = os.environ.get(
+            "VAPID_PUBLIC_KEY", self.VAPID_PUBLIC_KEY
+        )
+        self.VAPID_PRIVATE_KEY = os.environ.get(
+            "VAPID_PRIVATE_KEY", self.VAPID_PRIVATE_KEY
+        )
         self.CHECK_WATCHLISTS_CRON = os.environ.get(
             "CHECK_WATCHLISTS_CRON", self.CHECK_WATCHLISTS_CRON
         )
@@ -85,3 +89,14 @@ class ProductionConfig(Config):
         super().__init__()
         if not os.environ.get("SECRET_KEY"):
             raise RuntimeError("SECRET_KEY must be set in production")
+        if not os.environ.get("DATABASE_URL"):
+            raise RuntimeError("DATABASE_URL must be set in production")
+        missing_twilio = [
+            var
+            for var in ("TWILIO_SID", "TWILIO_TOKEN", "TWILIO_FROM")
+            if not os.environ.get(var)
+        ]
+        if missing_twilio:
+            raise RuntimeError(
+                "Missing Twilio configuration: " + ", ".join(missing_twilio)
+            )
