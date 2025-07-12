@@ -684,6 +684,30 @@ def get_stock_data(symbol: str) -> tuple[Any, ...]:
         return _cached_or_placeholder(cache_key)
 
 
+def get_realtime_data(symbol: str, provider: str = "fmp") -> tuple[Any, Any]:
+    """Return the latest price and EPS for ``symbol`` using ``provider``."""
+    if provider == "yfinance":
+        try:
+            import yfinance as yf  # lazy import
+
+            ticker = yf.Ticker(symbol)
+            price = ticker.fast_info.get("last_price") or ticker.info.get(
+                "regularMarketPrice"
+            )
+            eps = ticker.info.get("trailingEps")
+            return price, eps
+        except Exception as e:  # pragma: no cover - network dependency
+            logger.error("yfinance error for %s: %s", symbol, e)
+            return None, None
+
+    try:
+        (_, _, _, _, _, _, price, eps, *_rest) = get_stock_data(symbol)
+        return price, eps
+    except Exception:
+        logger.exception("Realtime provider error for %s", symbol)
+        return None, None
+
+
 def get_stock_news(symbol: str, limit: int = 3) -> list[dict]:
     """Fetch recent news articles for a stock ticker."""
     cache_key = ("news", symbol, limit)

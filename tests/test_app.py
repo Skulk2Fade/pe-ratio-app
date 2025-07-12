@@ -101,18 +101,8 @@ def test_api_endpoints(auth_client, app):
 
 def test_stream_price(client, monkeypatch):
     monkeypatch.setattr(
-        "stockapp.main.routes.get_stock_data",
-        lambda s: (
-            "Name",
-            "",
-            "",
-            "",
-            "",
-            "",
-            100,
-            5,
-            *([None] * 15),
-        ),
+        "stockapp.main.routes.get_realtime_data",
+        lambda symbol, provider=None: (100, 5),
     )
     resp = client.get("/stream_price?symbol=AAA")
     assert resp.status_code == 200

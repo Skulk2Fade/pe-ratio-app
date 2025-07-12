@@ -38,6 +38,9 @@ class Config:
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_TRANSLATION_DIRECTORIES = "translations"
 
+    REALTIME_PROVIDER = "fmp"
+    PRICE_STREAM_INTERVAL = 5
+
     DEBUG = False
 
     def __init__(self):
@@ -64,6 +67,12 @@ class Config:
         )
         self.VAPID_PRIVATE_KEY = os.environ.get(
             "VAPID_PRIVATE_KEY", self.VAPID_PRIVATE_KEY
+        )
+        self.REALTIME_PROVIDER = os.environ.get(
+            "REALTIME_PROVIDER", self.REALTIME_PROVIDER
+        )
+        self.PRICE_STREAM_INTERVAL = float(
+            os.environ.get("PRICE_STREAM_INTERVAL", self.PRICE_STREAM_INTERVAL)
         )
         self.CHECK_WATCHLISTS_CRON = os.environ.get(
             "CHECK_WATCHLISTS_CRON", self.CHECK_WATCHLISTS_CRON
