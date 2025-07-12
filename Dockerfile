@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Build frontend assets
 COPY package.json ./package.json
 COPY scripts ./scripts
-RUN npm install && npm run build
+RUN npm ci && npm run build
 
 COPY . .
 

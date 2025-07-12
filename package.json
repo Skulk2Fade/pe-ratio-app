@@ -5,7 +5,7 @@
   "private": true,
   "devDependencies": {
     "bootstrap": "5.3.2",
-    "plotly.js-dist-min": "^2"
+    "plotly.js-dist-min": "2.27.0"
   },
   "scripts": {
     "build": "node scripts/build_assets.js"

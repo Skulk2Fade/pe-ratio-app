@@ -7,7 +7,7 @@ from fpdf import FPDF
 from ..utils import generate_xlsx
 
 
-def csv_response(symbol: str, headers: list[str], row: list) -> 'Response':
+def csv_response(symbol: str, headers: list[str], row: list) -> "Response":
     """Return a CSV file download response for the provided row."""
     output = io.StringIO()
     writer = csv.writer(output)
@@ -19,7 +19,7 @@ def csv_response(symbol: str, headers: list[str], row: list) -> 'Response':
     return response
 
 
-def xlsx_response(symbol: str, headers: list[str], row: list) -> 'Response':
+def xlsx_response(symbol: str, headers: list[str], row: list) -> "Response":
     """Return an XLSX file download response for the provided row."""
     output = generate_xlsx(headers, [row])
     response = make_response(output)
@@ -30,7 +30,7 @@ def xlsx_response(symbol: str, headers: list[str], row: list) -> 'Response':
     return response
 
 
-def json_response(symbol: str, data: dict) -> 'Response':
+def json_response(symbol: str, data: dict) -> "Response":
     """Return a JSON download response."""
     response = make_response(json.dumps(data))
     response.headers["Content-Disposition"] = f"attachment; filename={symbol}_data.json"
@@ -38,7 +38,7 @@ def json_response(symbol: str, data: dict) -> 'Response':
     return response
 
 
-def pdf_response(symbol: str, fields: list[tuple[str, str]]) -> 'Response':
+def pdf_response(symbol: str, fields: list[tuple[str, str]]) -> "Response":
     """Return a PDF download response with the provided fields."""
     pdf = FPDF()
     pdf.add_page()
