@@ -11,5 +11,6 @@ The repository includes several guides to keep this README concise:
 * [Secure deployment](docs/deployment.md)
 * [Advanced features](docs/advanced_features.md)
 * [Contributing](docs/contributing.md)
+* [Architecture overview](docs/architecture.md)
 
 Visit those pages for setup steps, configuration options and details on optional functionality.
