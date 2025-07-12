@@ -25,12 +25,16 @@ workflow:
    The `package.json` file pins Bootstrap and Plotly versions so `npm ci`
    installs exactly those dependencies for reproducible builds.
 
-3. Run the unit tests and style checks before committing:
+3. Install the git hooks so formatting and linting run automatically:
+
+   ```bash
+   pre-commit install
+   ```
+
+4. Run the unit tests before committing:
 
    ```bash
    pytest
-   black --check .
-   flake8
    ```
 
-4. Open a pull request describing your changes.
+5. Open a pull request describing your changes.
