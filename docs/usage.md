@@ -29,6 +29,18 @@ docker compose up --build
 
 The web interface will be available at <http://localhost:5000>.
 
+### Standalone Docker Image
+
+If you prefer running a single container, a `Dockerfile` is provided. Build and
+run the image with:
+
+```bash
+docker build -t marketminder .
+docker run -p 5000:5000 --env-file .env marketminder
+```
+
+This uses Gunicorn to serve the application on port 5000.
+
 ### Database Configuration
 
 SQLite is used by default for local development. To use PostgreSQL set `DATABASE_URL`.
