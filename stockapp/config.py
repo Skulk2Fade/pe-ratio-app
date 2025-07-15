@@ -110,6 +110,17 @@ class ProductionConfig(Config):
             raise RuntimeError("SECRET_KEY must be set in production")
         if not os.environ.get("DATABASE_URL"):
             raise RuntimeError("DATABASE_URL must be set in production")
+        if (
+            self.SMTP_SERVER == "smtp.example.com"
+            or self.SMTP_USERNAME == "user@example.com"
+            or self.SMTP_PASSWORD == "password"
+        ):
+            raise RuntimeError("Valid SMTP settings must be provided in production")
+        if (
+            self.CELERY_BROKER_URL == "redis://localhost:6379/0"
+            or self.CELERY_RESULT_BACKEND == "redis://localhost:6379/0"
+        ):
+            raise RuntimeError("Valid Redis settings must be provided in production")
         missing_twilio = [
             var
             for var in ("TWILIO_SID", "TWILIO_TOKEN", "TWILIO_FROM")
