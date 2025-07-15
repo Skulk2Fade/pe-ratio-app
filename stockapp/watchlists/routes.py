@@ -30,6 +30,7 @@ watch_bp = Blueprint("watch", __name__)
 def watchlist():
     add_form = WatchlistAddForm()
     update_form = WatchlistUpdateForm()
+    error = None
     if request.method == "POST":
         if request.form.get("item_id"):
             if update_form.validate_on_submit():
@@ -51,6 +52,11 @@ def watchlist():
                     item.tags = tags
                     item.is_public = public
                     db.session.commit()
+            else:
+                error = "; ".join(
+                    f"{getattr(update_form, field).label.text}: {', '.join(msgs)}"
+                    for field, msgs in update_form.errors.items()
+                )
         else:
             if add_form.validate_on_submit():
                 symbol = add_form.symbol.data.upper()
@@ -78,6 +84,11 @@ def watchlist():
                         )
                     )
                     db.session.commit()
+            else:
+                error = "; ".join(
+                    f"{getattr(add_form, field).label.text}: {', '.join(msgs)}"
+                    for field, msgs in add_form.errors.items()
+                )
     items = (
         WatchlistItem.query.filter_by(user_id=current_user.id)
         .order_by(WatchlistItem.symbol)
@@ -96,6 +107,7 @@ def watchlist():
         items=items,
         add_form=add_form,
         update_form=update_form,
+        error=error,
         default_threshold=ALERT_PE_THRESHOLD,
         news=news,
         sentiments=sentiments,
