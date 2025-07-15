@@ -30,6 +30,7 @@ This page describes the main components of MarketMinder and how they interact.
 - **Blueprints** – modular routes for authentication, watchlists, portfolios and more.
 - **SQLAlchemy Models** – define users, alerts, stock records and other data structures.
 - **Database** – SQLite by default or PostgreSQL in production.
+- **Flask-Migrate** – manages versioned database schema changes using Alembic.
 - **Celery Worker** – executes scheduled tasks such as watchlist checks and email alerts.
 - **Redis Broker** – default message broker for Celery and optional caching layer.
 
