@@ -43,3 +43,7 @@ export REALTIME_PROVIDER="fmp"
 export PRICE_STREAM_INTERVAL=5
 export ASYNC_REALTIME=0
 ```
+
+Do not use the example SMTP or Redis values in a production deployment. Replace
+them with the real connection details for your environment, otherwise the
+application will refuse to start.
