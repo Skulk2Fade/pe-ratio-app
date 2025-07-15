@@ -37,4 +37,10 @@ workflow:
    pytest
    ```
 
-5. Open a pull request describing your changes.
+5. Optionally check static types with mypy:
+
+   ```bash
+   mypy app.py stockapp
+   ```
+
+6. Open a pull request describing your changes.

@@ -6,3 +6,10 @@ include = '\.pyi?$'
 max-line-length = 88
 extend-ignore = ['E203', 'W503']
 
+[tool.mypy]
+python_version = "3.11"
+files = ["app.py", "stockapp"]
+ignore_missing_imports = true
+show_error_codes = true
+check_untyped_defs = true
+
