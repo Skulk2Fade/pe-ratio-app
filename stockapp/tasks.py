@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 
 from celery import Celery
 from celery.schedules import crontab
+from flask import Flask
 
 
-def _parse_cron(expr: str):
+def _parse_cron(expr: str) -> crontab:
     """Return a ``crontab`` schedule from a five-field cron expression."""
     parts = expr.split()
     if len(parts) != 5:
@@ -50,7 +51,7 @@ celery = Celery(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=60)
-def send_email_task(self, to, subject, body):
+def send_email_task(self, to: str, subject: str, body: str) -> None:
     """Send email asynchronously with retries."""
     try:
         send_email(to, subject, body)
@@ -59,7 +60,7 @@ def send_email_task(self, to, subject, body):
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=60)
-def send_sms_task(self, to, body):
+def send_sms_task(self, to: str, body: str) -> None:
     """Send SMS asynchronously with retries."""
     try:
         send_sms(to, body)
@@ -67,7 +68,7 @@ def send_sms_task(self, to, body):
         raise self.retry(exc=e)
 
 
-def init_celery(app):
+def init_celery(app: Flask) -> None:
     """Configure Celery with the Flask app context."""
     celery.conf.update(
         broker_url=app.config.get("CELERY_BROKER_URL", "redis://localhost:6379/0"),
@@ -115,7 +116,7 @@ def init_celery(app):
     }
 
 
-def _check_watchlists():
+def _check_watchlists() -> None:
     """Check all user watchlists and send alerts when thresholds are exceeded."""
     now = datetime.utcnow()
     users = User.query.all()
@@ -185,12 +186,12 @@ def _check_watchlists():
 
 
 @celery.task(name="stockapp.tasks.check_watchlists_task")
-def check_watchlists_task():
+def check_watchlists_task() -> None:
     """Celery task wrapper for ``_check_watchlists``."""
     _check_watchlists()
 
 
-def _send_trend_summaries():
+def _send_trend_summaries() -> None:
     """Compile and email weekly summaries to opted-in users."""
     users = User.query.filter_by(trend_opt_in=True).all()
     for user in users:
@@ -221,12 +222,12 @@ def _send_trend_summaries():
 
 
 @celery.task(name="stockapp.tasks.send_trend_summaries_task")
-def send_trend_summaries_task():
+def send_trend_summaries_task() -> None:
     """Celery task wrapper for ``_send_trend_summaries``."""
     _send_trend_summaries()
 
 
-def _sync_brokerage():
+def _sync_brokerage() -> None:
     """Synchronize portfolios with brokerage holdings."""
     users = User.query.filter(
         (User.brokerage_token.isnot(None)) | (User.brokerage_access_token.isnot(None))
@@ -248,12 +249,12 @@ def _sync_brokerage():
 
 
 @celery.task(name="stockapp.tasks.sync_brokerage_task")
-def sync_brokerage_task():
+def sync_brokerage_task() -> None:
     """Celery task wrapper for ``_sync_brokerage``."""
     _sync_brokerage()
 
 
-def _check_dividends():
+def _check_dividends() -> None:
     """Notify users of upcoming dividend ex-dates."""
     today = datetime.utcnow().date()
     end = today + timedelta(days=7)
@@ -285,7 +286,7 @@ def _check_dividends():
 
 
 @celery.task(name="stockapp.tasks.check_dividends_task")
-def check_dividends_task():
+def check_dividends_task() -> None:
     """Celery task wrapper for ``_check_dividends``."""
     _check_dividends()
 

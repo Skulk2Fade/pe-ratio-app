@@ -21,3 +21,4 @@ Flask-Migrate
 black
 flake8
 pre-commit
+mypy

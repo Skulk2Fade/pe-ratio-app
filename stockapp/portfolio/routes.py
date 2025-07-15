@@ -1,4 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, make_response
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    make_response,
+    Response,
+)
 from flask_login import login_required, current_user
 import csv
 import io
@@ -29,7 +37,7 @@ portfolio_bp = Blueprint("portfolio", __name__)
 
 @portfolio_bp.route("/export_portfolio")
 @login_required
-def export_portfolio():
+def export_portfolio() -> Response | tuple[str, int]:
     fmt = request.args.get("format", "csv").lower()
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
     if fmt == "csv":
@@ -72,7 +80,7 @@ def export_portfolio():
 
 @portfolio_bp.route("/portfolio/sync")
 @login_required
-def sync_brokerage():
+def sync_brokerage() -> Response:
     token = current_user.brokerage_access_token or current_user.brokerage_token
     if not token:
         return redirect(url_for("portfolio.portfolio"))
@@ -87,7 +95,7 @@ def sync_brokerage():
 
 @portfolio_bp.route("/portfolio", methods=["GET", "POST"])
 @login_required
-def portfolio():
+def portfolio() -> str:
     symbol_prefill = request.args.get("symbol", "").upper()
     add_form = PortfolioAddForm(symbol=symbol_prefill)
     import_form = PortfolioImportForm()
@@ -132,7 +140,7 @@ def portfolio():
 
 @portfolio_bp.route("/dividends")
 @login_required
-def dividends():
+def dividends() -> str:
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
     data = []
     for item in items:
@@ -158,7 +166,7 @@ def dividends():
 
 @portfolio_bp.route("/portfolio/delete/<int:item_id>")
 @login_required
-def delete_portfolio_item(item_id):
+def delete_portfolio_item(item_id: int) -> Response:
     item = PortfolioItem.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         db.session.delete(item)
@@ -168,7 +176,7 @@ def delete_portfolio_item(item_id):
 
 @portfolio_bp.route("/portfolio/<username>")
 @login_required
-def view_portfolio(username):
+def view_portfolio(username: str) -> str:
     user = User.query.filter_by(username=username).first_or_404()
     items = PortfolioItem.query.filter_by(user_id=user.id).all()
     following = PortfolioFollow.query.filter_by(
@@ -184,7 +192,7 @@ def view_portfolio(username):
 
 @portfolio_bp.route("/portfolio/follow/<username>")
 @login_required
-def follow_portfolio(username):
+def follow_portfolio(username: str) -> Response:
     user = User.query.filter_by(username=username).first_or_404()
     if user.id == current_user.id:
         return redirect(url_for("portfolio.view_portfolio", username=username))
@@ -202,7 +210,7 @@ def follow_portfolio(username):
 
 
 @portfolio_bp.route("/leaderboard")
-def leaderboard():
+def leaderboard() -> str:
     from sqlalchemy import func
 
     results = (

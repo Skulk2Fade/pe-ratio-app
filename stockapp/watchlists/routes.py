@@ -1,4 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, make_response
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    make_response,
+    Response,
+)
 from flask_login import login_required, current_user
 import csv
 import io
@@ -27,7 +35,7 @@ watch_bp = Blueprint("watch", __name__)
 
 @watch_bp.route("/watchlist", methods=["GET", "POST"])
 @login_required
-def watchlist():
+def watchlist() -> str:
     add_form = WatchlistAddForm()
     update_form = WatchlistUpdateForm()
     error = None
@@ -116,7 +124,7 @@ def watchlist():
 
 @watch_bp.route("/watchlist/delete/<int:item_id>")
 @login_required
-def delete_watchlist_item(item_id):
+def delete_watchlist_item(item_id: int) -> Response:
     item = WatchlistItem.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         db.session.delete(item)
@@ -126,7 +134,7 @@ def delete_watchlist_item(item_id):
 
 @watch_bp.route("/watchlist/toggle_public/<int:item_id>")
 @login_required
-def toggle_public(item_id):
+def toggle_public(item_id: int) -> Response:
     item = WatchlistItem.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         item.is_public = not item.is_public
@@ -136,7 +144,7 @@ def toggle_public(item_id):
 
 @watch_bp.route("/add_watchlist/<symbol>")
 @login_required
-def add_watchlist(symbol):
+def add_watchlist(symbol: str) -> Response:
     symbol = symbol.upper()
     if not WatchlistItem.query.filter_by(
         user_id=current_user.id, symbol=symbol
@@ -152,7 +160,7 @@ def add_watchlist(symbol):
 
 @watch_bp.route("/favorites", methods=["GET", "POST"])
 @login_required
-def favorites():
+def favorites() -> str:
     if request.method == "POST":
         symbol = request.form["symbol"].upper()
         if not FavoriteTicker.query.filter_by(
@@ -166,7 +174,7 @@ def favorites():
 
 @watch_bp.route("/favorites/delete/<int:item_id>")
 @login_required
-def delete_favorite(item_id):
+def delete_favorite(item_id: int) -> Response:
     item = FavoriteTicker.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         db.session.delete(item)
@@ -176,7 +184,7 @@ def delete_favorite(item_id):
 
 @watch_bp.route("/add_favorite/<symbol>")
 @login_required
-def add_favorite(symbol):
+def add_favorite(symbol: str) -> Response:
     symbol = symbol.upper()
     if not FavoriteTicker.query.filter_by(
         user_id=current_user.id, symbol=symbol
@@ -188,7 +196,7 @@ def add_favorite(symbol):
 
 @watch_bp.route("/settings", methods=["GET", "POST"])
 @login_required
-def settings():
+def settings() -> str:
     if request.method == "POST":
         freq = request.form.get("frequency", type=int)
         if freq and freq > 0:
@@ -225,7 +233,7 @@ def settings():
 
 @watch_bp.route("/toggle_theme", methods=["POST"])
 @login_required
-def toggle_theme():
+def toggle_theme() -> Response:
     current_user.theme = "dark" if current_user.theme == "light" else "light"
     db.session.commit()
     return redirect(request.referrer or url_for("main.index"))
@@ -233,7 +241,7 @@ def toggle_theme():
 
 @watch_bp.route("/export_history")
 @login_required
-def export_history():
+def export_history() -> Response | tuple[str, int]:
     fmt = request.args.get("format", "csv").lower()
     entries = (
         History.query.filter_by(user_id=current_user.id)
@@ -283,7 +291,7 @@ def export_history():
 
 @watch_bp.route("/records")
 @login_required
-def records():
+def records() -> str:
     entries = (
         StockRecord.query.filter_by(user_id=current_user.id)
         .order_by(StockRecord.timestamp.desc())
@@ -294,14 +302,14 @@ def records():
 
 @watch_bp.route("/clear_records")
 @login_required
-def clear_records():
+def clear_records() -> Response:
     StockRecord.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     return redirect(url_for("watch.records"))
 
 
 @watch_bp.route("/watchlist/public/<username>")
-def public_watchlist(username):
+def public_watchlist(username: str) -> str:
     from ..models import User
 
     user = User.query.filter_by(username=username).first_or_404()
