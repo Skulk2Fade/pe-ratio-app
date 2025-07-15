@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_sock import Sock
+from flask_migrate import Migrate
 
 try:
     from flask_babel import Babel
@@ -26,3 +27,4 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 sock = Sock()
+migrate = Migrate()

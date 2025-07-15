@@ -12,6 +12,10 @@ This page covers basic setup and workflow for running MarketMinder locally.
    ```
    You may also run `./setup_env.sh` and `npm ci && npm run build` manually to
    use the pinned asset versions.
+   Apply the database migrations:
+   ```bash
+   flask db upgrade
+   ```
 3. Start the application:
    ```bash
    python app.py

@@ -1,0 +1,2 @@
+This directory contains Alembic database migrations.
+Use `flask db migrate` after modifying models and `flask db upgrade` to apply changes.

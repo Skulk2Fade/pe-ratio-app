@@ -16,6 +16,7 @@ redis
 python-dotenv
 flask-sock
 pywebpush
+Flask-Migrate
 
 black
 flake8

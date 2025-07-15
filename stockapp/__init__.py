@@ -5,7 +5,8 @@ from werkzeug.security import generate_password_hash
 # Load environment variables before importing modules that depend on them
 from .config import Config, DevelopmentConfig, ProductionConfig
 
-from .extensions import db, login_manager, csrf, sock, babel
+from .extensions import db, login_manager, csrf, sock, babel, migrate
+from flask_migrate import upgrade
 from .models import User
 from .auth import auth_bp
 from .main import main_bp
@@ -40,6 +41,7 @@ def create_app(config_class=None):
     app.config.from_object(config_class())
 
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     csrf.init_app(app)
@@ -69,7 +71,10 @@ def create_app(config_class=None):
     app.register_blueprint(broker_bp)
 
     with app.app_context():
-        db.create_all()
+        try:
+            upgrade()
+        except Exception:
+            db.create_all()
 
         # Only create the default user in development mode
         if app.config.get("ENV") == "development":
