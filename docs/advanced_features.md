@@ -41,7 +41,8 @@ opens the door for real-time push notifications in the future.
 
 Set `REALTIME_PROVIDER` to `yfinance` to fetch updates from Yahoo Finance
 instead of Financial Modeling Prep. Use `PRICE_STREAM_INTERVAL` to control how
-often updates are pushed to connected clients.
+often updates are pushed to connected clients. Enable `ASYNC_REALTIME` to
+perform these requests asynchronously for lower latency.
 
 ## Account Verification and Password Reset
 

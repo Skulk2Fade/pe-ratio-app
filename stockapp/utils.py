@@ -5,6 +5,8 @@ import logging
 import json
 import re
 import requests
+import httpx
+import asyncio
 import smtplib
 from email.mime.text import MIMEText
 from typing import Any, Iterable, TYPE_CHECKING
@@ -162,6 +164,60 @@ def _fetch_json(url: str, desc: str, symbol: str | None = None) -> Any:
         return data
     except (
         requests.exceptions.RequestException
+    ) as e:  # pragma: no cover - network failure
+        status = getattr(e.response, "status_code", "unknown")
+        if symbol:
+            logger.error(
+                "Network error fetching %s for %s: %s (status %s)",
+                desc,
+                symbol,
+                e,
+                status,
+            )
+        else:
+            logger.error(
+                "Network error fetching %s: %s (status %s)",
+                desc,
+                e,
+                status,
+            )
+    except Exception as e:  # pragma: no cover - other failure
+        if symbol:
+            logger.error("Error fetching %s for %s: %s", desc, symbol, e)
+        else:
+            logger.error("Error fetching %s: %s", desc, e)
+
+    if cached is not None:
+        logger.info("Using cached %s for %s", desc, symbol or url)
+        return cached
+    return {}
+
+
+async def _fetch_json_async(url: str, desc: str, symbol: str | None = None) -> Any:
+    """Asynchronously fetch JSON data from ``url`` with caching."""
+    if API_KEY_MISSING and "financialmodelingprep.com" in url:
+        if symbol:
+            logger.warning(
+                "API key missing; returning placeholder for %s data on %s",
+                desc,
+                symbol,
+            )
+        else:
+            logger.warning("API key missing; returning placeholder for %s", desc)
+        return {}
+
+    cached = _get_cached(url)
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+            _set_cached(url, data)
+            return data
+    except (
+        httpx.RequestError,
+        httpx.HTTPStatusError,
     ) as e:  # pragma: no cover - network failure
         status = getattr(e.response, "status_code", "unknown")
         if symbol:
@@ -706,6 +762,38 @@ def get_realtime_data(symbol: str, provider: str = "fmp") -> tuple[Any, Any]:
     except Exception:
         logger.exception("Realtime provider error for %s", symbol)
         return None, None
+
+
+async def get_realtime_data_async(
+    symbol: str, provider: str = "fmp"
+) -> tuple[Any, Any]:
+    """Asynchronously return the latest price and EPS for ``symbol``."""
+    if provider == "yfinance":
+        try:
+            import yfinance as yf  # lazy import
+
+            def fetch_yf() -> tuple[Any, Any]:
+                ticker = yf.Ticker(symbol)
+                price = ticker.fast_info.get("last_price") or ticker.info.get(
+                    "regularMarketPrice"
+                )
+                eps = ticker.info.get("trailingEps")
+                return price, eps
+
+            return await asyncio.to_thread(fetch_yf)
+        except Exception as e:  # pragma: no cover - network dependency
+            logger.error("yfinance error for %s: %s", symbol, e)
+            return None, None
+
+    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
+    try:
+        data = await _fetch_json_async(url, "quote", symbol)
+        if isinstance(data, list) and data:
+            quote = data[0]
+            return quote.get("price"), quote.get("eps")
+    except Exception:
+        logger.exception("Realtime provider error for %s", symbol)
+    return None, None
 
 
 def get_stock_news(symbol: str, limit: int = 3) -> list[dict]:

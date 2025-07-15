@@ -40,6 +40,7 @@ class Config:
 
     REALTIME_PROVIDER = "fmp"
     PRICE_STREAM_INTERVAL = 5
+    ASYNC_REALTIME = False
 
     DEBUG = False
 
@@ -71,6 +72,11 @@ class Config:
         self.REALTIME_PROVIDER = os.environ.get(
             "REALTIME_PROVIDER", self.REALTIME_PROVIDER
         )
+        self.ASYNC_REALTIME = os.environ.get("ASYNC_REALTIME", "0").lower() in [
+            "1",
+            "true",
+            "yes",
+        ]
         self.PRICE_STREAM_INTERVAL = float(
             os.environ.get("PRICE_STREAM_INTERVAL", self.PRICE_STREAM_INTERVAL)
         )

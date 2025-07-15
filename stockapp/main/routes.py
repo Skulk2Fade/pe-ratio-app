@@ -14,6 +14,7 @@ import json
 from ..utils import (
     get_stock_data,
     get_realtime_data,
+    get_realtime_data_async,
     get_historical_ohlc,
     get_locale,
     ALERT_PE_THRESHOLD,
@@ -25,6 +26,7 @@ from ..utils import (
     notify_user_push,
     convert_currency,
 )
+import asyncio
 from .export_helpers import (
     csv_response,
     xlsx_response,
@@ -60,9 +62,18 @@ def stream_price() -> Response:
         loops = 0
         while True:
             try:
-                price, eps = get_realtime_data(
-                    symbol, current_app.config.get("REALTIME_PROVIDER", "fmp")
-                )
+                if current_app.config.get("ASYNC_REALTIME"):
+                    price, eps = asyncio.run(
+                        get_realtime_data_async(
+                            symbol,
+                            current_app.config.get("REALTIME_PROVIDER", "fmp"),
+                        )
+                    )
+                else:
+                    price, eps = get_realtime_data(
+                        symbol,
+                        current_app.config.get("REALTIME_PROVIDER", "fmp"),
+                    )
                 data = json.dumps({"price": price, "eps": eps})
             except Exception:
                 data = json.dumps({"error": "fetch"})
@@ -86,9 +97,18 @@ def ws_price(ws) -> None:
     loops = 0
     while True:
         try:
-            price, eps = get_realtime_data(
-                symbol, current_app.config.get("REALTIME_PROVIDER", "fmp")
-            )
+            if current_app.config.get("ASYNC_REALTIME"):
+                price, eps = asyncio.run(
+                    get_realtime_data_async(
+                        symbol,
+                        current_app.config.get("REALTIME_PROVIDER", "fmp"),
+                    )
+                )
+            else:
+                price, eps = get_realtime_data(
+                    symbol,
+                    current_app.config.get("REALTIME_PROVIDER", "fmp"),
+                )
             data = json.dumps({"price": price, "eps": eps})
         except Exception:
             data = json.dumps({"error": "fetch"})

@@ -111,6 +111,22 @@ def test_stream_price(client, monkeypatch):
     assert "price" in chunk
 
 
+def test_stream_price_async(client, app, monkeypatch):
+    async def fake_rt(symbol, provider=None):
+        return 200, 10
+
+    monkeypatch.setattr(
+        "stockapp.main.routes.get_realtime_data_async",
+        fake_rt,
+    )
+    app.config["ASYNC_REALTIME"] = True
+    resp = client.get("/stream_price?symbol=AAA")
+    app.config["ASYNC_REALTIME"] = False
+    assert resp.status_code == 200
+    chunk = next(resp.response).decode()
+    assert "price" in chunk
+
+
 def test_ws_price_route(app):
     with app.test_request_context():
         url = url_for("main.ws_price")
