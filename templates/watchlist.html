@@ -5,6 +5,9 @@
 {% block content %}
     <div class="container py-5">
         <h3 class="mb-4">Watchlist</h3>
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
         <form method="POST" class="mb-3">
             {{ add_form.hidden_tag() }}
             <div class="row g-2 stack-sm">

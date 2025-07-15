@@ -7,7 +7,7 @@ from wtforms import (
     FileField,
     BooleanField,
 )
-from wtforms.validators import DataRequired, Email, Length, Optional
+from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange
 
 
 class SignupForm(FlaskForm):
@@ -25,10 +25,22 @@ class LoginForm(FlaskForm):
 
 class WatchlistAddForm(FlaskForm):
     symbol = StringField("Symbol", validators=[DataRequired(), Length(max=10)])
-    threshold = FloatField("Threshold", validators=[Optional()])
-    de_threshold = FloatField("D/E Threshold", validators=[Optional()])
-    rsi_threshold = FloatField("RSI Threshold", validators=[Optional()])
-    ma_threshold = FloatField("MA% Threshold", validators=[Optional()])
+    threshold = FloatField(
+        "Threshold",
+        validators=[Optional(), NumberRange(min=0, message="Must be positive")],
+    )
+    de_threshold = FloatField(
+        "D/E Threshold",
+        validators=[Optional(), NumberRange(min=0, message="Must be positive")],
+    )
+    rsi_threshold = FloatField(
+        "RSI Threshold",
+        validators=[Optional(), NumberRange(min=0, max=100, message="0-100")],
+    )
+    ma_threshold = FloatField(
+        "MA% Threshold",
+        validators=[Optional(), NumberRange(min=-100, max=100, message="-100-100")],
+    )
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
     public = BooleanField("Public")
@@ -36,10 +48,22 @@ class WatchlistAddForm(FlaskForm):
 
 class WatchlistUpdateForm(FlaskForm):
     item_id = IntegerField("Item ID", validators=[DataRequired()])
-    threshold = FloatField("Threshold", validators=[DataRequired()])
-    de_threshold = FloatField("D/E Threshold", validators=[Optional()])
-    rsi_threshold = FloatField("RSI Threshold", validators=[Optional()])
-    ma_threshold = FloatField("MA% Threshold", validators=[Optional()])
+    threshold = FloatField(
+        "Threshold",
+        validators=[DataRequired(), NumberRange(min=0, message="Must be positive")],
+    )
+    de_threshold = FloatField(
+        "D/E Threshold",
+        validators=[Optional(), NumberRange(min=0, message="Must be positive")],
+    )
+    rsi_threshold = FloatField(
+        "RSI Threshold",
+        validators=[Optional(), NumberRange(min=0, max=100, message="0-100")],
+    )
+    ma_threshold = FloatField(
+        "MA% Threshold",
+        validators=[Optional(), NumberRange(min=-100, max=100, message="-100-100")],
+    )
     notes = StringField("Notes", validators=[Optional(), Length(max=200)])
     tags = StringField("Tags", validators=[Optional(), Length(max=100)])
     public = BooleanField("Public")
