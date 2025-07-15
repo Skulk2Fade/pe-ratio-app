@@ -3,22 +3,23 @@ yfinance
 requests
 babel
 fpdf
-Flask-Login
-Flask-SQLAlchemy
-Flask-WTF
-Flask-Babel
+Flask - Login
+Flask - SQLAlchemy
+Flask - WTF
+Flask - Babel
 celery
 pyotp
 plotly
-psycopg2-binary
+psycopg2 - binary
 pytest
 redis
-python-dotenv
-flask-sock
+python - dotenv
+flask - sock
 pywebpush
-Flask-Migrate
+Flask - Migrate
+httpx
 
 black
 flake8
-pre-commit
+pre - commit
 mypy

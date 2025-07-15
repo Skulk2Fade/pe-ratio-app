@@ -16,6 +16,7 @@ Copy it to `.env` and adjust as needed. When starting the app these variables ar
 * `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM` &ndash; Optional credentials for SMS notifications.
 * `REALTIME_PROVIDER` &ndash; Data source for streaming price updates (`fmp` or `yfinance`).
 * `PRICE_STREAM_INTERVAL` &ndash; Seconds between real-time price updates (defaults to `5`).
+* `ASYNC_REALTIME` &ndash; Set to `1` to fetch streaming updates asynchronously.
 
 Example `.env` snippet:
 
@@ -40,4 +41,5 @@ export TWILIO_TOKEN="your_twilio_token"
 export TWILIO_FROM="+15551234567"
 export REALTIME_PROVIDER="fmp"
 export PRICE_STREAM_INTERVAL=5
+export ASYNC_REALTIME=0
 ```
