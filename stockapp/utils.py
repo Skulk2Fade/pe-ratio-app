@@ -385,11 +385,21 @@ def send_push(subscription: "PushSubscription", data: dict) -> None:
 
 
 def notify_user_push(user_id: int, message: str) -> None:
+    from flask import url_for
     from .models import PushSubscription
 
     subs = PushSubscription.query.filter_by(user_id=user_id).all()
+    data = {
+        "title": "MarketMinder Alert",
+        "body": message,
+        "actions": [
+            {"action": "view", "title": "Open"},
+            {"action": "dismiss", "title": "Dismiss"},
+        ],
+        "url": url_for("alerts.alerts", _external=True),
+    }
     for sub in subs:
-        send_push(sub, {"title": "MarketMinder Alert", "body": message})
+        send_push(sub, data)
 
 
 def _get_asx_historical_prices(
@@ -1221,8 +1231,7 @@ def screen_stocks(
         ):
             continue
         if rating and (
-            analyst_rating is None
-            or rating.lower() not in str(analyst_rating).lower()
+            analyst_rating is None or rating.lower() not in str(analyst_rating).lower()
         ):
             continue
         results.append(

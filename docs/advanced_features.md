@@ -110,7 +110,12 @@ Opt in from the Settings page. The Celery scheduler sends the summary each morni
 
 A small service worker enables offline caching of static assets so the app behaves like a Progressive Web App.
 Mobile friendly styles and a dark theme are included. Browsers can subscribe to push notifications if VAPID keys
-are configured.
+are configured. The service worker also performs background refreshes of your watchlist using the Sync API so
+data stays up to date even when the app is not open.
+
+Push notifications are interactive – tapping the **Open** action launches the alerts page while **Dismiss** simply
+closes the notification. Background sync events automatically fetch `/api/watchlist` and cache the response for
+faster startup on mobile devices.
 
 ## Frontend Assets
 

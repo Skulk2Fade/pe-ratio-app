@@ -78,6 +78,9 @@
                             }
                         });
                     }
+                    if ('sync' in reg && 'SyncManager' in window) {
+                        reg.sync.register('refresh-data');
+                    }
                     if (Notification.permission === 'granted') {
                         subscribe();
                     } else if (Notification.permission === 'default') {
