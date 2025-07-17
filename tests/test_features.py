@@ -178,6 +178,64 @@ def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
     assert b"Sharpe Ratio" in resp.data
     assert b"Value at Risk" in resp.data
     assert b"Monte Carlo VaR" in resp.data
+    assert b"Suggested Allocation" in resp.data
+
+
+def test_portfolio_optimization(auth_client, app, monkeypatch):
+    monkeypatch.setattr("stockapp.portfolio.routes.get_stock_news", lambda *a, **k: [])
+
+    def fake_get_stock_data(symbol):
+        return (
+            "Test Corp",
+            "",
+            "Tech",
+            "Software",
+            "NASDAQ",
+            "USD",
+            100,
+            5,
+            "1B",
+            0.5,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+
+    historical = {
+        "AAA": (["d1", "d2", "d3"], [100, 101, 102]),
+        "BBB": (["d1", "d2", "d3"], [50, 52, 53]),
+        "SPY": (["d1", "d2", "d3"], [300, 301, 302]),
+    }
+
+    monkeypatch.setattr("stockapp.portfolio.routes.get_stock_data", fake_get_stock_data)
+    monkeypatch.setattr(
+        "stockapp.portfolio.routes.get_historical_prices",
+        lambda s, days=30: historical.get(s, historical["SPY"]),
+    )
+
+    auth_client.post(
+        "/portfolio",
+        data={"symbol": "AAA", "quantity": 1, "price_paid": 90},
+        follow_redirects=True,
+    )
+    auth_client.post(
+        "/portfolio",
+        data={"symbol": "BBB", "quantity": 1, "price_paid": 110},
+        follow_redirects=True,
+    )
+
+    resp = auth_client.get("/portfolio", follow_redirects=True)
+    assert b"Suggested Allocation" in resp.data
 
 
 def test_check_watchlists(app, monkeypatch):

@@ -75,6 +75,7 @@ These metrics also appear in exported CSV/PDF/XLSX/JSON files.
 
 The portfolio page supports importing and exporting holdings to CSV, XLSX or JSON formats.
 A diversification analyzer highlights concentration risk using metrics like Beta and Sharpe ratio.
+An optimizer suggests asset weights that maximize the Sharpe ratio using recent price data.
 Holdings can also be synced from a brokerage via OAuth when supported.
 
 ## Social Features

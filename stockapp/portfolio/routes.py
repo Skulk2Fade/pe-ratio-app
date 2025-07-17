@@ -131,6 +131,7 @@ def portfolio() -> str:
         sharpe_ratio=analysis["sharpe_ratio"],
         value_at_risk=analysis["value_at_risk"],
         monte_carlo_var=analysis["monte_carlo_var"],
+        optimized_allocation=analysis["optimized_allocation"],
         news=analysis["news"],
         add_form=add_form,
         import_form=import_form,

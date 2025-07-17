@@ -86,6 +86,14 @@
         {% if monte_carlo_var is not none %}
         <div class="alert alert-danger">Monte Carlo VaR (95%): {{ monte_carlo_var }}</div>
         {% endif %}
+        {% if optimized_allocation %}
+        <h5 class="mt-4">Suggested Allocation</h5>
+        <ul class="list-unstyled">
+            {% for sym, weight in optimized_allocation.items() %}
+            <li>{{ sym }} - {{ (weight * 100)|round(2) }}%</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% if news %}
         <h5 class="mt-4">Latest News</h5>
         {% for sym, articles in news.items() %}
