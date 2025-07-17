@@ -87,3 +87,14 @@ class PortfolioUpdateForm(FlaskForm):
 
 class PortfolioImportForm(FlaskForm):
     file = FileField("File", validators=[DataRequired()])
+
+
+class CustomRuleForm(FlaskForm):
+    description = StringField(
+        "Description", validators=[DataRequired(), Length(max=200)]
+    )
+    rule = StringField("Rule", validators=[DataRequired(), Length(max=200)])
+
+
+class CustomRuleUpdateForm(CustomRuleForm):
+    rule_id = IntegerField("Rule ID", validators=[DataRequired()])

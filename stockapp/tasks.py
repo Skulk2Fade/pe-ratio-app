@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from celery import Celery
 from celery.schedules import crontab
@@ -25,6 +26,7 @@ from .models import (
     User,
     WatchlistItem,
     Alert,
+    CustomAlertRule,
     PortfolioItem,
     History,
     StockRecord,
@@ -48,6 +50,7 @@ from .portfolio.helpers import (
 
 # Celery application instance configured in ``init_celery``.
 celery = Celery(__name__)
+logger = logging.getLogger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=60)
@@ -116,6 +119,33 @@ def init_celery(app: Flask) -> None:
     }
 
 
+def _get_price(symbol: str) -> float | None:
+    try:
+        (
+            _name,
+            _logo_url,
+            _sector,
+            _industry,
+            _exchange,
+            _currency,
+            price,
+            *_rest,
+        ) = get_stock_data(symbol)
+        return price
+    except Exception:
+        return None
+
+
+def _price_change(symbol: str, days: int) -> float | None:
+    try:
+        _d, prices = get_historical_prices(symbol, days=days)
+        if len(prices) >= 2 and prices[0] and prices[-1]:
+            return round((prices[-1] - prices[0]) / prices[0] * 100, 2)
+    except Exception:
+        pass
+    return None
+
+
 def _check_watchlists() -> None:
     """Check all user watchlists and send alerts when thresholds are exceeded."""
     now = datetime.utcnow()
@@ -181,6 +211,22 @@ def _check_watchlists() -> None:
                     send_sms_task.delay(user.phone_number, msg)
                 db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
                 notify_user_push(user.id, msg)
+        # Evaluate custom alert rules defined by the user
+        rules = CustomAlertRule.query.filter_by(user_id=user.id).all()
+        for rule in rules:
+            context = {"price": _get_price, "change": _price_change}
+            try:
+                if eval(rule.rule, {"__builtins__": {}}, context):
+                    message = rule.description or rule.rule
+                    send_email_task.delay(user.email, "Watchlist Alert", message)
+                    if user.sms_opt_in and user.phone_number:
+                        send_sms_task.delay(user.phone_number, message)
+                    db.session.add(Alert(symbol=None, message=message, user_id=user.id))
+                    notify_user_push(user.id, message)
+            except Exception:  # pragma: no cover - rule error
+                logger.exception(
+                    "Error evaluating rule '%s' for user %s", rule.rule, user.id
+                )
         user.last_alert_time = now
     db.session.commit()
 

@@ -582,3 +582,49 @@ def test_theme_toggle(auth_client, app):
     with app.app_context():
         user = User.query.filter_by(username="tester").first()
         assert user.theme == "dark"
+
+
+def test_custom_alert_rules(app, monkeypatch):
+    monkeypatch.setattr(
+        "stockapp.tasks.get_stock_data",
+        lambda s: ("", "", "", "", "", "USD", 100, 5, "", 0.1),
+    )
+    monkeypatch.setattr(
+        "stockapp.tasks.get_historical_prices",
+        lambda s, days=7: (["d1", "d2"], [100, 110]),
+    )
+    emails = []
+    monkeypatch.setattr(
+        "stockapp.tasks.send_email_task.delay",
+        lambda to, subject, body: emails.append((to, subject, body)),
+    )
+    from stockapp.extensions import db
+    from stockapp.models import User, CustomAlertRule, Alert
+    from werkzeug.security import generate_password_hash
+    from stockapp import tasks
+
+    with app.app_context():
+        u = User(
+            username="rule",
+            email="r@example.com",
+            password_hash=generate_password_hash("x"),
+            is_verified=True,
+            alert_frequency=1,
+            last_alert_time=datetime.utcnow() - timedelta(hours=2),
+        )
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(
+            CustomAlertRule(
+                description="price up",
+                rule="change('AAA', 7) > 5",
+                user_id=u.id,
+            )
+        )
+        db.session.commit()
+
+    tasks._check_watchlists()
+    assert emails
+    with app.app_context():
+        alert = Alert.query.filter_by(user_id=u.id).first()
+        assert alert and "price up" in alert.message

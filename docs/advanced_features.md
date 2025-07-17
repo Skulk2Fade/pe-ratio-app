@@ -55,6 +55,14 @@ Password reset emails allow choosing a new password and remain valid for one hou
 Each watchlist entry can override the default P/E ratio threshold. Alerts and warnings will use
 the per-stock value if provided.
 
+## Custom Alert Rules
+
+Advanced users may define alert expressions using simple functions like
+`price()` and `change()`. Navigate to the **Custom Rules** page and add a rule
+such as `change('AAPL', 7) > 5` to be notified when Apple rises more than five
+percent over seven days. Expressions evaluate in a restricted context and can
+reference multiple tickers for cross‑asset comparisons.
+
 ## Additional Metrics
 
 Alongside the standard P/E ratio the app displays:
