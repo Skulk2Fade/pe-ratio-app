@@ -103,6 +103,7 @@
             <li><a href="{{ n.url }}" target="_blank">{{ n.headline }}</a> <small class="text-muted">{{ n.published }}</small></li>
             {% endfor %}
         </ul>
+        <p class="text-muted small">{{ news_summaries[sym] }}</p>
         {% endfor %}
         {% endif %}
         {% else %}

@@ -11,7 +11,7 @@ from datetime import datetime
 
 from ..extensions import db
 from ..models import PortfolioItem, Transaction, User
-from ..utils import get_locale, convert_currency
+from ..utils import get_locale, convert_currency, summarize_news
 from .. import brokerage
 
 
@@ -399,6 +399,7 @@ def calculate_portfolio_analysis(
         row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
         for row in data
     }
+    news_summaries = {sym: summarize_news(arts) for sym, arts in news_data.items()}
 
     return {
         "data": data,
@@ -413,6 +414,7 @@ def calculate_portfolio_analysis(
         "monte_carlo_var": monte_carlo_var,
         "optimized_allocation": optimized_allocation,
         "news": news_data,
+        "news_summaries": news_summaries,
     }
 
 

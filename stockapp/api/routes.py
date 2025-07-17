@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 
 from ..models import WatchlistItem, PortfolioItem, Alert
+from ..utils import get_news_summary
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -62,3 +63,10 @@ def get_alerts():
         for a in alerts
     ]
     return jsonify(data)
+
+
+@api_bp.route("/news_summary/<symbol>")
+def news_summary(symbol: str):
+    period = request.args.get("period", "daily")
+    summary = get_news_summary(symbol.upper(), period)
+    return jsonify({"symbol": symbol.upper(), "summary": summary})

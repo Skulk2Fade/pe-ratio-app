@@ -26,6 +26,7 @@ from ..utils import (
     ALERT_PE_THRESHOLD,
     get_stock_data,
     get_stock_news,
+    summarize_news,
     generate_xlsx,
 )
 from ..forms import WatchlistAddForm, WatchlistUpdateForm
@@ -103,6 +104,7 @@ def watchlist() -> str:
         .all()
     )
     news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
+    summaries = {sym: summarize_news(arts) for sym, arts in news.items()}
     sentiments = {}
     for sym, articles in news.items():
         if articles:
@@ -119,6 +121,7 @@ def watchlist() -> str:
         default_threshold=ALERT_PE_THRESHOLD,
         news=news,
         sentiments=sentiments,
+        summaries=summaries,
     )
 
 

@@ -70,6 +70,10 @@ def test_news_sentiment(monkeypatch):
     assert sentiments[0] > 0
     assert sentiments[1] < 0
 
+    summary = utils.summarize_news(news)
+    assert "2023-01-01" in summary
+    assert "positive" in summary or "negative" in summary
+
 
 def test_api_endpoints(auth_client, app):
     from stockapp.models import WatchlistItem, PortfolioItem, Alert, User
@@ -97,6 +101,10 @@ def test_api_endpoints(auth_client, app):
     resp = auth_client.get("/api/alerts")
     assert resp.status_code == 200
     assert any(alert["message"] == "msg" for alert in resp.get_json())
+
+    resp = auth_client.get("/api/news_summary/API")
+    assert resp.status_code == 200
+    assert "summary" in resp.get_json()
 
 
 def test_stream_price(client, monkeypatch):
