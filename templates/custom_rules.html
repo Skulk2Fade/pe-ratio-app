@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} - Custom Rules{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h3 class="mb-4">Custom Alert Rules</h3>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form method="POST" class="mb-3">
+        {{ add_form.hidden_tag() }}
+        <div class="row g-2 stack-sm">
+            <div class="col">
+                {{ add_form.description(class="form-control", placeholder="Description") }}
+            </div>
+            <div class="col">
+                {{ add_form.rule(class="form-control", placeholder="price('AAA') > 100") }}
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit">Add</button>
+            </div>
+        </div>
+    </form>
+    {% if rules %}
+    <ul class="list-group">
+        {% for r in rules %}
+        <li class="list-group-item">
+            <form method="POST" class="d-flex flex-column gap-2">
+                {{ update_form.hidden_tag() }}
+                <input type="hidden" name="rule_id" value="{{ r.id }}">
+                <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 stack-sm">
+                    <input type="text" name="description" value="{{ r.description }}" class="form-control" />
+                    <input type="text" name="rule" value="{{ r.rule }}" class="form-control" />
+                    <button class="btn btn-sm btn-primary" type="submit">Update</button>
+                    <a href="{{ url_for('alerts.delete_rule', rule_id=r.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No rules defined.</p>
+    {% endif %}
+    <a href="{{ url_for('alerts.alerts') }}" class="btn btn-secondary mt-3">Back</a>
+</div>
+{% endblock %}

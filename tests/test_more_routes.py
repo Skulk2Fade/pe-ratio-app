@@ -88,3 +88,14 @@ def test_portfolio_update_and_delete(auth_client, app, monkeypatch):
     auth_client.get(f"/portfolio/delete/{item_id}", follow_redirects=True)
     with app.app_context():
         assert PortfolioItem.query.get(item_id) is None
+
+
+def test_custom_rules_page(auth_client, app):
+    resp = auth_client.get("/custom_rules")
+    assert resp.status_code == 200
+    resp = auth_client.post(
+        "/custom_rules",
+        data={"description": "rule", "rule": "price('AAA') > 1"},
+        follow_redirects=True,
+    )
+    assert b"rule" in resp.data
