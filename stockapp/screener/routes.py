@@ -13,7 +13,11 @@ def screener():
         "peg_min": request.args.get("peg_min", type=float),
         "peg_max": request.args.get("peg_max", type=float),
         "yield_min": request.args.get("yield_min", type=float),
-        "sector": request.args.get("sector", type=str),
+        "sector": request.args.get("sector") or None,
+        "mc_min": request.args.get("mc_min", type=float),
+        "mc_max": request.args.get("mc_max", type=float),
+        "vol_min": request.args.get("vol_min", type=float),
+        "rating": request.args.get("rating") or None,
     }
     if any(v is not None for v in filters.values()):
         results = screen_stocks(**filters)

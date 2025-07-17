@@ -9,6 +9,9 @@ def test_screener_route(client, monkeypatch):
                 "pe": 10,
                 "peg": 1.2,
                 "dividend_yield": 2.0,
+                "market_cap": "10B",
+                "volume": 123456,
+                "analyst_rating": "Buy",
             }
         ],
     )

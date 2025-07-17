@@ -28,6 +28,22 @@
             <label class="form-label">{{ _('Sector') }}</label>
             <input type="text" name="sector" class="form-control" value="{{ request.args.get('sector', '') }}">
         </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Min Market Cap') }}</label>
+            <input type="number" step="1" name="mc_min" class="form-control" value="{{ request.args.get('mc_min', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Max Market Cap') }}</label>
+            <input type="number" step="1" name="mc_max" class="form-control" value="{{ request.args.get('mc_max', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Min Volume') }}</label>
+            <input type="number" step="1" name="vol_min" class="form-control" value="{{ request.args.get('vol_min', '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ _('Analyst Rating') }}</label>
+            <input type="text" name="rating" class="form-control" value="{{ request.args.get('rating', '') }}">
+        </div>
         <div class="col-12">
             <button class="btn btn-primary" type="submit">{{ _('Filter') }}</button>
         </div>
@@ -43,6 +59,9 @@
                     <th>{{ _('P/E') }}</th>
                     <th>{{ _('PEG') }}</th>
                     <th>{{ _('Dividend Yield %') }}</th>
+                    <th>{{ _('Market Cap') }}</th>
+                    <th>{{ _('Volume') }}</th>
+                    <th>{{ _('Analyst Rating') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -54,6 +73,9 @@
                     <td>{{ r.pe }}</td>
                     <td>{{ r.peg }}</td>
                     <td>{{ r.dividend_yield }}</td>
+                    <td>{{ r.market_cap }}</td>
+                    <td>{{ r.volume }}</td>
+                    <td>{{ r.analyst_rating }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
