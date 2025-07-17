@@ -306,6 +306,7 @@ def calculate_portfolio_analysis(
         sharpe_ratio = None
         value_at_risk = None
         monte_carlo_var = None
+        optimized_allocation = None
         if returns and len(returns) > 0:
             n = min(len(r) for r in returns.values())
             if n > 1:
@@ -381,13 +382,18 @@ def calculate_portfolio_analysis(
                     )
                 except Exception:
                     monte_carlo_var = None
-    else:
-        correlations = []
-        portfolio_volatility = None
-        beta = None
-        sharpe_ratio = None
-        value_at_risk = None
-        monte_carlo_var = None
+                try:
+                    optimized_allocation = optimize_portfolio(returns)
+                except Exception:
+                    optimized_allocation = None
+        else:
+            correlations = []
+            portfolio_volatility = None
+            beta = None
+            sharpe_ratio = None
+            value_at_risk = None
+            optimized_allocation = None
+            monte_carlo_var = None
 
     news_data = {
         row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
@@ -405,5 +411,64 @@ def calculate_portfolio_analysis(
         "sharpe_ratio": sharpe_ratio,
         "value_at_risk": value_at_risk,
         "monte_carlo_var": monte_carlo_var,
+        "optimized_allocation": optimized_allocation,
         "news": news_data,
     }
+
+
+def optimize_portfolio(
+    returns: Dict[str, List[float]], risk_free_rate: float = 0.0, samples: int = 5000
+) -> Dict[str, float] | None:
+    """Return weights that maximize the Sharpe ratio.
+
+    This Monte Carlo approach avoids external dependencies and
+    works with a small number of assets.
+    """
+
+    if not returns:
+        return None
+
+    n = min(len(r) for r in returns.values())
+    if n < 2:
+        return None
+
+    symbols = list(returns.keys())
+    truncated = {sym: r[-n:] for sym, r in returns.items()}
+
+    def mean(x: List[float]) -> float:
+        return sum(x) / len(x)
+
+    def cov(x: List[float], y: List[float]) -> float:
+        mx = mean(x)
+        my = mean(y)
+        return sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / (len(x) - 1)
+
+    means = {sym: mean(vals) for sym, vals in truncated.items()}
+    cov_matrix = [
+        [cov(truncated[s1], truncated[s2]) for s2 in symbols] for s1 in symbols
+    ]
+
+    best_weights = None
+    best_sharpe = float("-inf")
+
+    for _ in range(samples):
+        raw = [random.random() for _ in symbols]
+        total = sum(raw)
+        weights = [r / total for r in raw]
+
+        exp_return = sum(means[s] * w for s, w in zip(symbols, weights))
+
+        variance = 0.0
+        for i in range(len(symbols)):
+            for j in range(len(symbols)):
+                variance += weights[i] * weights[j] * cov_matrix[i][j]
+
+        std = variance**0.5
+        if std == 0:
+            continue
+        sharpe = (exp_return - risk_free_rate) / std
+        if sharpe > best_sharpe:
+            best_sharpe = sharpe
+            best_weights = {sym: round(weights[idx], 4) for idx, sym in enumerate(symbols)}
+
+    return best_weights
