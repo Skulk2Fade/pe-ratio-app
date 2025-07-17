@@ -17,6 +17,7 @@ Copy it to `.env` and adjust as needed. When starting the app these variables ar
 * `REALTIME_PROVIDER` &ndash; Data source for streaming price updates (`fmp` or `yfinance`).
 * `PRICE_STREAM_INTERVAL` &ndash; Seconds between real-time price updates (defaults to `5`).
 * `ASYNC_REALTIME` &ndash; Set to `1` to fetch streaming updates asynchronously.
+* `BROKERAGE_PROVIDER` &ndash; Brokerage integration to use (`basic` or `plaid`).
 
 Example `.env` snippet:
 
@@ -42,6 +43,7 @@ export TWILIO_FROM="+15551234567"
 export REALTIME_PROVIDER="fmp"
 export PRICE_STREAM_INTERVAL=5
 export ASYNC_REALTIME=0
+export BROKERAGE_PROVIDER="basic"
 ```
 
 Do not use the example SMTP or Redis values in a production deployment. Replace

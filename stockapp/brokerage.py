@@ -12,6 +12,14 @@ from typing import List, Dict, Optional
 
 from .utils import session
 
+# Determine which brokerage integration to use. The default "basic"
+# implementation uses the simple stub defined in this module. Setting the
+# ``BROKERAGE_PROVIDER`` environment variable to ``"plaid"`` will delegate to
+# the Plaid stub in ``stockapp.plaid``.
+BROKERAGE_PROVIDER = os.environ.get("BROKERAGE_PROVIDER", "basic").lower()
+if BROKERAGE_PROVIDER == "plaid":
+    from . import plaid
+
 BROKERAGE_CLIENT_ID = os.environ.get("BROKERAGE_CLIENT_ID")
 BROKERAGE_CLIENT_SECRET = os.environ.get("BROKERAGE_CLIENT_SECRET")
 BROKERAGE_AUTH_URL = os.environ.get("BROKERAGE_AUTH_URL")
@@ -117,6 +125,9 @@ def get_holdings(api_token: str) -> List[Dict[str, float]]:
     list of dict
         Each dictionary contains ``symbol``, ``quantity`` and ``price_paid``.
     """
+    if BROKERAGE_PROVIDER == "plaid":
+        return plaid.get_holdings(api_token)
+
     if api_token == "demo-token":
         return [
             {"symbol": "AAA", "quantity": 2, "price_paid": 90},
@@ -145,6 +156,9 @@ def get_transactions(api_token: str) -> List[Dict[str, object]]:
     Each transaction dictionary contains ``symbol``, ``quantity``, ``price``,
     ``type`` and ``timestamp`` keys.
     """
+    if BROKERAGE_PROVIDER == "plaid":
+        return plaid.get_transactions(api_token)
+
     if api_token == "demo-token":
         return [
             {
@@ -170,6 +184,9 @@ def get_transactions(api_token: str) -> List[Dict[str, object]]:
 
 def get_account_balance(api_token: str) -> Optional[float]:
     """Return the account cash balance for the given token."""
+    if BROKERAGE_PROVIDER == "plaid":
+        return plaid.get_account_balance(api_token)
+
     if api_token == "demo-token":
         return 10000.0
     data = _api_get("balance", api_token)

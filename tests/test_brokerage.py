@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from stockapp.portfolio.helpers import sync_transactions_from_brokerage
@@ -22,3 +23,19 @@ def test_sync_transactions(app):
 def test_account_balance():
     bal = brokerage.get_account_balance("demo-token")
     assert bal == 10000.0
+
+
+def test_plaid_provider(monkeypatch):
+    import importlib
+    monkeypatch.setitem(os.environ, "BROKERAGE_PROVIDER", "plaid")
+    import stockapp.brokerage as brok
+    importlib.reload(brok)
+
+    called = {}
+    monkeypatch.setattr(brok.plaid, "get_holdings", lambda t: called.setdefault("holdings", t) or [])
+    brok.get_holdings("demo-plaid-token")
+    assert called.get("holdings") == "demo-plaid-token"
+
+    # reset to default for other tests
+    monkeypatch.setitem(os.environ, "BROKERAGE_PROVIDER", "basic")
+    importlib.reload(brok)
