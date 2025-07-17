@@ -839,6 +839,50 @@ def get_stock_news(symbol: str, limit: int = 3) -> list[dict]:
         return cached if cached else []
 
 
+def summarize_news(articles: list[dict], period: str = "daily") -> str:
+    """Return a short natural language summary for ``articles``.
+
+    Articles are grouped by day or ISO week depending on ``period`` and the
+    average sentiment for each group is calculated.  A small textual summary is
+    returned so users can quickly gauge the tone of recent coverage.
+    """
+    if not articles:
+        return "No recent articles."
+
+    groups: dict[str, list[float]] = {}
+    for a in articles:
+        date_str = a.get("published") or ""
+        try:
+            date_obj = datetime.fromisoformat(date_str)
+        except Exception:
+            continue
+        if period == "weekly":
+            key = f"{date_obj.year}-W{date_obj.isocalendar().week}"
+        else:
+            key = date_obj.date().isoformat()
+        groups.setdefault(key, []).append(a.get("sentiment", 0.0))
+
+    parts = []
+    for key in sorted(groups.keys()):
+        vals = groups[key]
+        avg = sum(vals) / len(vals)
+        tone = "positive" if avg > 0.1 else "negative" if avg < -0.1 else "neutral"
+        if period == "weekly" and "-W" in key:
+            year, week = key.split("-W")
+            label = f"week {week} of {year}"
+        else:
+            label = key
+        parts.append(f"{label}: {tone} sentiment ({avg:+.2f})")
+
+    return "; ".join(parts)
+
+
+def get_news_summary(symbol: str, period: str = "daily", limit: int = 20) -> str:
+    """Fetch news for ``symbol`` and summarize it."""
+    articles = get_stock_news(symbol, limit=limit)
+    return summarize_news(articles, period)
+
+
 def moving_average(prices: list[float], period: int) -> list[float | None]:
     """Simple moving average for a list of prices."""
     ma = []

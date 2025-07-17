@@ -133,6 +133,7 @@ def portfolio() -> str:
         monte_carlo_var=analysis["monte_carlo_var"],
         optimized_allocation=analysis["optimized_allocation"],
         news=analysis["news"],
+        news_summaries=analysis["news_summaries"],
         add_form=add_form,
         import_form=import_form,
         update_form=update_form,
