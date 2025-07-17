@@ -1095,6 +1095,10 @@ def screen_stocks(
     peg_max: float | None = None,
     yield_min: float | None = None,
     sector: str | None = None,
+    mc_min: float | None = None,
+    mc_max: float | None = None,
+    vol_min: float | None = None,
+    rating: str | None = None,
 ) -> list[dict]:
     """Return a list of stocks matching the given criteria."""
     if API_KEY_MISSING:
@@ -1109,6 +1113,12 @@ def screen_stocks(
         params["sector"] = sector
     if yield_min is not None:
         params["dividendMoreThan"] = yield_min
+    if mc_min is not None:
+        params["marketCapMoreThan"] = mc_min
+    if mc_max is not None:
+        params["marketCapLowerThan"] = mc_max
+    if vol_min is not None:
+        params["volumeMoreThan"] = vol_min
     query = urllib.parse.urlencode(params)
     url = f"https://financialmodelingprep.com/api/v3/stock-screener?{query}"
     try:
@@ -1129,13 +1139,13 @@ def screen_stocks(
             _currency,
             price,
             eps,
-            _mc,
+            mc_val,
             _de,
             _pb,
             _roe,
             _roa,
             _pm,
-            _rating,
+            analyst_rating,
             dividend_yield,
             _payout,
             earnings_growth,
@@ -1166,6 +1176,11 @@ def screen_stocks(
             dividend_yield is None or dividend_yield * 100 < yield_min
         ):
             continue
+        if rating and (
+            analyst_rating is None
+            or rating.lower() not in str(analyst_rating).lower()
+        ):
+            continue
         results.append(
             {
                 "symbol": symbol,
@@ -1178,6 +1193,9 @@ def screen_stocks(
                     if dividend_yield is not None
                     else None
                 ),
+                "market_cap": mc_val,
+                "volume": item.get("volume"),
+                "analyst_rating": analyst_rating,
             }
         )
     return results
