@@ -210,6 +210,8 @@ def settings() -> str:
         current_user.phone_number = phone
         current_user.sms_opt_in = bool(request.form.get("sms_opt_in"))
         current_user.trend_opt_in = bool(request.form.get("trend_opt_in"))
+        current_user.digest_pref = bool(request.form.get("digest_pref"))
+        current_user.fcm_token = request.form.get("fcm_token") or None
         currency = request.form.get("currency")
         language = request.form.get("language")
         theme = request.form.get("theme")
@@ -229,6 +231,8 @@ def settings() -> str:
         phone=current_user.phone_number or "",
         sms_opt_in=current_user.sms_opt_in,
         trend_opt_in=current_user.trend_opt_in,
+        digest_pref=current_user.digest_pref,
+        fcm_token=current_user.fcm_token or "",
         currency=current_user.default_currency,
         language=current_user.language,
         theme=current_user.theme,
