@@ -13,7 +13,12 @@ import io
 import json
 
 from ..extensions import db
-from ..models import PortfolioItem, PortfolioFollow, User
+from ..models import (
+    PortfolioItem,
+    PortfolioFollow,
+    PortfolioComment,
+    User,
+)
 
 from ..utils import (
     get_stock_data,
@@ -23,7 +28,12 @@ from ..utils import (
     get_dividend_history,
     get_upcoming_dividends,
 )
-from ..forms import PortfolioAddForm, PortfolioUpdateForm, PortfolioImportForm
+from ..forms import (
+    PortfolioAddForm,
+    PortfolioUpdateForm,
+    PortfolioImportForm,
+    CommentForm,
+)
 from .helpers import (
     import_portfolio_items,
     update_portfolio_item,
@@ -192,11 +202,19 @@ def view_portfolio(username: str) -> str:
     following = PortfolioFollow.query.filter_by(
         follower_id=current_user.id, followed_id=user.id
     ).first()
+    comments = (
+        PortfolioComment.query.filter_by(portfolio_owner_id=user.id)
+        .order_by(PortfolioComment.timestamp.desc())
+        .all()
+    )
+    comment_form = CommentForm()
     return render_template(
         "public_portfolio.html",
         items=items,
         user=user,
         following=bool(following),
+        comments=comments,
+        comment_form=comment_form,
     )
 
 
@@ -216,6 +234,23 @@ def follow_portfolio(username: str) -> Response:
             PortfolioFollow(follower_id=current_user.id, followed_id=user.id)
         )
     db.session.commit()
+    return redirect(url_for("portfolio.view_portfolio", username=username))
+
+
+@portfolio_bp.route("/portfolio/comment/<username>", methods=["POST"])
+@login_required
+def comment_portfolio(username: str) -> Response:
+    user = User.query.filter_by(username=username).first_or_404()
+    form = CommentForm()
+    if form.validate_on_submit():
+        db.session.add(
+            PortfolioComment(
+                user_id=current_user.id,
+                portfolio_owner_id=user.id,
+                content=form.content.data,
+            )
+        )
+        db.session.commit()
     return redirect(url_for("portfolio.view_portfolio", username=username))
 
 

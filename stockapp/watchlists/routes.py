@@ -20,6 +20,8 @@ from ..models import (
     FavoriteTicker,
     History,
     StockRecord,
+    WatchlistComment,
+    User,
 )
 from ..utils import (
     get_locale,
@@ -29,7 +31,7 @@ from ..utils import (
     summarize_news,
     generate_xlsx,
 )
-from ..forms import WatchlistAddForm, WatchlistUpdateForm
+from ..forms import WatchlistAddForm, WatchlistUpdateForm, CommentForm
 
 watch_bp = Blueprint("watch", __name__)
 
@@ -313,8 +315,6 @@ def clear_records() -> Response:
 
 @watch_bp.route("/watchlist/public/<username>")
 def public_watchlist(username: str) -> str:
-    from ..models import User
-
     user = User.query.filter_by(username=username).first_or_404()
     items = WatchlistItem.query.filter_by(user_id=user.id, is_public=True).all()
     news = {i.symbol: get_stock_news(i.symbol, limit=3) for i in items}
@@ -325,10 +325,35 @@ def public_watchlist(username: str) -> str:
             sentiments[sym] = round(avg, 2)
         else:
             sentiments[sym] = None
+    comments = (
+        WatchlistComment.query.filter_by(watchlist_owner_id=user.id)
+        .order_by(WatchlistComment.timestamp.desc())
+        .all()
+    )
+    comment_form = CommentForm()
     return render_template(
         "public_watchlist.html",
         items=items,
         user=user,
         news=news,
         sentiments=sentiments,
+        comments=comments,
+        comment_form=comment_form,
     )
+
+
+@watch_bp.route("/watchlist/comment/<username>", methods=["POST"])
+@login_required
+def comment_watchlist(username: str) -> Response:
+    user = User.query.filter_by(username=username).first_or_404()
+    form = CommentForm()
+    if form.validate_on_submit():
+        db.session.add(
+            WatchlistComment(
+                user_id=current_user.id,
+                watchlist_owner_id=user.id,
+                content=form.content.data,
+            )
+        )
+        db.session.commit()
+    return redirect(url_for("watch.public_watchlist", username=username))

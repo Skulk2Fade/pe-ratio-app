@@ -6,6 +6,7 @@ from wtforms import (
     IntegerField,
     FileField,
     BooleanField,
+    TextAreaField,
 )
 from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange
 
@@ -98,3 +99,7 @@ class CustomRuleForm(FlaskForm):
 
 class CustomRuleUpdateForm(CustomRuleForm):
     rule_id = IntegerField("Rule ID", validators=[DataRequired()])
+
+
+class CommentForm(FlaskForm):
+    content = TextAreaField("Comment", validators=[DataRequired(), Length(max=500)])

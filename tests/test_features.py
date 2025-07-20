@@ -480,6 +480,53 @@ def test_public_watchlist_and_follow_portfolio(app, client, auth_client):
     assert b"SOC" in resp.data
 
 
+def test_comments_on_shared_pages(app, auth_client):
+    from stockapp.extensions import db
+    from stockapp.models import (
+        User,
+        WatchlistItem,
+        PortfolioItem,
+        WatchlistComment,
+        PortfolioComment,
+    )
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        u = User(
+            username="commented",
+            email="c@example.com",
+            password_hash=generate_password_hash("pass"),
+            is_verified=True,
+        )
+        db.session.add(u)
+        db.session.commit()
+        db.session.add(WatchlistItem(symbol="COM", user_id=u.id, is_public=True))
+        db.session.add(
+            PortfolioItem(symbol="COM", quantity=1, price_paid=1, user_id=u.id)
+        )
+        db.session.commit()
+
+    auth_client.post(
+        f"/watchlist/comment/{u.username}",
+        data={"content": "Nice!"},
+        follow_redirects=True,
+    )
+    resp = auth_client.get(f"/watchlist/public/{u.username}")
+    assert b"Nice!" in resp.data
+
+    auth_client.post(
+        f"/portfolio/comment/{u.username}",
+        data={"content": "Great!"},
+        follow_redirects=True,
+    )
+    resp = auth_client.get(f"/portfolio/{u.username}")
+    assert b"Great!" in resp.data
+
+    with app.app_context():
+        assert WatchlistComment.query.filter_by(content="Nice!").first()
+        assert PortfolioComment.query.filter_by(content="Great!").first()
+
+
 def test_leaderboard(app, client):
     from stockapp.extensions import db
     from stockapp.models import User, PortfolioFollow
