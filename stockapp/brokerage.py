@@ -7,6 +7,7 @@ static data when a special token is used.
 """
 
 import os
+import importlib
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 
@@ -17,8 +18,12 @@ from .utils import session
 # ``BROKERAGE_PROVIDER`` environment variable to ``"plaid"`` will delegate to
 # the Plaid stub in ``stockapp.plaid``.
 BROKERAGE_PROVIDER = os.environ.get("BROKERAGE_PROVIDER", "basic").lower()
-if BROKERAGE_PROVIDER == "plaid":
-    from . import plaid
+provider = None
+if BROKERAGE_PROVIDER != "basic":
+    try:
+        provider = importlib.import_module(f".{BROKERAGE_PROVIDER}", __package__)
+    except Exception:  # pragma: no cover - unknown provider
+        provider = None
 
 BROKERAGE_CLIENT_ID = os.environ.get("BROKERAGE_CLIENT_ID")
 BROKERAGE_CLIENT_SECRET = os.environ.get("BROKERAGE_CLIENT_SECRET")
@@ -125,8 +130,8 @@ def get_holdings(api_token: str) -> List[Dict[str, float]]:
     list of dict
         Each dictionary contains ``symbol``, ``quantity`` and ``price_paid``.
     """
-    if BROKERAGE_PROVIDER == "plaid":
-        return plaid.get_holdings(api_token)
+    if provider and hasattr(provider, "get_holdings"):
+        return provider.get_holdings(api_token)
 
     if api_token == "demo-token":
         return [
@@ -156,8 +161,8 @@ def get_transactions(api_token: str) -> List[Dict[str, object]]:
     Each transaction dictionary contains ``symbol``, ``quantity``, ``price``,
     ``type`` and ``timestamp`` keys.
     """
-    if BROKERAGE_PROVIDER == "plaid":
-        return plaid.get_transactions(api_token)
+    if provider and hasattr(provider, "get_transactions"):
+        return provider.get_transactions(api_token)
 
     if api_token == "demo-token":
         return [
@@ -184,8 +189,8 @@ def get_transactions(api_token: str) -> List[Dict[str, object]]:
 
 def get_account_balance(api_token: str) -> Optional[float]:
     """Return the account cash balance for the given token."""
-    if BROKERAGE_PROVIDER == "plaid":
-        return plaid.get_account_balance(api_token)
+    if provider and hasattr(provider, "get_account_balance"):
+        return provider.get_account_balance(api_token)
 
     if api_token == "demo-token":
         return 10000.0
