@@ -190,6 +190,7 @@ def calculate_portfolio_analysis(
     get_stock_data_func: Callable[[str], Tuple],
     get_historical_prices_func: Callable[[str], Tuple[List[str], List[float]]],
     get_stock_news_func: Callable[[str], List[Dict]],
+    days: int = 30,
 ) -> Dict[str, object]:
     """Return aggregated portfolio metrics for rendering."""
     data: List[Dict[str, object]] = []
@@ -197,6 +198,8 @@ def calculate_portfolio_analysis(
     total_pl = 0.0
     totals_currency = None
     sector_totals: Dict[str, float] = {}
+
+    sector_map: Dict[str, str] = {}
 
     for item in items:
         (
@@ -227,6 +230,7 @@ def calculate_portfolio_analysis(
                 totals_currency = currency
             if sector:
                 sector_totals[sector] = sector_totals.get(sector, 0) + value_num
+                sector_map[item.symbol] = sector
         else:
             current_price = value = pl = None
             value_num = 0
@@ -238,6 +242,7 @@ def calculate_portfolio_analysis(
                 "profit_loss": pl,
                 "price_num": price,
                 "value_num": value_num,
+                "sector": sector,
             }
         )
 
@@ -274,7 +279,7 @@ def calculate_portfolio_analysis(
             if price_num is None:
                 continue
             weights[sym] = row["value_num"] / total_value if total_value else 0
-            _dates, prices = get_historical_prices_func(sym, days=30)
+            _dates, prices = get_historical_prices_func(sym, days=days)
             if len(prices) > 1:
                 r: List[float] = []
                 for i in range(1, len(prices)):
@@ -286,6 +291,7 @@ def calculate_portfolio_analysis(
                 if r:
                     returns[sym] = r
         correlations = []
+        sector_returns: Dict[str, List[float]] = {}
         if returns:
             syms = list(returns.keys())
             for i in range(len(syms)):
@@ -301,12 +307,31 @@ def calculate_portfolio_analysis(
                             )
                         except Exception:
                             pass
+            # build sector level returns
+            n = min(len(r) for r in returns.values())
+            if n > 1:
+                for sym, r in returns.items():
+                    sector = sector_map.get(sym)
+                    if not sector:
+                        continue
+                    sector_returns.setdefault(sector, [])
+                    for idx in range(-n, 0):
+                        if len(sector_returns[sector]) < n:
+                            sector_returns[sector].append(0.0)
+                        sector_returns[sector][idx] += r[idx]
+                for sector in sector_returns:
+                    sector_returns[sector] = [
+                        val / list(sector_map.values()).count(sector)
+                        for val in sector_returns[sector]
+                    ]
         portfolio_volatility = None
         beta = None
         sharpe_ratio = None
         value_at_risk = None
         monte_carlo_var = None
         optimized_allocation = None
+        max_drawdown = None
+        sector_correlations = []
         if returns and len(returns) > 0:
             n = min(len(r) for r in returns.values())
             if n > 1:
@@ -333,6 +358,21 @@ def calculate_portfolio_analysis(
                         )
                     except Exception:
                         sharpe_ratio = None
+                    try:
+                        cumulative = [1.0]
+                        for r in portfolio_returns:
+                            cumulative.append(cumulative[-1] * (1 + r))
+                        peak = cumulative[0]
+                        max_dd_val = 0.0
+                        for val in cumulative:
+                            if val > peak:
+                                peak = val
+                            draw = (peak - val) / peak
+                            if draw > max_dd_val:
+                                max_dd_val = draw
+                        max_drawdown = round(max_dd_val * 100, 2)
+                    except Exception:
+                        max_drawdown = None
                     try:
                         sorted_returns = sorted(portfolio_returns)
                         idx_var = max(int(len(sorted_returns) * 0.05) - 1, 0)
@@ -365,6 +405,23 @@ def calculate_portfolio_analysis(
                             beta = round(b, 2)
                     except Exception:
                         beta = None
+                if sector_returns:
+                    sec_names = list(sector_returns.keys())
+                    for i in range(len(sec_names)):
+                        r1 = sector_returns[sec_names[i]]
+                        for j in range(i + 1, len(sec_names)):
+                            r2 = sector_returns[sec_names[j]]
+                            if len(r1) >= n and len(r2) >= n and n > 1:
+                                try:
+                                    c = correlation(r1[-n:], r2[-n:])
+                                    sector_correlations.append(
+                                        {
+                                            "pair": f"{sec_names[i]}-{sec_names[j]}",
+                                            "value": round(c, 2),
+                                        }
+                                    )
+                                except Exception:
+                                    pass
                 try:
                     sims = []
                     for _ in range(500):
@@ -388,12 +445,14 @@ def calculate_portfolio_analysis(
                     optimized_allocation = None
         else:
             correlations = []
+            sector_correlations = []
             portfolio_volatility = None
             beta = None
             sharpe_ratio = None
             value_at_risk = None
             optimized_allocation = None
             monte_carlo_var = None
+            max_drawdown = None
 
     news_data = {
         row["item"].symbol: get_stock_news_func(row["item"].symbol, limit=3)
@@ -413,6 +472,8 @@ def calculate_portfolio_analysis(
         "value_at_risk": value_at_risk,
         "monte_carlo_var": monte_carlo_var,
         "optimized_allocation": optimized_allocation,
+        "maximum_drawdown": max_drawdown,
+        "sector_correlations": sector_correlations,
         "news": news_data,
         "news_summaries": news_summaries,
     }
@@ -471,6 +532,8 @@ def optimize_portfolio(
         sharpe = (exp_return - risk_free_rate) / std
         if sharpe > best_sharpe:
             best_sharpe = sharpe
-            best_weights = {sym: round(weights[idx], 4) for idx, sym in enumerate(symbols)}
+            best_weights = {
+                sym: round(weights[idx], 4) for idx, sym in enumerate(symbols)
+            }
 
     return best_weights

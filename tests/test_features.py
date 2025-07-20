@@ -181,6 +181,65 @@ def test_portfolio_volatility_correlations(auth_client, app, monkeypatch):
     assert b"Suggested Allocation" in resp.data
 
 
+def test_portfolio_drawdown_and_sector_corr(auth_client, app, monkeypatch):
+    monkeypatch.setattr("stockapp.portfolio.routes.get_stock_news", lambda *a, **k: [])
+
+    def fake_get_stock_data(symbol):
+        sector = "Tech" if symbol == "AAA" else "Finance"
+        return (
+            "Test Corp",
+            "",
+            sector,
+            "Software",
+            "NASDAQ",
+            "USD",
+            100,
+            5,
+            "1B",
+            0.5,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+
+    historical = {
+        "AAA": (["d1", "d2", "d3", "d4"], [100, 98, 99, 97]),
+        "BBB": (["d1", "d2", "d3", "d4"], [50, 51, 52, 53]),
+        "SPY": (["d1", "d2", "d3", "d4"], [300, 299, 301, 300]),
+    }
+
+    monkeypatch.setattr("stockapp.portfolio.routes.get_stock_data", fake_get_stock_data)
+    monkeypatch.setattr(
+        "stockapp.portfolio.routes.get_historical_prices",
+        lambda s, days=30: historical.get(s, historical["SPY"]),
+    )
+
+    auth_client.post(
+        "/portfolio",
+        data={"symbol": "AAA", "quantity": 1, "price_paid": 100},
+        follow_redirects=True,
+    )
+    auth_client.post(
+        "/portfolio",
+        data={"symbol": "BBB", "quantity": 1, "price_paid": 50},
+        follow_redirects=True,
+    )
+
+    resp = auth_client.get("/portfolio", follow_redirects=True)
+    assert b"Maximum Drawdown" in resp.data
+    assert b"Sector Correlations" in resp.data
+
+
 def test_portfolio_optimization(auth_client, app, monkeypatch):
     monkeypatch.setattr("stockapp.portfolio.routes.get_stock_news", lambda *a, **k: [])
 

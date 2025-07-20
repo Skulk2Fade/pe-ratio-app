@@ -97,6 +97,11 @@ def sync_brokerage() -> Response:
 @login_required
 def portfolio() -> str:
     symbol_prefill = request.args.get("symbol", "").upper()
+    days = request.args.get("days", "30")
+    try:
+        days_int = int(days)
+    except ValueError:
+        days_int = 30
     add_form = PortfolioAddForm(symbol=symbol_prefill)
     import_form = PortfolioImportForm()
     update_form = PortfolioUpdateForm()
@@ -114,7 +119,7 @@ def portfolio() -> str:
 
     items = PortfolioItem.query.filter_by(user_id=current_user.id).all()
     analysis = calculate_portfolio_analysis(
-        items, get_stock_data, get_historical_prices, get_stock_news
+        items, get_stock_data, get_historical_prices, get_stock_news, days_int
     )
 
     return render_template(
@@ -132,6 +137,9 @@ def portfolio() -> str:
         value_at_risk=analysis["value_at_risk"],
         monte_carlo_var=analysis["monte_carlo_var"],
         optimized_allocation=analysis["optimized_allocation"],
+        maximum_drawdown=analysis["maximum_drawdown"],
+        sector_correlations=analysis["sector_correlations"],
+        sectors=sorted({row["sector"] for row in analysis["data"] if row["sector"]}),
         news=analysis["news"],
         news_summaries=analysis["news_summaries"],
         add_form=add_form,
