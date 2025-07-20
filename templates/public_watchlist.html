@@ -31,6 +31,29 @@
   {% else %}
   <p>No public items.</p>
   {% endif %}
+  <h4 class="mt-4">Comments</h4>
+  {% if comments %}
+  <ul class="list-group mb-3">
+    {% for c in comments %}
+    <li class="list-group-item">
+      <strong>{{ c.user.username }}</strong>
+      <small class="text-muted">{{ c.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+      <p class="mb-0">{{ c.content }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No comments yet.</p>
+  {% endif %}
+  {% if current_user.is_authenticated %}
+  <form method="POST" action="{{ url_for('watch.comment_watchlist', username=user.username) }}" class="mb-3">
+    {{ comment_form.hidden_tag() }}
+    {{ comment_form.content(class="form-control mb-2", placeholder="Add a comment") }}
+    <button class="btn btn-primary" type="submit">Post</button>
+  </form>
+  {% else %}
+  <p><a href="{{ url_for('auth.login') }}">Log in</a> to comment.</p>
+  {% endif %}
   <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back</a>
 </div>
 {% endblock %}
