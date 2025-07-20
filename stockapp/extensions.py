@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_wtf import CSRFProtect
 from flask_sock import Sock
 from flask_migrate import Migrate
+from authlib.integrations.flask_client import OAuth
 
 try:
     from flask_babel import Babel
@@ -28,3 +29,4 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 sock = Sock()
 migrate = Migrate()
+oauth = OAuth()

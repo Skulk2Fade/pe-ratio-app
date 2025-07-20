@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 # Load environment variables before importing modules that depend on them
 from .config import Config, DevelopmentConfig, ProductionConfig
 
-from .extensions import db, login_manager, csrf, sock, babel, migrate
+from .extensions import db, login_manager, csrf, sock, babel, migrate, oauth
 from flask_migrate import upgrade
 from .models import User
 from .auth import auth_bp
@@ -47,6 +47,27 @@ def create_app(config_class=None):
     csrf.init_app(app)
     sock.init_app(app)
     babel.init_app(app)
+    oauth.init_app(app)
+
+    if app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET"):
+        oauth.register(
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
+        )
+
+    if app.config.get("GITHUB_CLIENT_ID") and app.config.get("GITHUB_CLIENT_SECRET"):
+        oauth.register(
+            name="github",
+            client_id=app.config["GITHUB_CLIENT_ID"],
+            client_secret=app.config["GITHUB_CLIENT_SECRET"],
+            access_token_url="https://github.com/login/oauth/access_token",
+            authorize_url="https://github.com/login/oauth/authorize",
+            api_base_url="https://api.github.com/",
+            client_kwargs={"scope": "user:email"},
+        )
 
     from .utils import get_locale
 

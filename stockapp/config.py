@@ -42,6 +42,11 @@ class Config:
     PRICE_STREAM_INTERVAL = 5
     ASYNC_REALTIME = False
 
+    GOOGLE_CLIENT_ID = ""
+    GOOGLE_CLIENT_SECRET = ""
+    GITHUB_CLIENT_ID = ""
+    GITHUB_CLIENT_SECRET = ""
+
     DEBUG = False
 
     def __init__(self):
@@ -94,6 +99,18 @@ class Config:
         )
         self.CLEANUP_OLD_DATA_CRON = os.environ.get(
             "CLEANUP_OLD_DATA_CRON", self.CLEANUP_OLD_DATA_CRON
+        )
+        self.GOOGLE_CLIENT_ID = os.environ.get(
+            "GOOGLE_CLIENT_ID", self.GOOGLE_CLIENT_ID
+        )
+        self.GOOGLE_CLIENT_SECRET = os.environ.get(
+            "GOOGLE_CLIENT_SECRET", self.GOOGLE_CLIENT_SECRET
+        )
+        self.GITHUB_CLIENT_ID = os.environ.get(
+            "GITHUB_CLIENT_ID", self.GITHUB_CLIENT_ID
+        )
+        self.GITHUB_CLIENT_SECRET = os.environ.get(
+            "GITHUB_CLIENT_SECRET", self.GITHUB_CLIENT_SECRET
         )
 
 
