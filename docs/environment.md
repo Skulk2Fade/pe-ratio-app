@@ -18,7 +18,7 @@ Copy it to `.env` and adjust as needed. When starting the app these variables ar
 * `REALTIME_PROVIDER` &ndash; Data source for streaming price updates (`fmp` or `yfinance`).
 * `PRICE_STREAM_INTERVAL` &ndash; Seconds between real-time price updates (defaults to `5`).
 * `ASYNC_REALTIME` &ndash; Set to `1` to fetch streaming updates asynchronously.
-* `BROKERAGE_PROVIDER` &ndash; Brokerage integration to use (`basic` or `plaid`).
+* `BROKERAGE_PROVIDER` &ndash; Brokerage integration to use (`basic`, `plaid` or `alpaca`).
 
 Example `.env` snippet:
 

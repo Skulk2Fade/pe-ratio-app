@@ -32,10 +32,24 @@ def test_plaid_provider(monkeypatch):
     importlib.reload(brok)
 
     called = {}
-    monkeypatch.setattr(brok.plaid, "get_holdings", lambda t: called.setdefault("holdings", t) or [])
+    monkeypatch.setattr(brok.provider, "get_holdings", lambda t: called.setdefault("holdings", t) or [])
     brok.get_holdings("demo-plaid-token")
     assert called.get("holdings") == "demo-plaid-token"
 
-    # reset to default for other tests
+    monkeypatch.setitem(os.environ, "BROKERAGE_PROVIDER", "basic")
+    importlib.reload(brok)
+
+
+def test_alpaca_provider(monkeypatch):
+    import importlib
+    monkeypatch.setitem(os.environ, "BROKERAGE_PROVIDER", "alpaca")
+    import stockapp.brokerage as brok
+    importlib.reload(brok)
+
+    called = {}
+    monkeypatch.setattr(brok.provider, "get_holdings", lambda t: called.setdefault("holdings", t) or [])
+    brok.get_holdings("demo-alpaca-token")
+    assert called.get("holdings") == "demo-alpaca-token"
+
     monkeypatch.setitem(os.environ, "BROKERAGE_PROVIDER", "basic")
     importlib.reload(brok)
