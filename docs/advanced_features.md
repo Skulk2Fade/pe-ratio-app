@@ -63,6 +63,15 @@ such as `change('AAPL', 7) > 5` to be notified when Apple rises more than five
 percent over seven days. Expressions evaluate in a restricted context and can
 reference multiple tickers for cross‑asset comparisons.
 
+Rules can be evaluated on past data to see how often they would have
+triggered using the `/api/backtest_rule` endpoint. Provide the rule
+expression and a number of days to test, for example:
+
+```bash
+curl '/api/backtest_rule?rule=change(%27AAPL%27,7)%20%3E%205&days=30'
+```
+
+
 ## Additional Metrics
 
 Alongside the standard P/E ratio the app displays:
