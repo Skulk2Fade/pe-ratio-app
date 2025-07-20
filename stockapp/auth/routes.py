@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from datetime import datetime, timedelta
 from flask_login import login_user, logout_user, login_required
@@ -5,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import pyotp
 
-from ..extensions import db, login_manager
+from ..extensions import db, login_manager, oauth
 from ..models import User
 from ..utils import send_email, NotificationError
 from ..forms import SignupForm, LoginForm
@@ -96,6 +97,54 @@ def login():
         else:
             error = "Invalid credentials"
     return render_template("login.html", form=form, error=error, message=message)
+
+
+@auth_bp.route("/login/<provider>")
+def oauth_login(provider: str):
+    if provider not in ("google", "github"):
+        return redirect(url_for("auth.login"))
+    redirect_uri = url_for("auth.oauth_callback", provider=provider, _external=True)
+    client = oauth.create_client(provider)
+    if not client:
+        return redirect(url_for("auth.login"))
+    return client.authorize_redirect(redirect_uri)
+
+
+@auth_bp.route("/oauth_callback/<provider>")
+def oauth_callback(provider: str):
+    if provider not in ("google", "github"):
+        return redirect(url_for("auth.login"))
+    client = oauth.create_client(provider)
+    if not client:
+        return redirect(url_for("auth.login"))
+    token = client.authorize_access_token()
+    if provider == "google":
+        user_info = client.parse_id_token(token)
+        oauth_id = user_info.get("sub")
+        email = user_info.get("email")
+    else:
+        resp = client.get("user", token=token)
+        data = resp.json()
+        oauth_id = data.get("id")
+        email = data.get("email") or data.get("login")
+
+    user = User.query.filter_by(oauth_provider=provider, oauth_id=str(oauth_id)).first()
+    if not user:
+        username = email.split("@")[0] if email else f"{provider}_{oauth_id}"
+        if User.query.filter_by(username=username).first():
+            username = f"{username}_{provider}"
+        user = User(
+            username=username,
+            email=email,
+            oauth_provider=provider,
+            oauth_id=str(oauth_id),
+            password_hash=generate_password_hash(os.urandom(8).hex()),
+            is_verified=True,
+        )
+        db.session.add(user)
+        db.session.commit()
+    login_user(user)
+    return redirect(url_for("main.index"))
 
 
 @auth_bp.route("/mfa_verify", methods=["GET", "POST"])

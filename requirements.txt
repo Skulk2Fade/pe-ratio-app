@@ -18,6 +18,7 @@ flask - sock
 pywebpush
 Flask - Migrate
 httpx
+authlib
 
 black
 flake8

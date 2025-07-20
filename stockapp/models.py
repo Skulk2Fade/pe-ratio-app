@@ -25,6 +25,8 @@ class User(db.Model, UserMixin):
     default_currency = db.Column(db.String(3), default="USD")
     language = db.Column(db.String(5), default="en")
     theme = db.Column(db.String(10), default="light")
+    oauth_provider = db.Column(db.String(50))
+    oauth_id = db.Column(db.String(200))
     brokerage_token = db.Column(db.String(100))
     brokerage_access_token = db.Column(db.String(200))
     brokerage_refresh_token = db.Column(db.String(200))
