@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 
 from ..models import WatchlistItem, PortfolioItem, Alert
 from ..utils import get_news_summary
+from ..backtesting import backtest_custom_rule
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -70,3 +71,19 @@ def news_summary(symbol: str):
     period = request.args.get("period", "daily")
     summary = get_news_summary(symbol.upper(), period)
     return jsonify({"symbol": symbol.upper(), "summary": summary})
+
+
+@api_bp.route("/backtest_rule")
+@login_required
+def api_backtest_rule():
+    """Return historical evaluation of a custom rule."""
+    rule = request.args.get("rule", "")
+    days_param = request.args.get("days", "30")
+    try:
+        days = int(days_param)
+    except ValueError:
+        days = 30
+    if not rule:
+        return jsonify({"error": "rule required"}), 400
+    results = backtest_custom_rule(rule, days)
+    return jsonify({"rule": rule, "results": results})
