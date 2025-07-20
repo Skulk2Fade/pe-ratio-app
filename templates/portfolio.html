@@ -71,6 +71,10 @@
         <h5>Asset Correlations</h5>
         <div id="correlationChart" class="my-4"></div>
         {% endif %}
+        {% if sector_correlations %}
+        <h5>Sector Correlations</h5>
+        <div id="sectorCorrelationChart" class="my-4"></div>
+        {% endif %}
         {% if portfolio_volatility is not none %}
         <div class="alert alert-warning">Portfolio Volatility: {{ portfolio_volatility }}%</div>
         {% endif %}
@@ -85,6 +89,9 @@
         {% endif %}
         {% if monte_carlo_var is not none %}
         <div class="alert alert-danger">Monte Carlo VaR (95%): {{ monte_carlo_var }}</div>
+        {% endif %}
+        {% if maximum_drawdown is not none %}
+        <div class="alert alert-warning">Maximum Drawdown: {{ maximum_drawdown }}%</div>
         {% endif %}
         {% if optimized_allocation %}
         <h5 class="mt-4">Suggested Allocation</h5>
@@ -146,6 +153,31 @@
             colorscale: 'RdBu'
         }];
         Plotly.newPlot('correlationChart', data, {title: 'Correlation Heatmap'});
+    }
+    const sectorCorr = {{ sector_correlations|tojson }};
+    const sectors = {{ sectors|tojson }};
+    if (sectorCorr.length > 0) {
+        const n = sectors.length;
+        const matrix = Array.from({length: n}, () => Array(n).fill(1));
+        sectorCorr.forEach(c => {
+            const parts = c.pair.split('-');
+            const i = sectors.indexOf(parts[0]);
+            const j = sectors.indexOf(parts[1]);
+            if (i > -1 && j > -1) {
+                matrix[i][j] = c.value;
+                matrix[j][i] = c.value;
+            }
+        });
+        const data = [{
+            z: matrix,
+            x: sectors,
+            y: sectors,
+            type: 'heatmap',
+            zmin: -1,
+            zmax: 1,
+            colorscale: 'RdBu'
+        }];
+        Plotly.newPlot('sectorCorrelationChart', data, {title: 'Sector Correlation Heatmap'});
     }
 </script>
 {% endblock %}
