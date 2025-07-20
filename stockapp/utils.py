@@ -384,6 +384,23 @@ def send_push(subscription: "PushSubscription", data: dict) -> None:
         raise NotificationError(str(e))
 
 
+def send_mobile_push(token: str, title: str, body: str) -> None:
+    """Send a push notification to a mobile device via FCM."""
+    server_key = current_app.config.get("FCM_SERVER_KEY")
+    if not server_key:
+        logger.error("FCM server key not configured")
+        raise NotificationError("FCM server key not configured")
+    url = "https://fcm.googleapis.com/fcm/send"
+    headers = {"Authorization": f"key={server_key}", "Content-Type": "application/json"}
+    payload = {"to": token, "notification": {"title": title, "body": body}}
+    try:
+        resp = session.post(url, json=payload, headers=headers, timeout=10)
+        resp.raise_for_status()
+    except Exception as e:
+        logger.error("Mobile push error: %s", e)
+        raise NotificationError(str(e))
+
+
 def notify_user_push(user_id: int, message: str) -> None:
     from flask import url_for
     from .models import PushSubscription

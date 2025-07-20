@@ -33,6 +33,16 @@ If the `TWILIO_SID`, `TWILIO_TOKEN` and `TWILIO_FROM` variables are provided,
 the app can send SMS copies of alert emails.  Enable SMS alerts from the
 Settings page after adding a phone number.
 
+## Extended Notifications
+
+Alerts can also be delivered as a single daily digest instead of individual
+messages. Choose "Digest Alerts" from the Settings page to consolidate all
+notifications into one email/SMS/web push.
+
+Mobile apps may register a Firebase Cloud Messaging token via the same form.
+When set, Celery tasks send push notifications to that device alongside the
+standard web push alerts.
+
 ## WebSocket Streaming
 
 The price feed supports a WebSocket endpoint at `/ws/price`. Clients send the

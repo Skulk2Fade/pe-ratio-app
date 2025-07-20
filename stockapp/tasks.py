@@ -38,6 +38,7 @@ from .utils import (
     calculate_rsi,
     send_email,
     send_sms,
+    send_mobile_push,
     notify_user_push,
     ALERT_PE_THRESHOLD,
     get_upcoming_dividends,
@@ -67,6 +68,15 @@ def send_sms_task(self, to: str, body: str) -> None:
     """Send SMS asynchronously with retries."""
     try:
         send_sms(to, body)
+    except NotificationError as e:
+        raise self.retry(exc=e)
+
+
+@celery.task(bind=True, max_retries=3, default_retry_delay=60)
+def send_mobile_push_task(self, token: str, title: str, body: str) -> None:
+    """Send mobile push notification asynchronously with retries."""
+    try:
+        send_mobile_push(token, title, body)
     except NotificationError as e:
         raise self.retry(exc=e)
 
@@ -158,6 +168,7 @@ def _check_watchlists() -> None:
         if now - last < timedelta(hours=freq):
             continue
         items = WatchlistItem.query.filter_by(user_id=user.id).all()
+        messages = []
         for item in items:
             (
                 _name,
@@ -206,11 +217,8 @@ def _check_watchlists() -> None:
                                     f"{item.symbol} price deviation {round(diff,2)}% exceeds {item.ma_threshold}% from 50d MA"
                                 )
             for msg in alerts:
-                send_email_task.delay(user.email, "Watchlist Alert", msg)
-                if user.sms_opt_in and user.phone_number:
-                    send_sms_task.delay(user.phone_number, msg)
                 db.session.add(Alert(symbol=item.symbol, message=msg, user_id=user.id))
-                notify_user_push(user.id, msg)
+                messages.append(msg)
         # Evaluate custom alert rules defined by the user
         rules = CustomAlertRule.query.filter_by(user_id=user.id).all()
         for rule in rules:
@@ -218,16 +226,34 @@ def _check_watchlists() -> None:
             try:
                 if eval(rule.rule, {"__builtins__": {}}, context):
                     message = rule.description or rule.rule
-                    send_email_task.delay(user.email, "Watchlist Alert", message)
-                    if user.sms_opt_in and user.phone_number:
-                        send_sms_task.delay(user.phone_number, message)
                     db.session.add(Alert(symbol=None, message=message, user_id=user.id))
-                    notify_user_push(user.id, message)
+                    messages.append(message)
             except Exception:  # pragma: no cover - rule error
                 logger.exception(
                     "Error evaluating rule '%s' for user %s", rule.rule, user.id
                 )
-        user.last_alert_time = now
+        if messages:
+            if user.digest_pref:
+                body = "\n".join(messages)
+                send_email_task.delay(user.email, "Watchlist Alerts", body)
+                if user.sms_opt_in and user.phone_number:
+                    send_sms_task.delay(user.phone_number, body)
+                if user.fcm_token:
+                    send_mobile_push_task.delay(
+                        user.fcm_token, "MarketMinder Alert", body
+                    )
+                notify_user_push(user.id, body)
+            else:
+                for msg in messages:
+                    send_email_task.delay(user.email, "Watchlist Alert", msg)
+                    if user.sms_opt_in and user.phone_number:
+                        send_sms_task.delay(user.phone_number, msg)
+                    if user.fcm_token:
+                        send_mobile_push_task.delay(
+                            user.fcm_token, "MarketMinder Alert", msg
+                        )
+                    notify_user_push(user.id, msg)
+            user.last_alert_time = now
     db.session.commit()
 
 

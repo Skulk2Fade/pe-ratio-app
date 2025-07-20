@@ -11,6 +11,7 @@ class User(db.Model, UserMixin):
     phone_number = db.Column(db.String(20))
     sms_opt_in = db.Column(db.Boolean, default=False)
     trend_opt_in = db.Column(db.Boolean, default=False)
+    digest_pref = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String(100), unique=True)
     verification_token_sent = db.Column(db.DateTime)
@@ -30,6 +31,7 @@ class User(db.Model, UserMixin):
     brokerage_token = db.Column(db.String(100))
     brokerage_access_token = db.Column(db.String(200))
     brokerage_refresh_token = db.Column(db.String(200))
+    fcm_token = db.Column(db.String(200))
     brokerage_token_expiry = db.Column(db.DateTime)
 
 
