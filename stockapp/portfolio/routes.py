@@ -11,6 +11,7 @@ from flask_login import login_required, current_user
 import csv
 import io
 import json
+from fpdf import FPDF
 
 from ..extensions import db
 from ..models import (
@@ -83,6 +84,23 @@ def export_portfolio() -> Response | tuple[str, int]:
         response = make_response(json.dumps(data))
         response.headers["Content-Disposition"] = "attachment; filename=portfolio.json"
         response.headers["Content-Type"] = "application/json"
+        return response
+    elif fmt == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, txt="Portfolio", ln=1)
+        pdf.cell(60, 10, txt="Symbol", border=1)
+        pdf.cell(40, 10, txt="Quantity", border=1)
+        pdf.cell(40, 10, txt="Price Paid", border=1, ln=1)
+        for item in items:
+            pdf.cell(60, 10, txt=str(item.symbol), border=1)
+            pdf.cell(40, 10, txt=str(item.quantity), border=1)
+            pdf.cell(40, 10, txt=str(item.price_paid), border=1, ln=1)
+        pdf_output = pdf.output(dest="S").encode("latin-1")
+        response = make_response(pdf_output)
+        response.headers["Content-Disposition"] = "attachment; filename=portfolio.pdf"
+        response.headers["Content-Type"] = "application/pdf"
         return response
     else:
         return "Invalid format", 400
