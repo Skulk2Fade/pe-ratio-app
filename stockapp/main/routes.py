@@ -667,3 +667,41 @@ def download() -> Response | tuple[str, int]:
         return pdf_response(symbol, fields)
     else:
         return "Invalid format", 400
+
+
+@main_bp.route("/dashboard")
+def dashboard() -> str:
+    """Display real-time price chart with candlestick overlay."""
+    symbol = request.args.get("symbol", "").upper()
+    dates = opens = highs = lows = closes = []
+    price = eps = pe_ratio = None
+    if symbol:
+        try:
+            (
+                _name,
+                _logo,
+                _sector,
+                _industry,
+                _exchange,
+                _currency,
+                price,
+                eps,
+                *_rest,
+            ) = get_stock_data(symbol)
+            dates, opens, highs, lows, closes = get_historical_ohlc(symbol, days=60)
+            if price is not None and eps:
+                pe_ratio = round(price / eps, 2)
+        except Exception:
+            symbol = ""
+    return render_template(
+        "dashboard.html",
+        symbol=symbol,
+        price=price,
+        eps=eps,
+        pe_ratio=pe_ratio,
+        dates=dates,
+        opens=opens,
+        highs=highs,
+        lows=lows,
+        closes=closes,
+    )

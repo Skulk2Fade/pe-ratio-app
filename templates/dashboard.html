@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <script src="{{ url_for('static', filename='vendor/plotly.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 class="mb-4">Real-Time Dashboard</h3>
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-auto">
+            <input type="text" name="symbol" class="form-control" placeholder="Symbol" value="{{ symbol }}" required>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" type="submit">Load</button>
+        </div>
+    </form>
+    {% if symbol %}
+    <p>Price: <span id="rt_price">{{ price }}</span>
+        {% if pe_ratio is not none %}| P/E: <span id="rt_pe">{{ pe_ratio }}</span>{% endif %}
+    </p>
+    <div id="rt_chart"></div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if symbol %}
+<script>
+const dates = {{ dates|tojson }};
+const opens = {{ opens|tojson }};
+const highs = {{ highs|tojson }};
+const lows = {{ lows|tojson }};
+const closes = {{ closes|tojson }};
+const rtTimes = [];
+const rtPrices = [];
+
+const candle = { x: dates, open: opens, high: highs, low: lows, close: closes, type: 'candlestick', name: 'History' };
+const live = { x: rtTimes, y: rtPrices, mode: 'lines', name: 'Live Price' };
+
+Plotly.newPlot('rt_chart', [candle, live], { title: '{{ symbol }}', xaxis: { title: 'Time' }, yaxis:{ title: 'Price' } });
+
+const ws = new WebSocket("{{ url_for('main.ws_price') }}");
+ws.onopen = () => { ws.send("{{ symbol }}"); };
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.price !== undefined) {
+        document.getElementById('rt_price').textContent = data.price;
+        {% if eps %}
+        if (data.eps) document.getElementById('rt_pe').textContent = (data.price / data.eps).toFixed(2);
+        {% endif %}
+        rtTimes.push(new Date());
+        rtPrices.push(data.price);
+        Plotly.update('rt_chart', { x: [rtTimes], y: [rtPrices] }, {}, [1]);
+    }
+};
+</script>
+{% endif %}
+{% endblock %}
