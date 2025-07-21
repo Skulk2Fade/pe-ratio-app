@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+import json
 
 from celery import Celery
 from celery.schedules import crontab
@@ -30,6 +31,7 @@ from .models import (
     PortfolioItem,
     History,
     StockRecord,
+    DataSnapshot,
 )
 from .utils import (
     get_stock_data,
@@ -124,6 +126,12 @@ def init_celery(app: Flask) -> None:
             "task": "stockapp.tasks.cleanup_old_data_task",
             "schedule": _parse_cron(
                 app.config.get("CLEANUP_OLD_DATA_CRON", "0 3 * * *")
+            ),
+        },
+        "create-daily-snapshots": {
+            "task": "stockapp.tasks.create_snapshots_task",
+            "schedule": _parse_cron(
+                app.config.get("DATA_SNAPSHOT_CRON", "0 7 * * *")
             ),
         },
     }
@@ -376,3 +384,41 @@ def _cleanup_old_data(days: int = 30) -> None:
 def cleanup_old_data_task() -> None:
     """Celery task wrapper for ``_cleanup_old_data``."""
     _cleanup_old_data()
+
+
+def _create_snapshots() -> None:
+    """Persist daily portfolio and watchlist data for each user."""
+    now = datetime.utcnow()
+    users = User.query.all()
+    for user in users:
+        portfolio_items = PortfolioItem.query.filter_by(user_id=user.id).all()
+        watchlist_items = WatchlistItem.query.filter_by(user_id=user.id).all()
+        portfolio = [
+            {"symbol": i.symbol, "quantity": i.quantity, "price_paid": i.price_paid}
+            for i in portfolio_items
+        ]
+        watchlist = [
+            {
+                "symbol": i.symbol,
+                "pe_threshold": i.pe_threshold,
+                "de_threshold": i.de_threshold,
+                "rsi_threshold": i.rsi_threshold,
+                "ma_threshold": i.ma_threshold,
+            }
+            for i in watchlist_items
+        ]
+        db.session.add(
+            DataSnapshot(
+                user_id=user.id,
+                timestamp=now,
+                portfolio=json.dumps(portfolio),
+                watchlist=json.dumps(watchlist),
+            )
+        )
+    db.session.commit()
+
+
+@celery.task(name="stockapp.tasks.create_snapshots_task")
+def create_snapshots_task() -> None:
+    """Celery task wrapper for ``_create_snapshots``."""
+    _create_snapshots()
