@@ -10,6 +10,7 @@ The repository includes several guides to keep this README concise:
 * [Environment variables](docs/environment.md)
 * [Secure deployment](docs/deployment.md)
 * [Advanced features](docs/advanced_features.md)
+* [Localization](docs/localization.md)
 * [Contributing](docs/contributing.md)
 * [Architecture overview](docs/architecture.md)
 

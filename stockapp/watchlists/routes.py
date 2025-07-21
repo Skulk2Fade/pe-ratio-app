@@ -31,6 +31,7 @@ from ..utils import (
     get_stock_news,
     summarize_news,
     generate_xlsx,
+    get_supported_languages,
 )
 from ..forms import WatchlistAddForm, WatchlistUpdateForm, CommentForm
 
@@ -238,6 +239,7 @@ def settings() -> str:
         language=current_user.language,
         theme=current_user.theme,
         brokerage_token=current_user.brokerage_token or "",
+        languages=get_supported_languages(),
     )
 
 
