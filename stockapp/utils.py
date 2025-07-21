@@ -8,6 +8,7 @@ import requests
 import httpx
 import asyncio
 import smtplib
+import os
 from email.mime.text import MIMEText
 from typing import Any, Iterable, TYPE_CHECKING
 
@@ -317,6 +318,20 @@ def get_locale() -> str:
         except Exception:  # pragma: no cover - fallback
             return "en"
     return "en"
+
+
+def get_supported_languages() -> list[str]:
+    """Return available languages including English."""
+    directories = current_app.config.get("BABEL_TRANSLATION_DIRECTORIES", "translations")
+    langs = {"en"}
+    for directory in directories.split(";"):
+        try:
+            for entry in os.listdir(directory):
+                if os.path.isdir(os.path.join(directory, entry)):
+                    langs.add(entry)
+        except OSError:
+            continue
+    return sorted(langs)
 
 
 def send_email(to: str, subject: str, body: str) -> None:

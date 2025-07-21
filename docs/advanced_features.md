@@ -147,5 +147,4 @@ Bootstrap and Plotly are managed locally. Run `npm ci && npm run build` once aft
 
 ## Localization
 
-User language preferences are respected using **Flask-Babel**. Translations live in the `translations/` directory.
-After editing `.po` files run `pybabel compile -d translations` to generate the binary `.mo` files.
+User language preferences are respected using **Flask-Babel**. Spanish translations ship with the repository and additional languages can be dropped into the `translations/` directory. See [Localization](localization.md) for instructions on contributing new languages and compiling the catalogs.

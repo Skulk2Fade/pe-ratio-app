@@ -33,7 +33,7 @@
             </select>
             <label class="form-label mt-3">{{ _('Language') }}</label>
             <select name="language" class="form-select">
-                {% for lang in ['en','es','fr','de'] %}
+                {% for lang in languages %}
                     <option value="{{ lang }}" {% if language==lang %}selected{% endif %}>{{ lang }}</option>
                 {% endfor %}
             </select>
