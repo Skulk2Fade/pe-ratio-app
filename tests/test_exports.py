@@ -192,6 +192,37 @@ def test_export_portfolio_json(auth_client, app):
     assert resp.headers["Content-Type"] == "application/json"
 
 
+def test_export_portfolio_pdf(auth_client, app):
+    from stockapp.models import User, PortfolioItem
+    from stockapp.extensions import db
+
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        db.session.add(
+            PortfolioItem(symbol="DDD", quantity=4, price_paid=40, user_id=user.id)
+        )
+        db.session.commit()
+    resp = auth_client.get("/export_portfolio?format=pdf")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/pdf"
+
+
+def test_export_history_pdf(auth_client, app):
+    from stockapp.models import User, History
+    from stockapp.extensions import db
+    from datetime import datetime
+
+    with app.app_context():
+        user = User.query.filter_by(username="tester").first()
+        db.session.add(
+            History(symbol="EEE", user_id=user.id, timestamp=datetime.utcnow())
+        )
+        db.session.commit()
+    resp = auth_client.get("/export_history?format=pdf")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/pdf"
+
+
 def test_roi_calculator(client):
     data = {"initial": 100, "final": 120}
     resp = client.post("/calc/roi", data=data)

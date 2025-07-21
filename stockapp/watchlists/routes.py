@@ -12,6 +12,7 @@ import csv
 import io
 import json
 from babel.dates import format_datetime
+from fpdf import FPDF
 
 from ..extensions import db
 
@@ -293,6 +294,22 @@ def export_history() -> Response | tuple[str, int]:
         response = make_response(json.dumps(data))
         response.headers["Content-Disposition"] = "attachment; filename=history.json"
         response.headers["Content-Type"] = "application/json"
+        return response
+    elif fmt == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, txt="Watchlist History", ln=1)
+        pdf.cell(60, 10, txt="Symbol", border=1)
+        pdf.cell(80, 10, txt="Timestamp", border=1, ln=1)
+        for e in entries:
+            pdf.cell(60, 10, txt=str(e.symbol), border=1)
+            timestamp = format_datetime(e.timestamp, locale=get_locale())
+            pdf.cell(80, 10, txt=timestamp, border=1, ln=1)
+        pdf_output = pdf.output(dest="S").encode("latin-1")
+        response = make_response(pdf_output)
+        response.headers["Content-Disposition"] = "attachment; filename=history.pdf"
+        response.headers["Content-Type"] = "application/pdf"
         return response
     else:
         return "Invalid format", 400

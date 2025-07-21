@@ -100,7 +100,8 @@ These metrics also appear in exported CSV/PDF/XLSX/JSON files.
 
 ## Portfolio Import and Export
 
-The portfolio page supports importing and exporting holdings to CSV, XLSX or JSON formats.
+The portfolio page supports importing and exporting holdings to CSV, XLSX, JSON or PDF formats.
+Watchlist history exports share the same options for generating periodic reports.
 A diversification analyzer highlights concentration risk using metrics like Beta and Sharpe ratio.
 Additional risk statistics including maximum drawdown and sector correlations over configurable periods provide deeper insight into volatility.
 An optimizer suggests asset weights that maximize the Sharpe ratio using recent price data.
