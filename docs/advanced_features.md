@@ -122,6 +122,8 @@ Triggered alerts are saved in the database. After logging in click the *Alerts* 
 
 Old alerts and historical price records can build up over time. A scheduled task cleans up data older than 30 days. Control the timing with the `CLEANUP_OLD_DATA_CRON` variable.
 
+Daily snapshots of each user's portfolio and watchlist are also kept for reference. The `DATA_SNAPSHOT_CRON` environment variable controls when these records are captured.
+
 ## Historical Trend Notifications
 
 MarketMinder can email weekly summaries of portfolio and watchlist changes.

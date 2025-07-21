@@ -4,6 +4,7 @@ from stockapp.tasks import (
     send_trend_summaries_task,
     check_dividends_task,
     send_mobile_push_task,
+    create_snapshots_task,
 )
 
 
@@ -36,4 +37,11 @@ def test_send_mobile_push_task_invokes_helper(monkeypatch):
         "stockapp.tasks.send_mobile_push", lambda *a, **k: called.append(True)
     )
     send_mobile_push_task("t", "title", "body")
+    assert called
+
+
+def test_create_snapshots_task_invokes_helper(monkeypatch):
+    called = []
+    monkeypatch.setattr("stockapp.tasks._create_snapshots", lambda: called.append(True))
+    create_snapshots_task()
     assert called

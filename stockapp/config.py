@@ -27,6 +27,7 @@ class Config:
     SYNC_BROKERAGE_CRON = "0 6 * * *"
     CHECK_DIVIDENDS_CRON = "0 9 * * *"
     CLEANUP_OLD_DATA_CRON = "0 3 * * *"
+    DATA_SNAPSHOT_CRON = "0 7 * * *"
 
     TWILIO_SID = ""
     TWILIO_TOKEN = ""
@@ -99,6 +100,9 @@ class Config:
         )
         self.CLEANUP_OLD_DATA_CRON = os.environ.get(
             "CLEANUP_OLD_DATA_CRON", self.CLEANUP_OLD_DATA_CRON
+        )
+        self.DATA_SNAPSHOT_CRON = os.environ.get(
+            "DATA_SNAPSHOT_CRON", self.DATA_SNAPSHOT_CRON
         )
         self.GOOGLE_CLIENT_ID = os.environ.get(
             "GOOGLE_CLIENT_ID", self.GOOGLE_CLIENT_ID

@@ -140,3 +140,11 @@ class PortfolioComment(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship("User", foreign_keys=[user_id])
     owner = db.relationship("User", foreign_keys=[portfolio_owner_id])
+
+
+class DataSnapshot(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    portfolio = db.Column(db.Text)
+    watchlist = db.Column(db.Text)
